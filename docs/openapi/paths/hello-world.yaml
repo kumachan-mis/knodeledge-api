@@ -1,0 +1,23 @@
+post:
+  tags:
+    - Hello World
+  operationId: get
+  summary: Hello World
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/HelloWorldRequest.yaml"
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/HelloWorldResponse.yaml"
+    "400":
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/HelloWorldErrorResponse.yaml"

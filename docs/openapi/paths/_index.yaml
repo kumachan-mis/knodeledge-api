@@ -1,0 +1,2 @@
+/api/hello-world:
+  $ref: ./hello-world.yaml

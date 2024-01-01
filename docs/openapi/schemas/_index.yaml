@@ -1,0 +1,6 @@
+HelloWorldRequest:
+  $ref: ./HelloWorldRequest.yaml
+HelloWorldResponse:
+  $ref: ./HelloWorldResponse.yaml
+HelloWorldErrorResponse:
+  $ref: ./HelloWorldErrorResponse.yaml
