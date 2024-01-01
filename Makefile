@@ -5,6 +5,9 @@ OPEN_API_GENERATOR     := go-gin-server
 OPEN_API_MODEL_PACKAGE := model
 OPEN_API_MODEL_DST     := interal/${OPEN_API_MODEL_PACKAGE}
 
+install:
+	go get -v ./...
+
 run:
 	go run cmd/app/main.go
 
@@ -12,7 +15,7 @@ build:
 	go build -o tmp/app cmd/app/main.go
 
 test:
-	go test ./...
+	go test -v ./...
 
 start-docs-server:
 	@docker run --detach --name ${OPEN_API_DOCS_SERVER} -v "${PWD}:/local" -p 8081:8081 \
