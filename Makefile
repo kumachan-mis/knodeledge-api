@@ -1,6 +1,7 @@
 OPEN_API_DOCS_SERVER   := openapi-docs-server
 OPEN_API_INDEX         := docs/openapi/_index.yaml
 OPEN_API_BUNDLE        := tmp/openapi-bundle.yaml
+OPEN_API_DOCS_DIST     := tmp/openapi-docs.html
 OPEN_API_GENERATOR     := go-gin-server
 OPEN_API_MODEL_PACKAGE := model
 OPEN_API_MODEL_DST     := interal/${OPEN_API_MODEL_PACKAGE}
@@ -20,7 +21,7 @@ test:
 start-docs-server:
 	@docker run --detach --name ${OPEN_API_DOCS_SERVER} -v "${PWD}:/local" -p 8081:8081 \
 		redocly/cli preview-docs \
-		--api /local/${OPEN_API_INDEX} \
+		/local/${OPEN_API_INDEX} \
 		--host 0.0.0.0 \
 		--port 8081 \
 		1> /dev/null
@@ -32,6 +33,12 @@ stop-docs-server:
 	@docker rm ${OPEN_API_DOCS_SERVER} 1> /dev/null
 
 	@echo "OpenAPI docs server stopped"
+
+build-docs:
+	docker run --rm -v "${PWD}:/local" \
+		redocly/cli build-docs \
+		/local/${OPEN_API_INDEX} \
+		--output /local/${OPEN_API_DOCS_DIST}
 
 gen-models:
 	rm -Rf ${OPEN_API_BUNDLE} ${OPEN_API_MODEL_DST}

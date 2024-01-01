@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kumachan-mis/knodeledge-api/interal/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,6 +70,10 @@ func TestHelloWorldHandlerError(t *testing.T) {
 			request: strings.NewReader(`{"name": "Kumachan"`),
 		},
 		{
+			name:    "should return error when request body is empty",
+			request: strings.NewReader(""),
+		},
+		{
 			name:    "should return error when request body is nil",
 			request: nil,
 		},
@@ -78,12 +84,17 @@ func TestHelloWorldHandlerError(t *testing.T) {
 			router := setupRouter()
 
 			recorder := httptest.NewRecorder()
-			req, _ := http.NewRequest("POST", "/api/hello-world", nil)
+			req, _ := http.NewRequest("POST", "/api/hello-world", tc.request)
 
 			router.ServeHTTP(recorder, req)
 
 			assert.Equal(t, http.StatusBadRequest, recorder.Code)
-			assert.NotEmpty(t, recorder.Body.String())
+
+			var response model.HelloWorldErrorResponse
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
+
+			assert.NotEmpty(t, response.Message)
+
 		})
 	}
 }
