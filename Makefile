@@ -8,6 +8,9 @@ OPEN_API_MODEL_DST     := interal/${OPEN_API_MODEL_PACKAGE}
 run:
 	go run cmd/app/main.go
 
+build:
+	go build -o tmp/app cmd/app/main.go
+
 test:
 	go test ./...
 
