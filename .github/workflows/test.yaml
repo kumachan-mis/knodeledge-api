@@ -54,4 +54,4 @@ jobs:
         run: yarn global add @redocly/cli
 
       - name: Run docs build
-        run: redocly/cli build-docs docs/openapi/_index.yaml --output tmp/openapi-docs.html
+        run: "@redocly/cli build-docs docs/openapi/_index.yaml --output tmp/openapi-docs.html"
