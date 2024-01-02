@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+go_commit_files=$(git diff --name-only --cached --diff-filter=d | grep -E "^.*\.go$")
+
+if [ "${go_commit_files}" != "" ]; then
+    go vet ./...
+    go fmt ${go_commit_files}
+    git add ${go_commit_files}
+fi
