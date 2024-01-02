@@ -6,11 +6,19 @@ OPEN_API_GENERATOR     := go-gin-server
 OPEN_API_MODEL_PACKAGE := model
 OPEN_API_MODEL_DST     := interal/${OPEN_API_MODEL_PACKAGE}
 
-install:
+setup:
+	cp .pre-commit .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
 	go get -v ./...
 
 run:
 	go run cmd/app/main.go
+
+format:
+	go fmt ./...
+
+lint:
+	go vet ./...
 
 build:
 	go build -o tmp/app cmd/app/main.go

@@ -24,8 +24,14 @@ jobs:
       - name: Display Go version
         run: go version
 
-      - name: Install dependencies
-        run: make install
+      - name: Setup dependencies
+        run: make setup
+
+      - name: Run go format
+        run: make format
+
+      - name: Run go lint
+        run: make lint
 
       - name: Run go build
         run: make build
