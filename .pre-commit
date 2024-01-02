@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-go_commit_files=$(git diff --name-only --cached --diff-filter=d | grep -E "^.*\.go$")
+go_commit_files=$(git diff --name-only --cached --diff-filter=d | grep -E "^.*\.go$" || true)
 
 if [ "${go_commit_files}" != "" ]; then
     go vet ./...

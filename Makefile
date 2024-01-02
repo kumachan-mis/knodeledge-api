@@ -14,6 +14,12 @@ setup:
 run:
 	go run cmd/app/main.go
 
+format:
+	go fmt ./...
+
+lint:
+	go vet ./...
+
 build:
 	go build -o tmp/app cmd/app/main.go
 
