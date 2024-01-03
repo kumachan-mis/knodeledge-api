@@ -9,8 +9,8 @@
 
 package model
 
-type HelloWorldErrorResponse struct {
+type ApplicationErrorResponse struct {
 
 	// Error message
-	Message string `json:"message,omitempty"`
+	Message string `json:"message"`
 }

@@ -90,7 +90,7 @@ func TestHelloWorldHandlerError(t *testing.T) {
 
 			assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
-			var response model.HelloWorldErrorResponse
+			var response model.ApplicationErrorResponse
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
 
 			assert.NotEmpty(t, response.Message)

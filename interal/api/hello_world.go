@@ -10,7 +10,7 @@ import (
 func HelloWorldHandler(cxt *gin.Context) {
 	var request model.HelloWorldRequest
 	if err := cxt.ShouldBindJSON(&request); err != nil {
-		cxt.JSON(400, model.HelloWorldErrorResponse{
+		cxt.JSON(400, model.ApplicationErrorResponse{
 			Message: err.Error(),
 		})
 		return
