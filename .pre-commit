@@ -4,6 +4,6 @@ go_commit_files=$(git diff --name-only --cached --diff-filter=d | grep -E "^.*\.
 
 if [ "${go_commit_files}" != "" ]; then
     go vet ./...
-    go fmt ${go_commit_files}
+    go fmt ./...
     git add ${go_commit_files}
 fi

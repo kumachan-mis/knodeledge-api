@@ -12,5 +12,5 @@ package model
 type HelloWorldResponse struct {
 
 	// Hello message
-	Message string `json:"message,omitempty"`
+	Message string `json:"message"`
 }

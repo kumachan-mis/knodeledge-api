@@ -4,3 +4,5 @@ properties:
     type: string
     description: Error message
     example: unexpected EOF
+required:
+  - message

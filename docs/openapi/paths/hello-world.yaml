@@ -20,4 +20,4 @@ post:
       content:
         application/json:
           schema:
-            $ref: "../schemas/HelloWorldErrorResponse.yaml"
+            $ref: "../schemas/ApplicationErrorResponse.yaml"

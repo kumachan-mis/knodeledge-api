@@ -4,3 +4,5 @@ properties:
     type: string
     description: Hello message
     example: Hello, Kumachan!
+required:
+  - message

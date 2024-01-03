@@ -2,5 +2,5 @@ HelloWorldRequest:
   $ref: ./HelloWorldRequest.yaml
 HelloWorldResponse:
   $ref: ./HelloWorldResponse.yaml
-HelloWorldErrorResponse:
-  $ref: ./HelloWorldErrorResponse.yaml
+ApplicationErrorResponse:
+  $ref: ./ApplicationErrorResponse.yaml
