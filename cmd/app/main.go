@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/kumachan-mis/knodeledge-api/interal/api"
+	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/subosito/gotenv"
 )
 

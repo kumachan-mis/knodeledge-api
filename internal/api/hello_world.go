@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kumachan-mis/knodeledge-api/interal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/model"
 )
 
 func HelloWorldHandler(cxt *gin.Context) {

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kumachan-mis/knodeledge-api/interal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/model"
 	"github.com/stretchr/testify/assert"
 )
 
