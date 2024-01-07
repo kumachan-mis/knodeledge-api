@@ -6,7 +6,7 @@ COPY internal/ internal/
 COPY go.sum    go.sum
 COPY go.mod    go.mod
 
-RUN go build -o app cmd/openapi/main.go
+RUN go build -o app cmd/app/main.go
 
 
 FROM scratch AS runner
