@@ -28,6 +28,8 @@ steps:
         "gcr.io/$PROJECT_ID/$_SERVICE_NAME:$TAG_NAME",
         "--region",
         "$_REGION",
+        "--max-instances",
+        "$_MAX_INSTANCES",
       ]
 
 images:
@@ -36,6 +38,7 @@ images:
 substitutions:
   _SERVICE_NAME: knodeledge-api
   _REGION: us-central1
+  _MAX_INSTANCES: 1
 
 options:
   logging: CLOUD_LOGGING_ONLY
