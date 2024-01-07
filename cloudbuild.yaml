@@ -1,0 +1,38 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/$PROJECT_ID/$_SERVICE_NAME:$TAG_NAME",
+        "--build-arg",
+        "ALLOW_ORIGIN=$_ALLOW_ORIGIN",
+        "--build-arg",
+        "TRUSTED_PROXY=$_TRUSTED_PROXY",
+        "--build-arg",
+        "ENVIRONMENT=$_ENVIRONMENT",
+        ".",
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/$_SERVICE_NAME:$TAG_NAME"]
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "$_SERVICE_NAME",
+        "--image",
+        "gcr.io/$PROJECT_ID/$_SERVICE_NAME:$TAG_NAME",
+        "--region",
+        "$_REGION",
+      ]
+
+images:
+  - "gcr.io/$PROJECT_ID/$_SERVICE_NAME:$TAG_NAME"
+
+substitutions:
+  _SERVICE_NAME: knodeledge-api
+  _REGION: us-central1
