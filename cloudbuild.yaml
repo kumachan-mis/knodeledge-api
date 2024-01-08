@@ -38,7 +38,7 @@ images:
 substitutions:
   _SERVICE_NAME: knodeledge-api
   _REGION: us-central1
-  _MAX_INSTANCES: 1
+  _MAX_INSTANCES: "1"
 
 options:
   logging: CLOUD_LOGGING_ONLY
