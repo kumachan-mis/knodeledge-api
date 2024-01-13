@@ -1,7 +1,5 @@
 package db
 
-import "fmt"
-
 const COLLECTION = "hello_world"
 
 func GetHelloWorld(name string) (string, error) {
@@ -23,7 +21,7 @@ func SetHelloWorld(name string, message string) (string, error) {
 		Collection(COLLECTION).
 		Add(FirestoreContext, map[string]interface{}{
 			"name":    name,
-			"message": fmt.Sprintf("%v from Firestore", message),
+			"message": message,
 		})
 	if err != nil {
 		return "", err
