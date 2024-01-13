@@ -5,12 +5,6 @@ steps:
         "build",
         "-t",
         "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:${TAG_NAME}",
-        "--build-arg",
-        "ALLOW_ORIGIN=${_ALLOW_ORIGIN}",
-        "--build-arg",
-        "TRUSTED_PROXY=${_TRUSTED_PROXY}",
-        "--build-arg",
-        "ENVIRONMENT=${_ENVIRONMENT}",
         ".",
       ]
 
@@ -30,6 +24,8 @@ steps:
         "${_SERVICE_NAME}",
         "--image",
         "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:${TAG_NAME}",
+        "--set-env-vars",
+        "ENVIRONMENT=${_ENVIRONMENT},ALLOW_ORIGIN=${_ALLOW_ORIGIN},TRUSTED_PROXY=${_TRUSTED_PROXY}",
         "--region",
         "${_REGION}",
         "--service-account",
