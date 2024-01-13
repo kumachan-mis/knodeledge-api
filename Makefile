@@ -31,7 +31,7 @@ build:
 	go build -o tmp/app cmd/app/main.go
 
 test:
-	go test -v ./...
+	firebase emulators:exec 'go test ./...'
 
 start-firestore-emulator:
 	firebase emulators:start --only firestore
