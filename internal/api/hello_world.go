@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
 )
 
@@ -23,7 +24,18 @@ func HelloWorldHandler(cxt *gin.Context) {
 		return
 	}
 
+	message, err := db.GetHelloWorld(request.Name)
+	if err != nil {
+		message, err = db.SetHelloWorld(request.Name, fmt.Sprintf("Hello, %s!", request.Name))
+	}
+
+	if err != nil {
+		cxt.JSON(500, model.ApplicationErrorResponse{
+			Message: err.Error(),
+		})
+	}
+
 	cxt.JSON(200, model.HelloWorldResponse{
-		Message: fmt.Sprintf("Hello, %s!", request.Name),
+		Message: message,
 	})
 }
