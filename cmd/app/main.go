@@ -26,7 +26,7 @@ func main() {
 	gotenv.Load(fmt.Sprintf(".env.%v", mode))
 	gotenv.Load(fmt.Sprintf(".env.%v.local", mode))
 
-	err := db.InitDatabaseClient(os.Getenv("FIREBASE_PROJECT_ID"))
+	err := db.InitDatabaseClient(os.Getenv("GOOGLE_CLOUD_PROJECT_ID"))
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
@@ -48,5 +48,13 @@ func main() {
 
 	router.POST("/api/hello-world", api.HelloWorldHandler)
 
-	router.Run(":8080")
+	err = router.Run(":8080")
+	if err != nil {
+		log.Fatalf("Failed to run gin server: %v", err)
+	}
+
+	err = db.FinalizeDatabaseClient()
+	if err != nil {
+		log.Fatalf("Failed to finalize database: %v", err)
+	}
 }
