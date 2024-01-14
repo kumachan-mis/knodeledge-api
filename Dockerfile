@@ -7,8 +7,8 @@ COPY internal/ internal/
 COPY go.sum    go.sum
 COPY go.mod    go.mod
 
-RUN apt-get update && \
-    apt-get install -y ca-certificates && \
+RUN apk update && \
+    apk add --no-cache --quiet ca-certificates && \
     update-ca-certificates && \
     go build -o app cmd/app/main.go
 
