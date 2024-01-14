@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
@@ -15,8 +16,9 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	db.InitDatabaseClient("test-project-id")
+	db.InitDatabaseClient(firestore.DetectProjectID)
 	m.Run()
+	db.FinalizeDatabaseClient()
 }
 
 func TestHelloWorldHandler(t *testing.T) {
