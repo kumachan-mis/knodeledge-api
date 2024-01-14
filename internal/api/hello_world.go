@@ -1,10 +1,9 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 )
 
 func HelloWorldHandler(cxt *gin.Context) {
@@ -16,14 +15,16 @@ func HelloWorldHandler(cxt *gin.Context) {
 		return
 	}
 
-	if request.Name == "" {
-		cxt.JSON(200, model.HelloWorldResponse{
-			Message: "Hello World!",
+	message, err := usecase.HelloWorldUseCase(request.Name)
+
+	if err != nil {
+		cxt.JSON(500, model.ApplicationErrorResponse{
+			Message: err.Error(),
 		})
 		return
 	}
 
 	cxt.JSON(200, model.HelloWorldResponse{
-		Message: fmt.Sprintf("Hello, %s!", request.Name),
+		Message: message,
 	})
 }

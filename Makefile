@@ -31,7 +31,10 @@ build:
 	go build -o tmp/app cmd/app/main.go
 
 test:
-	go test -v ./...
+	firebase emulators:exec 'go test ./...'
+
+start-firestore-emulator:
+	firebase emulators:start --only firestore
 
 start-docs-server:
 	@docker run --detach --name ${OPEN_API_DOCS_SERVER} -v "${API_REPOSITORY_ROOT}:/api" -p 8081:8081 \

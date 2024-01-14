@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/api"
+	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/subosito/gotenv"
 )
 
@@ -16,7 +18,18 @@ func main() {
 		env = "development"
 	}
 
-	gotenv.Load(fmt.Sprintf(".env.%s", env))
+	mode := "development"
+	if os.Getenv("GIN_MODE") == "release" {
+		mode = "production"
+	}
+
+	gotenv.Load(fmt.Sprintf(".env.%v", mode))
+	gotenv.Load(fmt.Sprintf(".env.%v.local", mode))
+
+	err := db.InitDatabaseClient(os.Getenv("FIREBASE_PROJECT_ID"))
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
 
 	router := gin.Default()
 	router.SetTrustedProxies([]string{os.Getenv("TRUSTED_PROXY")})

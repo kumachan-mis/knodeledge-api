@@ -9,9 +9,15 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	db.InitDatabaseClient("test-project-id")
+	m.Run()
+}
 
 func TestHelloWorldHandler(t *testing.T) {
 	testCases := []struct {
