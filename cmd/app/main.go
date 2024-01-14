@@ -26,7 +26,7 @@ func main() {
 	gotenv.Load(fmt.Sprintf(".env.%v", mode))
 	gotenv.Load(fmt.Sprintf(".env.%v.local", mode))
 
-	err := db.InitDatabase()
+	err := db.InitDatabaseClient(os.Getenv("FIREBASE_PROJECT_ID"))
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
