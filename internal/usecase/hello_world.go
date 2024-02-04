@@ -5,12 +5,26 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 )
 
-func HelloWorldUseCase(name string) (string, error) {
+//go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
+
+type HelloWorldUseCase interface {
+	UseHelloWorld(name string) (string, error)
+}
+
+type helloWorldUseCase struct {
+	service service.HelloWorldService
+}
+
+func NewHelloWorldUseCase(service service.HelloWorldService) HelloWorldUseCase {
+	return helloWorldUseCase{service: service}
+}
+
+func (uc helloWorldUseCase) UseHelloWorld(name string) (string, error) {
 	n := domain.NewNameObject(name)
 
-	m, err := service.SearchHelloWorld(n)
+	m, err := uc.service.SearchHelloWorld(n)
 	if err != nil {
-		m, err = service.LogHelloWorld(n)
+		m, err = uc.service.LogHelloWorld(n)
 	}
 
 	if err != nil {

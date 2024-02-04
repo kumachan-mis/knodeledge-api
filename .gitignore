@@ -5,8 +5,10 @@
 ### Project Settings ###
 .env*
 !.env.development
-tmp/
 *.log
+
+mock/
+tmp/
 
 ### Firebase ###
 .idea
