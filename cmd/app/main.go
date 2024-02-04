@@ -9,6 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
+	"github.com/kumachan-mis/knodeledge-api/internal/repository"
+	"github.com/kumachan-mis/knodeledge-api/internal/service"
+	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 	"github.com/subosito/gotenv"
 )
 
@@ -46,7 +49,17 @@ func main() {
 		})
 	})
 
-	router.POST("/api/hello-world", api.HelloWorldHandler)
+	client := db.FirestoreClient()
+	if client == nil {
+		log.Fatalf("Failed to get firestore client")
+	}
+
+	r := repository.NewHelloWorldRepository(*client)
+	s := service.NewHelloWorldService(r)
+	uc := usecase.NewHelloWorldUseCase(s)
+	a := api.NewHelloWorldApi(uc)
+
+	router.POST("/api/hello-world", a.HandleHelloWorld)
 
 	err = router.Run(":8080")
 	if err != nil {

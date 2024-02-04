@@ -1,14 +1,28 @@
 package repository
 
 import (
+	"cloud.google.com/go/firestore"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
 )
 
 const HELLO_WORLD_COLLECTION = "hello_world"
 
-func FetchHelloWorld(name string) (string, *record.HelloWorldEntry, error) {
-	iter := db.FirestoreClient().Collection(HELLO_WORLD_COLLECTION).
+type HelloWorldRepository interface {
+	FetchHelloWorld(name string) (string, *record.HelloWorldEntry, error)
+	CreateHelloWorld(entry record.HelloWorldEntry) (string, error)
+}
+
+type helloWorldRepository struct {
+	client firestore.Client
+}
+
+func NewHelloWorldRepository(client firestore.Client) HelloWorldRepository {
+	return helloWorldRepository{client: client}
+}
+
+func (r helloWorldRepository) FetchHelloWorld(name string) (string, *record.HelloWorldEntry, error) {
+	iter := r.client.Collection(HELLO_WORLD_COLLECTION).
 		Where("name", "==", name).
 		Limit(1).
 		Documents(db.FirestoreContext())
@@ -27,8 +41,8 @@ func FetchHelloWorld(name string) (string, *record.HelloWorldEntry, error) {
 	return snapshot.Ref.ID, &entry, nil
 }
 
-func CreateHelloWorld(entry record.HelloWorldEntry) (string, error) {
-	ref, _, err := db.FirestoreClient().
+func (r helloWorldRepository) CreateHelloWorld(entry record.HelloWorldEntry) (string, error) {
+	ref, _, err := r.client.
 		Collection(HELLO_WORLD_COLLECTION).
 		Add(db.FirestoreContext(), entry)
 	if err != nil {
