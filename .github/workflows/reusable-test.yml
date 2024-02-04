@@ -15,8 +15,8 @@ jobs:
         with:
           go-version: 1.21.5
 
-      - name: Install Go dependencies
-        run: make dependencies
+      - name: Setup Go environment
+        run: make setup
 
       - name: Install firesrore emulator
         run: curl -sL https://firebase.tools | bash
@@ -31,4 +31,4 @@ jobs:
         run: make build
 
       - name: Run go test
-        run: make generate test
+        run: make test
