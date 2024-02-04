@@ -16,7 +16,11 @@ OPEN_API_NODE_DST       := src/openapi
 setup:
 	cp .pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
+	
 	go get -v ./...
+	go install go.uber.org/mock/mockgen@latest
+	
+	go generate ./...
 
 run:
 	go run cmd/app/main.go
