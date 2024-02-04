@@ -20,7 +20,6 @@ setup: dependencies generate
 dependencies:
 	go get -v ./...
 	go install go.uber.org/mock/mockgen@latest
-	go mod tidy
 
 run:
 	go run cmd/app/main.go
