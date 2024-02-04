@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 	db.FinalizeDatabaseClient()
 }
 
-func TestFetchHelloWorld(t *testing.T) {
+func TestFetchHelloWorldValidDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewHelloWorldRepository(*client)
 
@@ -50,7 +50,7 @@ func TestFetchHelloWorldNotFound(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestCreateHelloWorld(t *testing.T) {
+func TestCreateHelloWorldSucceeded(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewHelloWorldRepository(*client)
 
