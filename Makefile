@@ -33,6 +33,9 @@ build:
 test:
 	firebase emulators:exec 'go test ./...'
 
+generate:
+	go generate ./...
+
 start-firestore-emulator:
 	firebase emulators:start --only firestore
 

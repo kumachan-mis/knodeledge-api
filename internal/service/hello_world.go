@@ -6,6 +6,8 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
+
 type HelloWorldService interface {
 	SearchHelloWorld(name domain.NameObject) (*domain.MessageObject, error)
 	LogHelloWorld(name domain.NameObject) (*domain.MessageObject, error)
