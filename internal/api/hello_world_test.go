@@ -1,4 +1,4 @@
-package api
+package api_test
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
+	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
@@ -24,7 +25,7 @@ func TestMain(m *testing.M) {
 	db.FinalizeDatabaseClient()
 }
 
-func TestHelloWorldHandler(t *testing.T) {
+func TestHandleHelloWorld(t *testing.T) {
 	testCases := []struct {
 		name     string
 		request  string
@@ -67,7 +68,7 @@ func TestHelloWorldHandler(t *testing.T) {
 	}
 }
 
-func TestHelloWorldHandlerError(t *testing.T) {
+func TestHandleHelloWorldError(t *testing.T) {
 	testCases := []struct {
 		name    string
 		request io.Reader
@@ -117,7 +118,7 @@ func setupRouter() *gin.Engine {
 	r := repository.NewHelloWorldRepository(*client)
 	s := service.NewHelloWorldService(r)
 	uc := usecase.NewHelloWorldUseCase(s)
-	a := NewHelloWorldApi(uc)
+	a := api.NewHelloWorldApi(uc)
 
 	router.POST("/api/hello-world", a.HandleHelloWorld)
 	return router
