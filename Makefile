@@ -13,14 +13,14 @@ OPEN_API_GO_DST       := interal/${OPEN_API_GO_PACKAGE}
 OPEN_API_NODE_GENERATOR := typescript-fetch
 OPEN_API_NODE_DST       := src/openapi
 
-setup:
+setup: dependencies generate
 	cp .pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
-	
+
+dependencies:
 	go get -v ./...
 	go install go.uber.org/mock/mockgen@latest
-	
-	go generate ./...
+	go mod tidy
 
 run:
 	go run cmd/app/main.go
