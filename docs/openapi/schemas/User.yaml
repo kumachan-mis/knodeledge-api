@@ -4,3 +4,5 @@ properties:
     type: string
     description: User ID
     example: auth0|65a3d656ca600978b0f9501b
+required:
+  - id
