@@ -1,4 +1,5 @@
 type: object
+description: Response Body for Project List API
 properties:
   projects:
     type: array

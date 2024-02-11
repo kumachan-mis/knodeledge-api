@@ -1,4 +1,5 @@
 type: object
+description: User object
 properties:
   id:
     type: string

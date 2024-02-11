@@ -1,4 +1,5 @@
 type: object
+description: Common error response for application
 properties:
   message:
     type: string

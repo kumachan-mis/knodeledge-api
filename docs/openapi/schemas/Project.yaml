@@ -1,4 +1,5 @@
 type: object
+description: Project object
 properties:
   id:
     type: string
