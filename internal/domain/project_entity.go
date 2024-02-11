@@ -1,12 +1,21 @@
 package domain
 
 type ProjectEntity struct {
+	id          ProjectIdObject
 	name        ProjectNameObject
 	description ProjectDescriptionObject
 }
 
-func NewProjectEntity(name ProjectNameObject, description ProjectDescriptionObject) (*ProjectEntity, error) {
-	return &ProjectEntity{name: name, description: description}, nil
+func NewProjectEntity(
+	id ProjectIdObject,
+	name ProjectNameObject,
+	description ProjectDescriptionObject,
+) (*ProjectEntity, error) {
+	return &ProjectEntity{id: id, name: name, description: description}, nil
+}
+
+func (e *ProjectEntity) Id() ProjectIdObject {
+	return e.id
 }
 
 func (e *ProjectEntity) Name() ProjectNameObject {
