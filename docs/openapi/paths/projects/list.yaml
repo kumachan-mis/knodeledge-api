@@ -1,0 +1,23 @@
+post:
+  tags:
+    - Projects
+  operationId: list
+  summary: Get list of projects
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/ProjectListRequest.yaml
+  responses:
+    "200":
+      description: OK - Returns list of projects
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/ProjectListResponse.yaml
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/ApplicationErrorResponse.yaml

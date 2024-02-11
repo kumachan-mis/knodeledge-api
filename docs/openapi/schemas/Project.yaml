@@ -1,0 +1,17 @@
+type: object
+properties:
+  id:
+    type: string
+    description: Auto-generated project ID
+    example: 123e4567-e89b-12d3-a456-426614174000
+  name:
+    type: string
+    description: Project name
+    example: My Project
+  description:
+    type: string
+    description: Project description
+    example: This is my project
+required:
+  - id
+  - name
