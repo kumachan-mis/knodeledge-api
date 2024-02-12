@@ -8,6 +8,6 @@ func NewUserEntity(id UserIdObject) (*UserEntity, error) {
 	return &UserEntity{id: id}, nil
 }
 
-func (e *UserEntity) Id() UserIdObject {
-	return e.id
+func (e *UserEntity) Id() *UserIdObject {
+	return &e.id
 }

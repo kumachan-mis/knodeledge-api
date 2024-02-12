@@ -8,7 +8,7 @@ type UserIdObject struct {
 
 func NewUserIdObject(userId string) (*UserIdObject, error) {
 	if userId == "" {
-		return nil, fmt.Errorf("user id is required")
+		return nil, fmt.Errorf("user id is required, but got '%s'", userId)
 	}
 	return &UserIdObject{value: userId}, nil
 }

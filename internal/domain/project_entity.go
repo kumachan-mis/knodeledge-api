@@ -14,14 +14,14 @@ func NewProjectEntity(
 	return &ProjectEntity{id: id, name: name, description: description}, nil
 }
 
-func (e *ProjectEntity) Id() ProjectIdObject {
-	return e.id
+func (e *ProjectEntity) Id() *ProjectIdObject {
+	return &e.id
 }
 
-func (e *ProjectEntity) Name() ProjectNameObject {
-	return e.name
+func (e *ProjectEntity) Name() *ProjectNameObject {
+	return &e.name
 }
 
-func (e *ProjectEntity) Description() ProjectDescriptionObject {
-	return e.description
+func (e *ProjectEntity) Description() *ProjectDescriptionObject {
+	return &e.description
 }
