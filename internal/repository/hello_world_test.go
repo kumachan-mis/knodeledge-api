@@ -3,18 +3,11 @@ package repository_test
 import (
 	"testing"
 
-	"cloud.google.com/go/firestore"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	db.InitDatabaseClient(firestore.DetectProjectID)
-	m.Run()
-	db.FinalizeDatabaseClient()
-}
 
 func TestFetchHelloWorldValidDocument(t *testing.T) {
 	client := db.FirestoreClient()
