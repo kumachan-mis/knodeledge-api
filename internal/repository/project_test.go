@@ -5,6 +5,7 @@ import (
 
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
+	"github.com/kumachan-mis/knodeledge-api/test/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,12 +13,12 @@ func TestFetchUserProjectsValidDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 
-	userId := UserId()
+	userId := testutil.UserId()
 	projects, err := r.FetchUserProjects(userId)
 
 	assert.NoError(t, err)
 
-	assert.Equal(t, 2, len(projects))
+	assert.Len(t, projects, 2)
 
 	project := projects["PROJECT_WITHOUT_DESCRIPTION"]
 	assert.Equal(t, "No Description Project", project.Name)
@@ -34,7 +35,7 @@ func TestFetchUserProjectsNoDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 
-	userId := UnknownUserId()
+	userId := testutil.UnknownUserId()
 	projects, err := r.FetchUserProjects(userId)
 
 	assert.NoError(t, err)
@@ -48,12 +49,12 @@ func TestFetchUserProjectsInvalidDocument(t *testing.T) {
 		userId string
 	}{
 		{
-			name:   "invalid name",
-			userId: ErrorUserId(0),
+			name:   "should return error when project name is invalid",
+			userId: testutil.ErrorUserId(0),
 		},
 		{
-			name:   "invalid description",
-			userId: ErrorUserId(1),
+			name:   "should return error when project description is invalid",
+			userId: testutil.ErrorUserId(1),
 		},
 	}
 
