@@ -20,4 +20,10 @@ post:
       content:
         application/json:
           schema:
+            $ref: ../../schemas/ProjectListErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
             $ref: ../../schemas/ApplicationErrorResponse.yaml

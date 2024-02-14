@@ -8,5 +8,7 @@ ProjectListRequest:
   $ref: ./ProjectListRequest.yaml
 ProjectListResponse:
   $ref: ./ProjectListResponse.yaml
+ProjectListErrorResponse:
+  $ref: ./ProjectListErrorResponse.yaml
 ApplicationErrorResponse:
   $ref: ./ApplicationErrorResponse.yaml

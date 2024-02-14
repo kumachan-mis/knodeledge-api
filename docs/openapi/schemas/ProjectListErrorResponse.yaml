@@ -1,0 +1,9 @@
+type: object
+description: Error Response Body for Project List API
+properties:
+  message:
+    type: string
+    description: Error message when request body format is invalid
+    example: unexpected EOF
+  user:
+    $ref: ./UserError.yaml
