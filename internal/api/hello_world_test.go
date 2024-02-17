@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
@@ -18,12 +17,6 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	db.InitDatabaseClient(firestore.DetectProjectID)
-	m.Run()
-	db.FinalizeDatabaseClient()
-}
 
 func TestHandleHelloWorld(t *testing.T) {
 	testCases := []struct {
@@ -55,7 +48,7 @@ func TestHandleHelloWorld(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupRouter()
+			router := setupHelloWorldRouter()
 
 			recorder := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", "/api/hello-world", strings.NewReader(tc.request))
@@ -93,7 +86,7 @@ func TestHandleHelloWorldError(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupRouter()
+			router := setupHelloWorldRouter()
 
 			recorder := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", "/api/hello-world", tc.request)
@@ -111,7 +104,7 @@ func TestHandleHelloWorldError(t *testing.T) {
 	}
 }
 
-func setupRouter() *gin.Engine {
+func setupHelloWorldRouter() *gin.Engine {
 	router := gin.Default()
 
 	client := db.FirestoreClient()

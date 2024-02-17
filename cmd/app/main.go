@@ -54,12 +54,19 @@ func main() {
 		log.Fatalf("Failed to get firestore client")
 	}
 
-	r := repository.NewHelloWorldRepository(*client)
-	s := service.NewHelloWorldService(r)
-	uc := usecase.NewHelloWorldUseCase(s)
-	a := api.NewHelloWorldApi(uc)
+	helloWorldRepository := repository.NewHelloWorldRepository(*client)
+	helloWorldService := service.NewHelloWorldService(helloWorldRepository)
+	helloWorldUseCase := usecase.NewHelloWorldUseCase(helloWorldService)
+	helloWorldApi := api.NewHelloWorldApi(helloWorldUseCase)
 
-	router.POST("/api/hello-world", a.HandleHelloWorld)
+	router.POST("/api/hello-world", helloWorldApi.HandleHelloWorld)
+
+	projectRepository := repository.NewProjectRepository(*client)
+	projectService := service.NewProjectService(projectRepository)
+	projectUseCase := usecase.NewProjectUseCase(projectService)
+	projectApi := api.NewProjectApi(projectUseCase)
+
+	router.POST("/api/project/list", projectApi.HandleList)
 
 	err = router.Run(":8080")
 	if err != nil {
