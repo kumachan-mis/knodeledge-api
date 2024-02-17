@@ -8,7 +8,7 @@ OPEN_API_DOCS_DIST   := tmp/openapi-docs.html
 
 OPEN_API_GO_GENERATOR := go-gin-server
 OPEN_API_GO_PACKAGE   := model
-OPEN_API_GO_DST       := interal/${OPEN_API_GO_PACKAGE}
+OPEN_API_GO_DST       := internal/${OPEN_API_GO_PACKAGE}
 
 OPEN_API_NODE_GENERATOR := typescript-fetch
 OPEN_API_NODE_DST       := src/openapi

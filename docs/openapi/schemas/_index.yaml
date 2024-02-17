@@ -2,5 +2,13 @@ HelloWorldRequest:
   $ref: ./HelloWorldRequest.yaml
 HelloWorldResponse:
   $ref: ./HelloWorldResponse.yaml
+Project:
+  $ref: ./Project.yaml
+ProjectListRequest:
+  $ref: ./ProjectListRequest.yaml
+ProjectListResponse:
+  $ref: ./ProjectListResponse.yaml
+ProjectListErrorResponse:
+  $ref: ./ProjectListErrorResponse.yaml
 ApplicationErrorResponse:
   $ref: ./ApplicationErrorResponse.yaml

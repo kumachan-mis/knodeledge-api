@@ -1,0 +1,7 @@
+type: object
+description: Error Message for User object
+properties:
+  id:
+    type: string
+    description: Error message for user ID
+    example: "user id is required, but got ''"

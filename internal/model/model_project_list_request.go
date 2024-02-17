@@ -9,9 +9,7 @@
 
 package model
 
-// ApplicationErrorResponse - Common error response for application
-type ApplicationErrorResponse struct {
-
-	// Error message
-	Message string `json:"message"`
+// ProjectListRequest - Request Body for Project List API
+type ProjectListRequest struct {
+	User User `json:"user"`
 }

@@ -1,2 +1,4 @@
 /api/hello-world:
   $ref: ./hello-world.yaml
+/api/projects/list:
+  $ref: ./projects/list.yaml

@@ -1,0 +1,7 @@
+type: object
+description: Request Body for Project List API
+properties:
+  user:
+    $ref: ./User.yaml
+required:
+  - user

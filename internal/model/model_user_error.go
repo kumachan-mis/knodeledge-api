@@ -9,9 +9,9 @@
 
 package model
 
-// ApplicationErrorResponse - Common error response for application
-type ApplicationErrorResponse struct {
+// UserError - Error Message for User object
+type UserError struct {
 
-	// Error message
-	Message string `json:"message"`
+	// Error message for user ID
+	Id string `json:"id,omitempty"`
 }
