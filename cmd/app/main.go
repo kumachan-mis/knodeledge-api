@@ -66,7 +66,7 @@ func main() {
 	projectUseCase := usecase.NewProjectUseCase(projectService)
 	projectApi := api.NewProjectApi(projectUseCase)
 
-	router.POST("/api/project/list", projectApi.HandleList)
+	router.POST("/api/projects/list", projectApi.HandleList)
 
 	err = router.Run(":8080")
 	if err != nil {
