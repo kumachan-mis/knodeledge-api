@@ -4,14 +4,24 @@ type ProjectEntity struct {
 	id          ProjectIdObject
 	name        ProjectNameObject
 	description ProjectDescriptionObject
+	createdAt   CreatedAtObject
+	updatedAt   UpdatedAtObject
 }
 
 func NewProjectEntity(
 	id ProjectIdObject,
 	name ProjectNameObject,
 	description ProjectDescriptionObject,
+	createdAt CreatedAtObject,
+	updatedAt UpdatedAtObject,
 ) (*ProjectEntity, error) {
-	return &ProjectEntity{id: id, name: name, description: description}, nil
+	return &ProjectEntity{
+		id:          id,
+		name:        name,
+		description: description,
+		createdAt:   createdAt,
+		updatedAt:   updatedAt,
+	}, nil
 }
 
 func (e *ProjectEntity) Id() *ProjectIdObject {
@@ -24,4 +34,12 @@ func (e *ProjectEntity) Name() *ProjectNameObject {
 
 func (e *ProjectEntity) Description() *ProjectDescriptionObject {
 	return &e.description
+}
+
+func (e *ProjectEntity) CreatedAt() *CreatedAtObject {
+	return &e.createdAt
+}
+
+func (e *ProjectEntity) UpdatedAt() *UpdatedAtObject {
+	return &e.updatedAt
 }

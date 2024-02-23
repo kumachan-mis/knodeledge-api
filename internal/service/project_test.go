@@ -3,6 +3,7 @@ package service_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
@@ -24,19 +25,25 @@ func TestListProjectsValidEntry(t *testing.T) {
 	r.EXPECT().
 		FetchUserProjects(testutil.UserId()).
 		Return(map[string]record.ProjectEntry{
-			"0000000000000001": {
-				Name:        "First Project",
-				Description: "This is my first project",
-				UserId:      testutil.UserId(),
-			},
-			"0000000000000002": {
-				Name:   "Second Project",
-				UserId: testutil.UserId(),
-			},
 			"0000000000000003": {
 				Name:        maxLengthProjectName,
 				Description: maxLengthProjectDescription,
 				UserId:      testutil.UserId(),
+				CreatedAt:   time.Date(2024, 1, 1, 3, 0, 0, 0, time.UTC),
+				UpdatedAt:   time.Date(2024, 1, 1, 3, 0, 0, 0, time.UTC),
+			},
+			"0000000000000002": {
+				Name:      "Second Project",
+				UserId:    testutil.UserId(),
+				CreatedAt: time.Date(2024, 1, 1, 2, 0, 0, 0, time.UTC),
+				UpdatedAt: time.Date(2024, 1, 1, 2, 0, 0, 0, time.UTC),
+			},
+			"0000000000000001": {
+				Name:        "First Project",
+				Description: "This is my first project",
+				UserId:      testutil.UserId(),
+				CreatedAt:   time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC),
+				UpdatedAt:   time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC),
 			},
 		}, nil)
 
