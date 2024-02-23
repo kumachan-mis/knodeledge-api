@@ -16,7 +16,7 @@ func JsonBindErrorToResponseModel[ErrorModel any](err error, defaultModel ErrorM
 func UseCaseErrorToResponseMessage[ErrorModel any](err *usecase.Error[ErrorModel]) string {
 	switch err.Code() {
 	case usecase.InvalidArgumentError:
-		return "invald request value"
+		return "invalid request value"
 	default:
 		logrus.WithError(err).Error("internal error")
 		return "internal error"

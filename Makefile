@@ -13,6 +13,8 @@ OPEN_API_GO_DST       := internal/${OPEN_API_GO_PACKAGE}
 OPEN_API_NODE_GENERATOR := typescript-fetch
 OPEN_API_NODE_DST       := src/openapi
 
+.PHONY: setup dependencies
+
 setup: dependencies generate
 	cp .pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
@@ -20,6 +22,8 @@ setup: dependencies generate
 dependencies:
 	go get -v ./...
 	go install go.uber.org/mock/mockgen@latest
+
+.PHONY: run format lint build test generate
 
 run:
 	go run cmd/app/main.go
@@ -39,11 +43,15 @@ test:
 generate:
 	go generate ./...
 
+.PHONY: start-firestore-emulator edit-firestore-emulator-fixtures
+
 start-firestore-emulator:
 	firebase emulators:start --only firestore
 
 edit-firestore-emulator-fixtures:
 	firebase emulators:start --only firestore --import ${API_REPOSITORY_ROOT}/fixtures --export-on-exit
+
+.PHONY: start-docs-server stop-docs-server build-docs gen-openapi-go gen-openapi-node
 
 start-docs-server:
 	@docker run --detach --name ${OPEN_API_DOCS_SERVER} -v "${API_REPOSITORY_ROOT}:/api" -p 8081:8081 \
