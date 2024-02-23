@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
@@ -24,11 +25,15 @@ func TestFetchUserProjectsValidDocument(t *testing.T) {
 	assert.Equal(t, "No Description Project", project.Name)
 	assert.Equal(t, "", project.Description)
 	assert.Equal(t, userId, project.UserId)
+	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), project.CreatedAt)
+	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), project.UpdatedAt)
 
 	project = projects["PROJECT_WITH_DESCRIPTION"]
 	assert.Equal(t, "Described Project", project.Name)
 	assert.Equal(t, "This is project description", project.Description)
 	assert.Equal(t, userId, project.UserId)
+	assert.Equal(t, time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC), project.CreatedAt)
+	assert.Equal(t, time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC), project.UpdatedAt)
 }
 
 func TestFetchUserProjectsNoDocument(t *testing.T) {
