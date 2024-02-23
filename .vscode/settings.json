@@ -1,6 +1,6 @@
 {
     "go.inferGopath": true,
-    "go.goroot": "${env:HOME}/.asdf/installs/golang/1.21.5/go",
+    "go.goroot": "${env:HOME}/.asdf/installs/golang/1.22.0/go",
     "gopls": {
         "ui.semanticTokens": true
     },
