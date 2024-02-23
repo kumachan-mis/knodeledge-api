@@ -1,0 +1,11 @@
+type: object
+description: Error Message for ProjectWithoutId object
+properties:
+  name:
+    type: string
+    description: Error message for project name
+    example: project name is required, but got ''
+  description:
+    type: string
+    description: Error message for project description
+    example: project description must be less than or equal to 400 characters

@@ -1,0 +1,29 @@
+post:
+  tags:
+    - Projects
+  operationId: create
+  summary: Create new project
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/ProjectCreateRequest.yaml
+  responses:
+    "200":
+      description: OK - Returns newly created project
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/ProjectCreateResponse.yaml
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/ProjectCreateErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/ApplicationErrorResponse.yaml

@@ -1,0 +1,15 @@
+type: object
+description: Project object without auto-generated ID
+properties:
+  name:
+    type: string
+    maxLength: 100
+    description: Project name
+    example: My Project
+  description:
+    type: string
+    maxLength: 400
+    description: Project description
+    example: This is my project
+required:
+  - name
