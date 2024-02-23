@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
@@ -26,7 +27,11 @@ func TestListProjectsValidEntity(t *testing.T) {
 	assert.NoError(t, err)
 	description, err := domain.NewProjectDescriptionObject("This is a project")
 	assert.NoError(t, err)
-	projectWithDesc, err := domain.NewProjectEntity(*id, *name, *description)
+	createdAt, err := domain.NewCreatedAtObject(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
+	assert.NoError(t, err)
+	updatedAt, err := domain.NewUpdatedAtObject(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
+	assert.NoError(t, err)
+	projectWithDesc, err := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 	assert.NoError(t, err)
 
 	id, err = domain.NewProjectIdObject("0000000000000002")
@@ -35,7 +40,11 @@ func TestListProjectsValidEntity(t *testing.T) {
 	assert.NoError(t, err)
 	description, err = domain.NewProjectDescriptionObject("")
 	assert.NoError(t, err)
-	projectWithoutDesc, err := domain.NewProjectEntity(*id, *name, *description)
+	createdAt, err = domain.NewCreatedAtObject(time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC))
+	assert.NoError(t, err)
+	updatedAt, err = domain.NewUpdatedAtObject(time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC))
+	assert.NoError(t, err)
+	projectWithoutDesc, err := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 	assert.NoError(t, err)
 
 	s.EXPECT().
