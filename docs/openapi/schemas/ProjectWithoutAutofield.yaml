@@ -1,5 +1,5 @@
 type: object
-description: Project object without auto-generated ID
+description: Project object without auto-generated fields
 properties:
   name:
     type: string

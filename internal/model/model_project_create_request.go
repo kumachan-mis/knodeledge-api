@@ -13,5 +13,5 @@ package model
 type ProjectCreateRequest struct {
 	User User `json:"user"`
 
-	Project ProjectWithoutId `json:"project"`
+	Project ProjectWithoutAutofield `json:"project"`
 }

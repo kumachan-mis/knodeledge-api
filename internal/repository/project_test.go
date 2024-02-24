@@ -82,7 +82,7 @@ func TestInsertProjectValidEntry(t *testing.T) {
 	r := repository.NewProjectRepository(*client)
 
 	userId := testutil.UserId()
-	entry := record.ProjectWithoutTimestampEntry{
+	entry := record.ProjectWithoutAutofieldEntry{
 		Name:        "New Project",
 		Description: "This is new project",
 		UserId:      userId,

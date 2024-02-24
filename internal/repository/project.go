@@ -14,7 +14,7 @@ const ProjectCollection = "projects"
 
 type ProjectRepository interface {
 	FetchUserProjects(userId string) (map[string]record.ProjectEntry, error)
-	InsertProject(entry record.ProjectWithoutTimestampEntry) (string, *record.ProjectEntry, error)
+	InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, error)
 }
 
 type projectRepository struct {
@@ -50,7 +50,7 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 	return projects, nil
 }
 
-func (r projectRepository) InsertProject(entry record.ProjectWithoutTimestampEntry) (string, *record.ProjectEntry, error) {
+func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, error) {
 	ref, _, err := r.client.Collection(ProjectCollection).
 		Add(db.FirestoreContext(), map[string]any{
 			"name":        entry.Name,

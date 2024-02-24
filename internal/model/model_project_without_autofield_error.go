@@ -9,12 +9,12 @@
 
 package model
 
-// ProjectWithoutId - Project object without auto-generated ID
-type ProjectWithoutId struct {
+// ProjectWithoutAutofieldError - Error Message for ProjectWithoutAutofield object
+type ProjectWithoutAutofieldError struct {
 
-	// Project name
-	Name string `json:"name"`
+	// Error message for project name
+	Name string `json:"name,omitempty"`
 
-	// Project description
+	// Error message for project description
 	Description string `json:"description,omitempty"`
 }

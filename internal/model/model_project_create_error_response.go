@@ -17,5 +17,5 @@ type ProjectCreateErrorResponse struct {
 
 	User UserError `json:"user,omitempty"`
 
-	Project ProjectWithoutIdError `json:"project,omitempty"`
+	Project ProjectWithoutAutofieldError `json:"project,omitempty"`
 }

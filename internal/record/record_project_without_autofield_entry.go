@@ -1,6 +1,6 @@
 package record
 
-type ProjectWithoutTimestampEntry struct {
+type ProjectWithoutAutofieldEntry struct {
 	Name        string
 	Description string
 	UserId      string

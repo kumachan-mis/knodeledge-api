@@ -8,10 +8,10 @@ UserError:
   $ref: ./UserError.yaml
 Project:
   $ref: ./Project.yaml
-ProjectWithoutId:
-  $ref: ./ProjectWithoutId.yaml
-ProjectWithoutIdError:
-  $ref: ./ProjectWithoutIdError.yaml
+ProjectWithoutAutofield:
+  $ref: ./ProjectWithoutAutofield.yaml
+ProjectWithoutAutofieldError:
+  $ref: ./ProjectWithoutAutofieldError.yaml
 ProjectListRequest:
   $ref: ./ProjectListRequest.yaml
 ProjectListResponse:

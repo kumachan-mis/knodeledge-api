@@ -1,5 +1,5 @@
 type: object
-description: Error Message for ProjectWithoutId object
+description: Error Message for ProjectWithoutAutofield object
 properties:
   name:
     type: string

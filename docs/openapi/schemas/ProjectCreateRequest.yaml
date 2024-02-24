@@ -4,7 +4,7 @@ properties:
   user:
     $ref: ./User.yaml
   project:
-    $ref: ./ProjectWithoutId.yaml
+    $ref: ./ProjectWithoutAutofield.yaml
 required:
   - user
   - project

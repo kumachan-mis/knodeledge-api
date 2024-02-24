@@ -8,4 +8,4 @@ properties:
   user:
     $ref: ./UserError.yaml
   project:
-    $ref: ./ProjectWithoutIdError.yaml
+    $ref: ./ProjectWithoutAutofieldError.yaml
