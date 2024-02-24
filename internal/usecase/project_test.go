@@ -27,9 +27,9 @@ func TestListProjectsValidEntity(t *testing.T) {
 	assert.NoError(t, err)
 	description, err := domain.NewProjectDescriptionObject("This is a project")
 	assert.NoError(t, err)
-	createdAt, err := domain.NewCreatedAtObject(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
+	createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 	assert.NoError(t, err)
-	updatedAt, err := domain.NewUpdatedAtObject(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
+	updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 	assert.NoError(t, err)
 	projectWithDesc, err := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 	assert.NoError(t, err)
@@ -40,9 +40,9 @@ func TestListProjectsValidEntity(t *testing.T) {
 	assert.NoError(t, err)
 	description, err = domain.NewProjectDescriptionObject("")
 	assert.NoError(t, err)
-	createdAt, err = domain.NewCreatedAtObject(time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC))
+	createdAt, err = domain.NewCreatedAtObject(testutil.Date().Add(1 * time.Hour))
 	assert.NoError(t, err)
-	updatedAt, err = domain.NewUpdatedAtObject(time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC))
+	updatedAt, err = domain.NewUpdatedAtObject(testutil.Date().Add(1 * time.Hour))
 	assert.NoError(t, err)
 	projectWithoutDesc, err := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 	assert.NoError(t, err)
@@ -52,24 +52,23 @@ func TestListProjectsValidEntity(t *testing.T) {
 		Do(func(userId domain.UserIdObject) {
 			assert.Equal(t, testutil.UserId(), userId.Value())
 		}).
-		Return([]domain.ProjectEntity{
-			*projectWithDesc,
-			*projectWithoutDesc,
-		}, nil)
+		Return([]domain.ProjectEntity{*projectWithDesc, *projectWithoutDesc}, nil)
 
 	uc := usecase.NewProjectUseCase(s)
 
-	projects, err := uc.ListProjects(model.User{Id: testutil.UserId()})
+	res, err := uc.ListProjects(model.ProjectListRequest{
+		User: model.User{Id: testutil.UserId()},
+	})
 	assert.Nil(t, err)
 
-	assert.Len(t, projects, 2)
+	assert.Len(t, res.Projects, 2)
 
-	project := projects[0]
+	project := res.Projects[0]
 	assert.Equal(t, "0000000000000001", project.Id)
 	assert.Equal(t, "Project With Description", project.Name)
 	assert.Equal(t, "This is a project", project.Description)
 
-	project = projects[1]
+	project = res.Projects[1]
 	assert.Equal(t, "0000000000000002", project.Id)
 	assert.Equal(t, "Project Without Description", project.Name)
 	assert.Equal(t, "", project.Description)
@@ -82,12 +81,14 @@ func TestListProjectsInvalidUserId(t *testing.T) {
 	tt := []struct {
 		name     string
 		userId   string
-		expected model.UserError
+		expected model.ProjectListErrorResponse
 	}{
 		{
-			name:     "empty user id",
-			userId:   "",
-			expected: model.UserError{Id: "user id is required, but got ''"},
+			name:   "empty user id",
+			userId: "",
+			expected: model.ProjectListErrorResponse{
+				User: model.UserError{Id: "user id is required, but got ''"},
+			},
 		},
 	}
 
@@ -98,15 +99,17 @@ func TestListProjectsInvalidUserId(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			projects, ucErr := uc.ListProjects(model.User{Id: tc.userId})
+			res, ucErr := uc.ListProjects(model.ProjectListRequest{
+				User: model.User{Id: tc.userId},
+			})
 			assert.Error(t, ucErr)
 
 			expectedJson, _ := json.Marshal(tc.expected)
 			assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
 			assert.Equal(t, usecase.ErrorCode("invalid argument"), ucErr.Code())
-			assert.Equal(t, tc.expected, *ucErr.Model())
+			assert.Equal(t, tc.expected, *ucErr.Response())
 
-			assert.Nil(t, projects)
+			assert.Nil(t, res)
 		})
 	}
 }
@@ -123,10 +126,12 @@ func TestListProjectsServiceError(t *testing.T) {
 
 	uc := usecase.NewProjectUseCase(s)
 
-	projects, ucErr := uc.ListProjects(model.User{Id: testutil.UserId()})
+	res, ucErr := uc.ListProjects(model.ProjectListRequest{
+		User: model.User{Id: testutil.UserId()},
+	})
 	assert.Error(t, ucErr)
 	assert.Equal(t, usecase.ErrorCode("internal error"), ucErr.Code())
-	assert.Nil(t, ucErr.Model())
+	assert.Nil(t, ucErr.Response())
 	assert.Equal(t, "internal error: service error", ucErr.Error())
-	assert.Nil(t, projects)
+	assert.Nil(t, res)
 }

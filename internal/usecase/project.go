@@ -9,7 +9,8 @@ import (
 //go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
 
 type ProjectUseCase interface {
-	ListProjects(user model.User) ([]model.Project, *Error[model.UserError])
+	ListProjects(req model.ProjectListRequest) (
+		*model.ProjectListResponse, *Error[model.ProjectListErrorResponse])
 }
 
 type projectUseCase struct {
@@ -20,15 +21,22 @@ func NewProjectUseCase(service service.ProjectService) ProjectUseCase {
 	return projectUseCase{service: service}
 }
 
-func (uc projectUseCase) ListProjects(user model.User) ([]model.Project, *Error[model.UserError]) {
-	uid, err := domain.NewUserIdObject(user.Id)
+func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
+	*model.ProjectListResponse, *Error[model.ProjectListErrorResponse]) {
+	uid, err := domain.NewUserIdObject(req.User.Id)
 	if err != nil {
-		return nil, NewModelBasedError(InvalidArgumentError, model.UserError{Id: err.Error()})
+		return nil, NewModelBasedError(
+			InvalidArgumentError,
+			model.ProjectListErrorResponse{User: model.UserError{Id: err.Error()}},
+		)
 	}
 
 	entities, err := uc.service.ListProjects(*uid)
 	if err != nil {
-		return nil, NewMessageBasedError[model.UserError](InternalError, err.Error())
+		return nil, NewMessageBasedError[model.ProjectListErrorResponse](
+			InternalError,
+			err.Error(),
+		)
 	}
 
 	projects := make([]model.Project, len(entities))
@@ -41,5 +49,5 @@ func (uc projectUseCase) ListProjects(user model.User) ([]model.Project, *Error[
 		}
 		i++
 	}
-	return projects, nil
+	return &model.ProjectListResponse{Projects: projects}, nil
 }

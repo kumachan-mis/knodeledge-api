@@ -13,34 +13,34 @@ const (
 	InternalError        ErrorCode = "internal error"
 )
 
-func NewMessageBasedError[ErrorModel any](code ErrorCode, message string) *Error[ErrorModel] {
-	return &Error[ErrorModel]{code: code, message: ErrorMessage(message), model: nil}
+func NewMessageBasedError[ErrorResponse any](code ErrorCode, message string) *Error[ErrorResponse] {
+	return &Error[ErrorResponse]{code: code, message: ErrorMessage(message), response: nil}
 }
 
-func NewModelBasedError[ErrorModel any](code ErrorCode, model ErrorModel) *Error[ErrorModel] {
-	return &Error[ErrorModel]{code: code, message: "", model: &model}
+func NewModelBasedError[ErrorResponse any](code ErrorCode, response ErrorResponse) *Error[ErrorResponse] {
+	return &Error[ErrorResponse]{code: code, message: "", response: &response}
 }
 
-type Error[ErrorModel any] struct {
-	code    ErrorCode
-	message ErrorMessage
-	model   *ErrorModel
+type Error[ErrorResponse any] struct {
+	code     ErrorCode
+	message  ErrorMessage
+	response *ErrorResponse
 }
 
-func (e Error[ErrorModel]) Code() ErrorCode {
+func (e Error[ErrorResponse]) Code() ErrorCode {
 	return e.code
 }
 
-func (e Error[ErrorModel]) Model() *ErrorModel {
-	return e.model
+func (e Error[ErrorResponse]) Response() *ErrorResponse {
+	return e.response
 }
 
-func (e Error[ErrorModel]) Error() string {
-	if e.model == nil {
+func (e Error[ErrorResponse]) Error() string {
+	if e.response == nil {
 		return fmt.Sprintf("%s: %s", e.code, e.message)
 	}
 
-	bytes, err := json.Marshal(e.model)
+	bytes, err := json.Marshal(e.response)
 	if err != nil {
 		return fmt.Sprintf("%s: %s", e.code, e.message)
 	}
