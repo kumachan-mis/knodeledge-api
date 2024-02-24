@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
+	"github.com/kumachan-mis/knodeledge-api/internal/record"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/kumachan-mis/knodeledge-api/test/testutil"
 	"github.com/stretchr/testify/assert"
@@ -74,4 +75,28 @@ func TestFetchUserProjectsInvalidDocument(t *testing.T) {
 			assert.Nil(t, projects)
 		})
 	}
+}
+
+func TestInsertProjectValidEntry(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewProjectRepository(*client)
+
+	userId := testutil.UserId()
+	entry := record.ProjectWithoutTimestampEntry{
+		Name:        "New Project",
+		Description: "This is new project",
+		UserId:      userId,
+	}
+
+	id, project, err := r.InsertProject(entry)
+	now := time.Now()
+
+	assert.NoError(t, err)
+
+	assert.NotEmpty(t, id)
+	assert.Equal(t, entry.Name, project.Name)
+	assert.Equal(t, entry.Description, project.Description)
+	assert.Equal(t, entry.UserId, project.UserId)
+	assert.Less(t, now.Sub(project.CreatedAt), time.Second)
+	assert.Less(t, now.Sub(project.UpdatedAt), time.Second)
 }
