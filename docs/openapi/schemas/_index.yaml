@@ -1,7 +1,3 @@
-HelloWorldRequest:
-  $ref: ./HelloWorldRequest.yaml
-HelloWorldResponse:
-  $ref: ./HelloWorldResponse.yaml
 User:
   $ref: ./User.yaml
 UserError:

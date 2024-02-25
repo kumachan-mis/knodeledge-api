@@ -41,6 +41,7 @@ test:
 	firebase emulators:exec --only firestore --import ${API_REPOSITORY_ROOT}/fixtures 'go test ./...'
 
 generate:
+	rm -Rf ${API_REPOSITORY_ROOT}/mock
 	go generate ./...
 
 .PHONY: start-firestore-emulator edit-firestore-emulator-fixtures
