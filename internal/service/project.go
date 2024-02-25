@@ -53,11 +53,8 @@ func (s projectService) ListProjects(userId domain.UserIdObject) ([]domain.Proje
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert entry to entity (updatedAt): %w", err)
 		}
-		project, err := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert entry to entity: %w", err)
-		}
-		projects[i] = *project
+
+		projects[i] = *domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 		i++
 	}
 
@@ -102,10 +99,6 @@ func (s projectService) CreateProject(userId domain.UserIdObject, project domain
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert entry to entity (updatedAt): %w", err)
 	}
-	projectEntity, err := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert entry to entity: %w", err)
-	}
 
-	return projectEntity, nil
+	return domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt), nil
 }

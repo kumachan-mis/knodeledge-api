@@ -14,14 +14,14 @@ func NewProjectEntity(
 	description ProjectDescriptionObject,
 	createdAt CreatedAtObject,
 	updatedAt UpdatedAtObject,
-) (*ProjectEntity, error) {
+) *ProjectEntity {
 	return &ProjectEntity{
 		id:          id,
 		name:        name,
 		description: description,
 		createdAt:   createdAt,
 		updatedAt:   updatedAt,
-	}, nil
+	}
 }
 
 func (e *ProjectEntity) Id() *ProjectIdObject {

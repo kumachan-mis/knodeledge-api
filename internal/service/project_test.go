@@ -262,8 +262,7 @@ func TestCreateProjectValidEntry(t *testing.T) {
 		description, err := domain.NewProjectDescriptionObject(tc.project.Description)
 		assert.NoError(t, err)
 
-		project, err := domain.NewProjectWithoutAutofieldEntity(*name, *description)
-		assert.NoError(t, err)
+		project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
 		createdProject, err := s.CreateProject(*userId, *project)
 		assert.NoError(t, err)
@@ -352,8 +351,7 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 			description, err := domain.NewProjectDescriptionObject("This is new project")
 			assert.NoError(t, err)
 
-			project, err := domain.NewProjectWithoutAutofieldEntity(*name, *description)
-			assert.NoError(t, err)
+			project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
 			createdProject, err := s.CreateProject(*userId, *project)
 			assert.ErrorContains(t, err, tc.expectedError)
@@ -381,8 +379,7 @@ func TestCreateProjectRepositoryError(t *testing.T) {
 	description, err := domain.NewProjectDescriptionObject("This is new project")
 	assert.NoError(t, err)
 
-	project, err := domain.NewProjectWithoutAutofieldEntity(*name, *description)
-	assert.NoError(t, err)
+	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
 	createdProject, err := s.CreateProject(*userId, *project)
 	assert.ErrorContains(t, err, "failed to insert project: repository error")

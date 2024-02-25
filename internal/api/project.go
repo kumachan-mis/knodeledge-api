@@ -10,6 +10,7 @@ import (
 
 type ProjectApi interface {
 	HandleList(c *gin.Context)
+	HandleCreate(c *gin.Context)
 }
 
 type projectApi struct {
@@ -32,9 +33,10 @@ func (api projectApi) HandleList(c *gin.Context) {
 	res, err := api.usecase.ListProjects(request)
 
 	if err != nil && err.Code() == usecase.InvalidArgumentError {
+		resErr := UseCaseErrorToResponse(err)
 		c.JSON(http.StatusBadRequest, model.ProjectListErrorResponse{
 			Message: UseCaseErrorToMessage(err),
-			User:    UseCaseErrorToResponse(err).User,
+			User:    resErr.User,
 		})
 		return
 	}
@@ -47,4 +49,35 @@ func (api projectApi) HandleList(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (api projectApi) HandleCreate(c *gin.Context) {
+	var request model.ProjectCreateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, model.ProjectCreateErrorResponse{
+			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	res, err := api.usecase.CreateProject(request)
+
+	if err != nil && err.Code() == usecase.InvalidArgumentError {
+		resErr := UseCaseErrorToResponse(err)
+		c.JSON(http.StatusBadRequest, model.ProjectCreateErrorResponse{
+			Message: UseCaseErrorToMessage(err),
+			User:    resErr.User,
+			Project: resErr.Project,
+		})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: UseCaseErrorToMessage(err),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, res)
 }

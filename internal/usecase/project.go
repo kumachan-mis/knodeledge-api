@@ -11,6 +11,8 @@ import (
 type ProjectUseCase interface {
 	ListProjects(req model.ProjectListRequest) (
 		*model.ProjectListResponse, *Error[model.ProjectListErrorResponse])
+	CreateProject(req model.ProjectCreateRequest) (
+		*model.ProjectCreateResponse, *Error[model.ProjectCreateErrorResponse])
 }
 
 type projectUseCase struct {
@@ -23,11 +25,11 @@ func NewProjectUseCase(service service.ProjectService) ProjectUseCase {
 
 func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 	*model.ProjectListResponse, *Error[model.ProjectListErrorResponse]) {
-	uid, err := domain.NewUserIdObject(req.User.Id)
-	if err != nil {
+	uid, uidErr := domain.NewUserIdObject(req.User.Id)
+	if uidErr != nil {
 		return nil, NewModelBasedError(
 			InvalidArgumentError,
-			model.ProjectListErrorResponse{User: model.UserError{Id: err.Error()}},
+			model.ProjectListErrorResponse{User: model.UserError{Id: uidErr.Error()}},
 		)
 	}
 
@@ -50,4 +52,57 @@ func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 		i++
 	}
 	return &model.ProjectListResponse{Projects: projects}, nil
+}
+
+func (uc projectUseCase) CreateProject(req model.ProjectCreateRequest) (
+	*model.ProjectCreateResponse, *Error[model.ProjectCreateErrorResponse]) {
+	uid, uidErr := domain.NewUserIdObject(req.User.Id)
+	pname, pnameErr := domain.NewProjectNameObject(req.Project.Name)
+	pdesc, pdescErr := domain.NewProjectDescriptionObject(req.Project.Description)
+
+	uidMsg := ""
+	if uidErr != nil {
+		uidMsg = uidErr.Error()
+	}
+	pnameMsg := ""
+	if pnameErr != nil {
+		pnameMsg = pnameErr.Error()
+	}
+	pdescMsg := ""
+	if pdescErr != nil {
+		pdescMsg = pdescErr.Error()
+	}
+
+	if uidErr != nil || pnameErr != nil || pdescErr != nil {
+		return nil, NewModelBasedError(
+			InvalidArgumentError,
+			model.ProjectCreateErrorResponse{
+				User: model.UserError{
+					Id: uidMsg,
+				},
+				Project: model.ProjectWithoutAutofieldError{
+					Name:        pnameMsg,
+					Description: pdescMsg,
+				},
+			},
+		)
+	}
+
+	project := domain.NewProjectWithoutAutofieldEntity(*pname, *pdesc)
+
+	entity, err := uc.service.CreateProject(*uid, *project)
+	if err != nil {
+		return nil, NewMessageBasedError[model.ProjectCreateErrorResponse](
+			InternalError,
+			err.Error(),
+		)
+	}
+
+	return &model.ProjectCreateResponse{
+		Project: model.Project{
+			Id:          entity.Id().Value(),
+			Name:        entity.Name().Value(),
+			Description: entity.Description().Value(),
+		},
+	}, nil
 }

@@ -8,8 +8,8 @@ type ProjectWithoutAutofieldEntity struct {
 func NewProjectWithoutAutofieldEntity(
 	name ProjectNameObject,
 	description ProjectDescriptionObject,
-) (*ProjectWithoutAutofieldEntity, error) {
-	return &ProjectWithoutAutofieldEntity{name: name, description: description}, nil
+) *ProjectWithoutAutofieldEntity {
+	return &ProjectWithoutAutofieldEntity{name: name, description: description}
 }
 
 func (e *ProjectWithoutAutofieldEntity) Name() *ProjectNameObject {
