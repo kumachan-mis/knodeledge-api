@@ -40,9 +40,9 @@ func TestListProjectsValidEntity(t *testing.T) {
 	assert.NoError(t, err)
 	description, err = domain.NewProjectDescriptionObject("")
 	assert.NoError(t, err)
-	createdAt, err = domain.NewCreatedAtObject(testutil.Date().Add(1 * time.Hour))
+	createdAt, err = domain.NewCreatedAtObject(testutil.Date().Add(-1 * time.Hour))
 	assert.NoError(t, err)
-	updatedAt, err = domain.NewUpdatedAtObject(testutil.Date().Add(1 * time.Hour))
+	updatedAt, err = domain.NewUpdatedAtObject(testutil.Date().Add(-1 * time.Hour))
 	assert.NoError(t, err)
 
 	projectWithoutDesc := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)

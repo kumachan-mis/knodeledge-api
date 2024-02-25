@@ -46,7 +46,7 @@ generate:
 .PHONY: start-firestore-emulator edit-firestore-emulator-fixtures
 
 start-firestore-emulator:
-	firebase emulators:start --only firestore
+	firebase emulators:start --only firestore --import ${API_REPOSITORY_ROOT}/fixtures
 
 edit-firestore-emulator-fixtures:
 	firebase emulators:start --only firestore --import ${API_REPOSITORY_ROOT}/fixtures --export-on-exit
