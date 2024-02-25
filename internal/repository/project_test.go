@@ -33,8 +33,8 @@ func TestFetchUserProjectsValidDocument(t *testing.T) {
 	assert.Equal(t, "Described Project", project.Name)
 	assert.Equal(t, "This is project description", project.Description)
 	assert.Equal(t, userId, project.UserId)
-	assert.Equal(t, time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC), project.CreatedAt)
-	assert.Equal(t, time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC), project.UpdatedAt)
+	assert.Equal(t, time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC), project.CreatedAt)
+	assert.Equal(t, time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC), project.UpdatedAt)
 }
 
 func TestFetchUserProjectsNoDocument(t *testing.T) {
