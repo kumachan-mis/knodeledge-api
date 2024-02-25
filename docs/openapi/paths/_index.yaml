@@ -2,3 +2,5 @@
   $ref: ./hello-world.yaml
 /api/projects/list:
   $ref: ./projects/list.yaml
+/api/projects/create:
+  $ref: ./projects/create.yaml

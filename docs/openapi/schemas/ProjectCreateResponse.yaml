@@ -1,0 +1,7 @@
+type: object
+description: Response Body for Project Create API
+properties:
+  project:
+    $ref: ./Project.yaml
+required:
+  - project

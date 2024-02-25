@@ -1,0 +1,10 @@
+type: object
+description: Request Body for Project Create API
+properties:
+  user:
+    $ref: ./User.yaml
+  project:
+    $ref: ./ProjectWithoutAutofield.yaml
+required:
+  - user
+  - project

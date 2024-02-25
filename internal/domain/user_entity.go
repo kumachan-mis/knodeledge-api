@@ -4,8 +4,8 @@ type UserEntity struct {
 	id UserIdObject
 }
 
-func NewUserEntity(id UserIdObject) (*UserEntity, error) {
-	return &UserEntity{id: id}, nil
+func NewUserEntity(id UserIdObject) *UserEntity {
+	return &UserEntity{id: id}
 }
 
 func (e *UserEntity) Id() *UserIdObject {

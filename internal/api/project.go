@@ -10,6 +10,7 @@ import (
 
 type ProjectApi interface {
 	HandleList(c *gin.Context)
+	HandleCreate(c *gin.Context)
 }
 
 type projectApi struct {
@@ -24,30 +25,59 @@ func (api projectApi) HandleList(c *gin.Context) {
 	var request model.ProjectListRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, model.ProjectListErrorResponse{
-			Message: JsonBindErrorToResponseMessage(err),
-			User:    JsonBindErrorToResponseModel(err, model.UserError{}),
+			Message: JsonBindErrorToMessage(err),
 		})
 		return
 	}
 
-	projects, err := api.usecase.ListProjects(request.User)
+	res, err := api.usecase.ListProjects(request)
 
 	if err != nil && err.Code() == usecase.InvalidArgumentError {
+		resErr := UseCaseErrorToResponse(err)
 		c.JSON(http.StatusBadRequest, model.ProjectListErrorResponse{
-			Message: UseCaseErrorToResponseMessage(err),
-			User:    UseCaseErrorToResponseModel(err, model.UserError{}),
+			Message: UseCaseErrorToMessage(err),
+			User:    resErr.User,
 		})
 		return
 	}
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
-			Message: UseCaseErrorToResponseMessage(err),
+			Message: UseCaseErrorToMessage(err),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, model.ProjectListResponse{
-		Projects: projects,
-	})
+	c.JSON(http.StatusOK, res)
+}
+
+func (api projectApi) HandleCreate(c *gin.Context) {
+	var request model.ProjectCreateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, model.ProjectCreateErrorResponse{
+			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	res, err := api.usecase.CreateProject(request)
+
+	if err != nil && err.Code() == usecase.InvalidArgumentError {
+		resErr := UseCaseErrorToResponse(err)
+		c.JSON(http.StatusBadRequest, model.ProjectCreateErrorResponse{
+			Message: UseCaseErrorToMessage(err),
+			User:    resErr.User,
+			Project: resErr.Project,
+		})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: UseCaseErrorToMessage(err),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, res)
 }

@@ -67,6 +67,7 @@ func main() {
 	projectApi := api.NewProjectApi(projectUseCase)
 
 	router.POST("/api/projects/list", projectApi.HandleList)
+	router.POST("/api/projects/create", projectApi.HandleCreate)
 
 	err = router.Run(":8080")
 	if err != nil {

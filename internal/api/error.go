@@ -5,15 +5,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func JsonBindErrorToResponseMessage(err error) string {
+func JsonBindErrorToMessage(err error) string {
 	return "invalid request format"
 }
 
-func JsonBindErrorToResponseModel[ErrorModel any](err error, defaultModel ErrorModel) ErrorModel {
-	return defaultModel
-}
-
-func UseCaseErrorToResponseMessage[ErrorModel any](err *usecase.Error[ErrorModel]) string {
+func UseCaseErrorToMessage[ErrorResponse any](err *usecase.Error[ErrorResponse]) string {
 	switch err.Code() {
 	case usecase.InvalidArgumentError:
 		return "invalid request value"
@@ -23,9 +19,6 @@ func UseCaseErrorToResponseMessage[ErrorModel any](err *usecase.Error[ErrorModel
 	}
 }
 
-func UseCaseErrorToResponseModel[ErrorModel any](err *usecase.Error[ErrorModel], defaultModel ErrorModel) ErrorModel {
-	if err.Model() == nil {
-		return defaultModel
-	}
-	return *err.Model()
+func UseCaseErrorToResponse[ErrorResponse any](err *usecase.Error[ErrorResponse]) ErrorResponse {
+	return *err.Response()
 }

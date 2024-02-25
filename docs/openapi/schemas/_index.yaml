@@ -2,8 +2,16 @@ HelloWorldRequest:
   $ref: ./HelloWorldRequest.yaml
 HelloWorldResponse:
   $ref: ./HelloWorldResponse.yaml
+User:
+  $ref: ./User.yaml
+UserError:
+  $ref: ./UserError.yaml
 Project:
   $ref: ./Project.yaml
+ProjectWithoutAutofield:
+  $ref: ./ProjectWithoutAutofield.yaml
+ProjectWithoutAutofieldError:
+  $ref: ./ProjectWithoutAutofieldError.yaml
 ProjectListRequest:
   $ref: ./ProjectListRequest.yaml
 ProjectListResponse:
