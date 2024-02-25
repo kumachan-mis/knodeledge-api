@@ -61,7 +61,7 @@ func (s projectService) ListProjects(userId domain.UserIdObject) ([]domain.Proje
 	sort.Slice(projects, func(i, j int) bool {
 		ikey := projects[i].UpdatedAt().Value()
 		jkey := projects[j].UpdatedAt().Value()
-		return ikey.Before(jkey)
+		return ikey.After(jkey)
 	})
 
 	return projects, nil

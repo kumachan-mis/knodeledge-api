@@ -29,21 +29,21 @@ func TestListProjectsValidEntry(t *testing.T) {
 				Name:        maxLengthProjectName,
 				Description: maxLengthProjectDescription,
 				UserId:      testutil.UserId(),
-				CreatedAt:   testutil.Date().Add(3 * time.Hour),
-				UpdatedAt:   testutil.Date().Add(3 * time.Hour),
+				CreatedAt:   testutil.Date().Add(-3 * time.Hour),
+				UpdatedAt:   testutil.Date().Add(-3 * time.Hour),
 			},
 			"0000000000000002": {
 				Name:      "Second Project",
 				UserId:    testutil.UserId(),
-				CreatedAt: testutil.Date().Add(2 * time.Hour),
-				UpdatedAt: testutil.Date().Add(2 * time.Hour),
+				CreatedAt: testutil.Date().Add(-2 * time.Hour),
+				UpdatedAt: testutil.Date().Add(-2 * time.Hour),
 			},
 			"0000000000000001": {
 				Name:        "First Project",
 				Description: "This is my first project",
 				UserId:      testutil.UserId(),
-				CreatedAt:   testutil.Date().Add(1 * time.Hour),
-				UpdatedAt:   testutil.Date().Add(1 * time.Hour),
+				CreatedAt:   testutil.Date().Add(-1 * time.Hour),
+				UpdatedAt:   testutil.Date().Add(-1 * time.Hour),
 			},
 		}, nil)
 
@@ -61,22 +61,22 @@ func TestListProjectsValidEntry(t *testing.T) {
 	assert.Equal(t, "0000000000000001", project.Id().Value())
 	assert.Equal(t, "First Project", project.Name().Value())
 	assert.Equal(t, "This is my first project", project.Description().Value())
-	assert.Equal(t, testutil.Date().Add(1*time.Hour), project.CreatedAt().Value())
-	assert.Equal(t, testutil.Date().Add(1*time.Hour), project.UpdatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-1*time.Hour), project.CreatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-1*time.Hour), project.UpdatedAt().Value())
 
 	project = projects[1]
 	assert.Equal(t, "0000000000000002", project.Id().Value())
 	assert.Equal(t, "Second Project", project.Name().Value())
 	assert.Equal(t, "", project.Description().Value())
-	assert.Equal(t, testutil.Date().Add(2*time.Hour), project.CreatedAt().Value())
-	assert.Equal(t, testutil.Date().Add(2*time.Hour), project.UpdatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-2*time.Hour), project.CreatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-2*time.Hour), project.UpdatedAt().Value())
 
 	project = projects[2]
 	assert.Equal(t, "0000000000000003", project.Id().Value())
 	assert.Equal(t, maxLengthProjectName, project.Name().Value())
 	assert.Equal(t, maxLengthProjectDescription, project.Description().Value())
-	assert.Equal(t, testutil.Date().Add(3*time.Hour), project.CreatedAt().Value())
-	assert.Equal(t, testutil.Date().Add(3*time.Hour), project.UpdatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-3*time.Hour), project.CreatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-3*time.Hour), project.UpdatedAt().Value())
 }
 
 func TestListProjectsNoEntry(t *testing.T) {
