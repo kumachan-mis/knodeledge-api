@@ -284,6 +284,19 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "should return error when all fields are empty",
+			userId:  "",
+			project: model.ProjectWithoutAutofield{},
+			expected: model.ProjectCreateErrorResponse{
+				User: model.UserError{
+					Id: "user id is required, but got ''",
+				},
+				Project: model.ProjectWithoutAutofieldError{
+					Name: "project name is required, but got ''",
+				},
+			},
+		},
 	}
 
 	for _, tc := range tt {
