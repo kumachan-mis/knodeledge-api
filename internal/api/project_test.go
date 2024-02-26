@@ -266,6 +266,18 @@ func TestProjectCreateInvalidArgument(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "should return error when empty object is passed",
+			request: map[string]any{},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{
+					"name": "project name is required, but got ''",
+				},
+			},
+		},
 	}
 
 	for _, tc := range tt {
