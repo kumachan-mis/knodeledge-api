@@ -2,6 +2,6 @@ type: object
 description: Response Body for Project Create API
 properties:
   project:
-    $ref: ./ProjectOnlyId.yaml
+    $ref: ./Project.yaml
 required:
   - project
