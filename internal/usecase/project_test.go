@@ -50,14 +50,14 @@ func TestListProjectsValidEntity(t *testing.T) {
 	s.EXPECT().
 		ListProjects(gomock.Any()).
 		Do(func(userId domain.UserIdObject) {
-			assert.Equal(t, testutil.UserId(), userId.Value())
+			assert.Equal(t, testutil.ReadOnlyUserId(), userId.Value())
 		}).
 		Return([]domain.ProjectEntity{*projectWithDesc, *projectWithoutDesc}, nil)
 
 	uc := usecase.NewProjectUseCase(s)
 
 	res, err := uc.ListProjects(model.ProjectListRequest{
-		User: model.User{Id: testutil.UserId()},
+		User: model.User{Id: testutil.ReadOnlyUserId()},
 	})
 	assert.Nil(t, err)
 
@@ -127,7 +127,7 @@ func TestListProjectsServiceError(t *testing.T) {
 	uc := usecase.NewProjectUseCase(s)
 
 	res, ucErr := uc.ListProjects(model.ProjectListRequest{
-		User: model.User{Id: testutil.UserId()},
+		User: model.User{Id: testutil.ReadOnlyUserId()},
 	})
 	assert.Error(t, ucErr)
 	assert.Equal(t, usecase.ErrorCode("internal error"), ucErr.Code())
@@ -195,7 +195,7 @@ func TestCreateProjectValidEntity(t *testing.T) {
 			s.EXPECT().
 				CreateProject(gomock.Any(), gomock.Any()).
 				Do(func(userId domain.UserIdObject, project domain.ProjectWithoutAutofieldEntity) {
-					assert.Equal(t, testutil.UserId(), userId.Value())
+					assert.Equal(t, testutil.ModifyOnlyUserId(), userId.Value())
 					assert.Equal(t, tc.project.Name, project.Name().Value())
 					assert.Equal(t, tc.project.Description, project.Description().Value())
 				}).
@@ -204,7 +204,7 @@ func TestCreateProjectValidEntity(t *testing.T) {
 			uc := usecase.NewProjectUseCase(s)
 
 			res, err := uc.CreateProject(model.ProjectCreateRequest{
-				User:    model.User{Id: testutil.UserId()},
+				User:    model.User{Id: testutil.ModifyOnlyUserId()},
 				Project: tc.project,
 			})
 			assert.Nil(t, err)
@@ -242,7 +242,7 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 		},
 		{
 			name:   "should return error when project name is empty",
-			userId: testutil.UserId(),
+			userId: testutil.ModifyOnlyUserId(),
 			project: model.ProjectWithoutAutofield{
 				Name:        "",
 				Description: "This is a project",
@@ -255,7 +255,7 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 		},
 		{
 			name:   "should return error when project name is too long",
-			userId: testutil.UserId(),
+			userId: testutil.ModifyOnlyUserId(),
 			project: model.ProjectWithoutAutofield{
 				Name: tooLongProjectName,
 			},
@@ -270,7 +270,7 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 		},
 		{
 			name:   "should return error when project description is too long",
-			userId: testutil.UserId(),
+			userId: testutil.ModifyOnlyUserId(),
 			project: model.ProjectWithoutAutofield{
 				Name:        "Project With Description",
 				Description: tooLongProjectDescription,
@@ -337,7 +337,7 @@ func TestCreateProjectServiceError(t *testing.T) {
 	uc := usecase.NewProjectUseCase(s)
 
 	res, ucErr := uc.CreateProject(model.ProjectCreateRequest{
-		User: model.User{Id: testutil.UserId()},
+		User: model.User{Id: testutil.ModifyOnlyUserId()},
 		Project: model.ProjectWithoutAutofield{
 			Name: "Project Name",
 		},

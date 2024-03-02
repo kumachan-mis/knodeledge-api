@@ -24,7 +24,7 @@ func TestProjectList(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
-			"id": testutil.UserId(),
+			"id": testutil.ReadOnlyUserId(),
 		},
 	})
 	req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(string(requestBody)))
@@ -90,7 +90,7 @@ func TestProjectListInvalidRequestFormat(t *testing.T) {
 		},
 		{
 			name:    "should return error when request body is invalid JSON",
-			request: fmt.Sprintf(`{"user": {"id": "%s"`, testutil.UserId()),
+			request: fmt.Sprintf(`{"user": {"id": "%s"`, testutil.ReadOnlyUserId()),
 		},
 		{
 			name:    "should return error when request body is empty",
@@ -177,7 +177,7 @@ func TestProjectCreate(t *testing.T) {
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
-				"user":    map[string]any{"id": testutil.UserId()},
+				"user":    map[string]any{"id": testutil.ModifyOnlyUserId()},
 				"project": tc.project,
 			})
 			req, _ := http.NewRequest("POST", "/api/projects/create", strings.NewReader(string(requestBody)))
@@ -229,7 +229,7 @@ func TestProjectCreateInvalidArgument(t *testing.T) {
 		{
 			name: "should return error when project name is empty",
 			request: map[string]any{
-				"user": map[string]any{"id": testutil.UserId()},
+				"user": map[string]any{"id": testutil.ModifyOnlyUserId()},
 				"project": map[string]any{
 					"name": "",
 				},

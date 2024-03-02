@@ -23,25 +23,25 @@ func TestListProjectsValidEntry(t *testing.T) {
 
 	r := repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchUserProjects(testutil.UserId()).
+		FetchUserProjects(testutil.ReadOnlyUserId()).
 		Return(map[string]record.ProjectEntry{
 			"0000000000000003": {
 				Name:        maxLengthProjectName,
 				Description: maxLengthProjectDescription,
-				UserId:      testutil.UserId(),
+				UserId:      testutil.ReadOnlyUserId(),
 				CreatedAt:   testutil.Date().Add(-3 * time.Hour),
 				UpdatedAt:   testutil.Date().Add(-3 * time.Hour),
 			},
 			"0000000000000002": {
 				Name:      "Second Project",
-				UserId:    testutil.UserId(),
+				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-2 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-2 * time.Hour),
 			},
 			"0000000000000001": {
 				Name:        "First Project",
 				Description: "This is my first project",
-				UserId:      testutil.UserId(),
+				UserId:      testutil.ReadOnlyUserId(),
 				CreatedAt:   testutil.Date().Add(-1 * time.Hour),
 				UpdatedAt:   testutil.Date().Add(-1 * time.Hour),
 			},
@@ -49,7 +49,7 @@ func TestListProjectsValidEntry(t *testing.T) {
 
 	s := service.NewProjectService(r)
 
-	userId, err := domain.NewUserIdObject(testutil.UserId())
+	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 	assert.NoError(t, err)
 
 	projects, err := s.ListProjects(*userId)
@@ -85,12 +85,12 @@ func TestListProjectsNoEntry(t *testing.T) {
 
 	r := repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchUserProjects(testutil.UserId()).
+		FetchUserProjects(testutil.ReadOnlyUserId()).
 		Return(map[string]record.ProjectEntry{}, nil)
 
 	s := service.NewProjectService(r)
 
-	userId, err := domain.NewUserIdObject(testutil.UserId())
+	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 	assert.NoError(t, err)
 
 	projects, err := s.ListProjects(*userId)
@@ -114,7 +114,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			projectId: "",
 			project: record.ProjectEntry{
 				Name:      "Project",
-				UserId:    testutil.UserId(),
+				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
@@ -125,7 +125,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			projectId: "0000000000000001",
 			project: record.ProjectEntry{
 				Name:      "",
-				UserId:    testutil.UserId(),
+				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
@@ -136,7 +136,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			projectId: "0000000000000001",
 			project: record.ProjectEntry{
 				Name:      tooLongProjectName,
-				UserId:    testutil.UserId(),
+				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
@@ -152,7 +152,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			project: record.ProjectEntry{
 				Name:        "Project",
 				Description: tooLongProjectDescription,
-				UserId:      testutil.UserId(),
+				UserId:      testutil.ReadOnlyUserId(),
 				CreatedAt:   testutil.Date(),
 				UpdatedAt:   testutil.Date(),
 			},
@@ -171,14 +171,14 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 
 			r := repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				FetchUserProjects(testutil.UserId()).
+				FetchUserProjects(testutil.ReadOnlyUserId()).
 				Return(map[string]record.ProjectEntry{
 					tc.projectId: tc.project,
 				}, nil)
 
 			s := service.NewProjectService(r)
 
-			userId, err := domain.NewUserIdObject(testutil.UserId())
+			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 			assert.NoError(t, err)
 
 			projects, err := s.ListProjects(*userId)
@@ -194,12 +194,12 @@ func TestListProjectsRepositoryError(t *testing.T) {
 
 	r := repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchUserProjects(testutil.UserId()).
+		FetchUserProjects(testutil.ReadOnlyUserId()).
 		Return(nil, fmt.Errorf("repository error"))
 
 	s := service.NewProjectService(r)
 
-	userId, err := domain.NewUserIdObject(testutil.UserId())
+	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 	assert.NoError(t, err)
 
 	projects, err := s.ListProjects(*userId)
@@ -222,7 +222,7 @@ func TestCreateProjectValidEntry(t *testing.T) {
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:        "New Project",
 				Description: "This is new project",
-				UserId:      testutil.UserId(),
+				UserId:      testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
@@ -231,7 +231,7 @@ func TestCreateProjectValidEntry(t *testing.T) {
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:        maxLengthProjectName,
 				Description: maxLengthProjectDescription,
-				UserId:      testutil.UserId(),
+				UserId:      testutil.ModifyOnlyUserId(),
 			},
 		},
 	}
@@ -254,7 +254,7 @@ func TestCreateProjectValidEntry(t *testing.T) {
 
 		s := service.NewProjectService(r)
 
-		userId, err := domain.NewUserIdObject(testutil.UserId())
+		userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 		assert.NoError(t, err)
 
 		name, err := domain.NewProjectNameObject(tc.project.Name)
@@ -289,7 +289,7 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 			createdProject: record.ProjectEntry{
 				Name:        "",
 				Description: "This is new project",
-				UserId:      testutil.UserId(),
+				UserId:      testutil.ModifyOnlyUserId(),
 				CreatedAt:   testutil.Date(),
 				UpdatedAt:   testutil.Date(),
 			},
@@ -300,7 +300,7 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 			createdProject: record.ProjectEntry{
 				Name:        tooLongProjectName,
 				Description: "This is new project",
-				UserId:      testutil.UserId(),
+				UserId:      testutil.ModifyOnlyUserId(),
 				CreatedAt:   testutil.Date(),
 				UpdatedAt:   testutil.Date(),
 			},
@@ -315,7 +315,7 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 			createdProject: record.ProjectEntry{
 				Name:        "New Project",
 				Description: tooLongProjectDescription,
-				UserId:      testutil.UserId(),
+				UserId:      testutil.ModifyOnlyUserId(),
 				CreatedAt:   testutil.Date(),
 				UpdatedAt:   testutil.Date(),
 			},
@@ -337,13 +337,13 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 				InsertProject(record.ProjectWithoutAutofieldEntry{
 					Name:        "New Project",
 					Description: "This is new project",
-					UserId:      testutil.UserId(),
+					UserId:      testutil.ModifyOnlyUserId(),
 				}).
 				Return("0000000000000001", &tc.createdProject, nil)
 
 			s := service.NewProjectService(r)
 
-			userId, err := domain.NewUserIdObject(testutil.UserId())
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.NoError(t, err)
 
 			name, err := domain.NewProjectNameObject("New Project")
@@ -371,7 +371,7 @@ func TestCreateProjectRepositoryError(t *testing.T) {
 
 	s := service.NewProjectService(r)
 
-	userId, err := domain.NewUserIdObject(testutil.UserId())
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 	assert.NoError(t, err)
 
 	name, err := domain.NewProjectNameObject("New Project")
