@@ -1,4 +1,6 @@
 /api/projects/list:
   $ref: ./projects/list.yaml
+/api/projects/find:
+  $ref: ./projects/find.yaml
 /api/projects/create:
   $ref: ./projects/create.yaml

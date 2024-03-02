@@ -1,5 +1,5 @@
 type: object
-description: Error Response Body for Project Create API
+description: Error Response Body for Project Find API
 properties:
   message:
     type: string
@@ -8,4 +8,4 @@ properties:
   user:
     $ref: ./UserOnlyIdError.yaml
   project:
-    $ref: ./ProjectWithoutAutofieldError.yaml
+    $ref: ./ProjectOnlyIdError.yaml

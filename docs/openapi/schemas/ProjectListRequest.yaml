@@ -2,6 +2,6 @@ type: object
 description: Request Body for Project List API
 properties:
   user:
-    $ref: ./User.yaml
+    $ref: ./UserOnlyId.yaml
 required:
   - user

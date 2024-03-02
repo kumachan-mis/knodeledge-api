@@ -5,6 +5,3 @@ info:
   description: App to Create Graphically-Summarized Notes in Three Steps
 paths:
   $ref: ./paths/_index.yaml
-components:
-  schemas:
-    $ref: ./schemas/_index.yaml

@@ -1,10 +1,10 @@
 type: object
-description: Request Body for Project Create API
+description: Request Body for Project Find API
 properties:
   user:
     $ref: ./UserOnlyId.yaml
   project:
-    $ref: ./ProjectWithoutAutofield.yaml
+    $ref: ./ProjectOnlyId.yaml
 required:
   - user
   - project
