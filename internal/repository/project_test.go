@@ -15,7 +15,7 @@ func TestFetchUserProjectsValidDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 
-	userId := testutil.UserId()
+	userId := testutil.ReadOnlyUserId()
 	projects, err := r.FetchUserProjects(userId)
 
 	assert.NoError(t, err)
@@ -81,7 +81,7 @@ func TestInsertProjectValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 
-	userId := testutil.UserId()
+	userId := testutil.ModifyOnlyUserId()
 	entry := record.ProjectWithoutAutofieldEntry{
 		Name:        "New Project",
 		Description: "This is new project",

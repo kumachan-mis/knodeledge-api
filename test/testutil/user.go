@@ -2,8 +2,12 @@ package testutil
 
 import "fmt"
 
-func UserId() string {
+func ReadOnlyUserId() string {
 	return "auth0|65a3d656ca600978b0f9501b"
+}
+
+func ModifyOnlyUserId() string {
+	return "auth0|65e28e5aafc0548859b07ef3"
 }
 
 func ErrorUserId(i int) string {
