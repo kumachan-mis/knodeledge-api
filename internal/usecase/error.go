@@ -10,7 +10,7 @@ type ErrorMessage string
 
 const (
 	InvalidArgumentError ErrorCode = "invalid argument"
-	InternalError        ErrorCode = "internal error"
+	InternalErrorPanic   ErrorCode = "internal error"
 )
 
 func NewMessageBasedError[ErrorResponse any](code ErrorCode, message string) *Error[ErrorResponse] {
