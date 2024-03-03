@@ -11,6 +11,8 @@ import (
 type ProjectUseCase interface {
 	ListProjects(req model.ProjectListRequest) (
 		*model.ProjectListResponse, *Error[model.ProjectListErrorResponse])
+	FindProject(req model.ProjectFindRequest) (
+		*model.ProjectFindResponse, *Error[model.ProjectFindErrorResponse])
 	CreateProject(req model.ProjectCreateRequest) (
 		*model.ProjectCreateResponse, *Error[model.ProjectCreateErrorResponse])
 }
@@ -52,6 +54,53 @@ func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 		i++
 	}
 	return &model.ProjectListResponse{Projects: projects}, nil
+}
+
+func (uc projectUseCase) FindProject(req model.ProjectFindRequest) (
+	*model.ProjectFindResponse, *Error[model.ProjectFindErrorResponse]) {
+	uid, uidErr := domain.NewUserIdObject(req.User.Id)
+	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
+
+	uidMsg := ""
+	if uidErr != nil {
+		uidMsg = uidErr.Error()
+	}
+	pidMsg := ""
+	if pidErr != nil {
+		pidMsg = pidErr.Error()
+	}
+
+	if uidErr != nil || pidErr != nil {
+		return nil, NewModelBasedError(
+			InvalidArgumentError,
+			model.ProjectFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: uidMsg},
+				Project: model.ProjectOnlyIdError{Id: pidMsg},
+			},
+		)
+	}
+
+	entity, sErr := uc.service.FindProject(*uid, *pid)
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.ProjectFindErrorResponse](
+			NotFoundError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil {
+		return nil, NewMessageBasedError[model.ProjectFindErrorResponse](
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
+		)
+	}
+
+	return &model.ProjectFindResponse{
+		Project: model.Project{
+			Id:          entity.Id().Value(),
+			Name:        entity.Name().Value(),
+			Description: entity.Description().Value(),
+		},
+	}, nil
 }
 
 func (uc projectUseCase) CreateProject(req model.ProjectCreateRequest) (

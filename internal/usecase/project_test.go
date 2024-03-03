@@ -141,6 +141,177 @@ func TestListProjectsServiceError(t *testing.T) {
 	assert.Nil(t, res)
 }
 
+func TestFindProjectValidEntity(t *testing.T) {
+	tt := []struct {
+		name               string
+		projectId          string
+		projectName        string
+		projectDescription string
+	}{
+		{
+			name:               "should find project with description",
+			projectId:          "0000000000000001",
+			projectName:        "Project With Description",
+			projectDescription: "This is a project",
+		},
+		{
+			name:               "should find project without description",
+			projectId:          "0000000000000002",
+			projectName:        "Project Without Description",
+			projectDescription: "",
+		},
+	}
+
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := mock_service.NewMockProjectService(ctrl)
+
+		id, err := domain.NewProjectIdObject(tc.projectId)
+		assert.NoError(t, err)
+		name, err := domain.NewProjectNameObject(tc.projectName)
+		assert.NoError(t, err)
+		description, err := domain.NewProjectDescriptionObject(tc.projectDescription)
+		assert.NoError(t, err)
+		createdAt, err := domain.NewCreatedAtObject(testutil.Date())
+		assert.NoError(t, err)
+		updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
+		assert.NoError(t, err)
+		authorId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+		assert.NoError(t, err)
+
+		project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId)
+
+		s.EXPECT().
+			FindProject(gomock.Any(), gomock.Any()).
+			Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject) {
+				assert.Equal(t, testutil.ReadOnlyUserId(), userId.Value())
+				assert.Equal(t, tc.projectId, projectId.Value())
+			}).
+			Return(project, nil)
+
+		uc := usecase.NewProjectUseCase(s)
+
+		res, ucErr := uc.FindProject(model.ProjectFindRequest{
+			User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+			Project: model.ProjectOnlyId{Id: tc.projectId},
+		})
+		assert.Nil(t, ucErr)
+
+		assert.Equal(t, tc.projectId, res.Project.Id)
+		assert.Equal(t, tc.projectName, res.Project.Name)
+		assert.Equal(t, tc.projectDescription, res.Project.Description)
+	}
+}
+
+func TestFindProjectInvalidArgument(t *testing.T) {
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		expected  model.ProjectFindErrorResponse
+	}{
+		{
+			name:      "empty user id",
+			userId:    "",
+			projectId: "0000000000000001",
+			expected: model.ProjectFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: model.ProjectOnlyIdError{Id: ""},
+			},
+		},
+		{
+			name:      "empty project id",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "",
+			expected: model.ProjectFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+			},
+		},
+		{
+			name:      "empty all fields",
+			userId:    "",
+			projectId: "",
+			expected: model.ProjectFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := mock_service.NewMockProjectService(ctrl)
+
+		uc := usecase.NewProjectUseCase(s)
+
+		res, ucErr := uc.FindProject(model.ProjectFindRequest{
+			User:    model.UserOnlyId{Id: tc.userId},
+			Project: model.ProjectOnlyId{Id: tc.projectId},
+		})
+		assert.Error(t, ucErr)
+
+		expectedJson, _ := json.Marshal(tc.expected)
+		assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
+		assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
+		assert.Equal(t, tc.expected, *ucErr.Response())
+
+		assert.Nil(t, res)
+	}
+}
+
+func TestFindProjectServiceError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     service.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  usecase.ErrorCode
+	}{
+		{
+			name:          "not found",
+			errorCode:     service.NotFoundError,
+			errorMessage:  "failed to find project",
+			expectedError: "not found: failed to find project",
+			expectedCode:  usecase.NotFoundError,
+		},
+		{
+			name:          "internal error",
+			errorCode:     service.RepositoryFailurePanic,
+			errorMessage:  "service error",
+			expectedError: "internal error: service error",
+			expectedCode:  usecase.InternalErrorPanic,
+		},
+	}
+
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := mock_service.NewMockProjectService(ctrl)
+
+		s.EXPECT().
+			FindProject(gomock.Any(), gomock.Any()).
+			Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+
+		uc := usecase.NewProjectUseCase(s)
+
+		res, ucErr := uc.FindProject(model.ProjectFindRequest{
+			User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+			Project: model.ProjectOnlyId{Id: "0000000000000001"},
+		})
+		assert.Error(t, ucErr)
+		assert.Equal(t, tc.expectedError, ucErr.Error())
+		assert.Equal(t, tc.expectedCode, ucErr.Code())
+		assert.Nil(t, ucErr.Response())
+		assert.Nil(t, res)
+	}
+}
+
 func TestCreateProjectValidEntity(t *testing.T) {
 	maxLengthProjectName := testutil.RandomString(100)
 	maxLengthProjectDescription := testutil.RandomString(400)
