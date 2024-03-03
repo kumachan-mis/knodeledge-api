@@ -12,6 +12,7 @@ import (
 
 type ProjectService interface {
 	ListProjects(userId domain.UserIdObject) ([]domain.ProjectEntity, *Error)
+	FindProject(userId domain.UserIdObject, projectId domain.ProjectIdObject) (*domain.ProjectEntity, *Error)
 	CreateProject(userId domain.UserIdObject, project domain.ProjectWithoutAutofieldEntity) (*domain.ProjectEntity, *Error)
 }
 
@@ -50,6 +51,27 @@ func (s projectService) ListProjects(userId domain.UserIdObject) ([]domain.Proje
 	return projects, nil
 }
 
+func (s projectService) FindProject(userId domain.UserIdObject, projectId domain.ProjectIdObject) (*domain.ProjectEntity, *Error) {
+	entry, rErr := s.repository.FetchProject(projectId.Value())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to find project")
+	}
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to fetch project: %w", rErr.Unwrap())
+	}
+
+	entity, err := entryToEntity(projectId.Value(), *entry)
+	if err != nil {
+		return nil, err
+	}
+
+	if !entity.AuthoredBy(&userId) {
+		return nil, Errorf(NotFoundError, "failed to find project")
+	}
+
+	return entity, nil
+}
+
 func (s projectService) CreateProject(userId domain.UserIdObject, project domain.ProjectWithoutAutofieldEntity) (*domain.ProjectEntity, *Error) {
 	entryWithoutAutofield := record.ProjectWithoutAutofieldEntry{
 		Name:        project.Name().Value(),
@@ -86,6 +108,10 @@ func entryToEntity(key string, entry record.ProjectEntry) (*domain.ProjectEntity
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
 	}
+	authorId, err := domain.NewUserIdObject(entry.UserId)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (authorId): %w", err)
+	}
 
-	return domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt), nil
+	return domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId), nil
 }

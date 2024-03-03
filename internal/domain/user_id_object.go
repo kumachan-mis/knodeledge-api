@@ -18,3 +18,7 @@ func NewUserIdObject(userId string) (*UserIdObject, error) {
 func (o *UserIdObject) Value() string {
 	return o.value
 }
+
+func (o *UserIdObject) Equals(other *UserIdObject) bool {
+	return o.value == other.value
+}
