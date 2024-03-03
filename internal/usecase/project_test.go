@@ -8,8 +8,9 @@ import (
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
-	"github.com/kumachan-mis/knodeledge-api/mock/service"
+	mock_service "github.com/kumachan-mis/knodeledge-api/mock/service"
 	"github.com/kumachan-mis/knodeledge-api/test/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -19,7 +20,7 @@ func TestListProjectsValidEntity(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	s := service.NewMockProjectService(ctrl)
+	s := mock_service.NewMockProjectService(ctrl)
 
 	id, err := domain.NewProjectIdObject("0000000000000001")
 	assert.NoError(t, err)
@@ -56,10 +57,10 @@ func TestListProjectsValidEntity(t *testing.T) {
 
 	uc := usecase.NewProjectUseCase(s)
 
-	res, err := uc.ListProjects(model.ProjectListRequest{
+	res, ucErr := uc.ListProjects(model.ProjectListRequest{
 		User: model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
 	})
-	assert.Nil(t, err)
+	assert.Nil(t, ucErr)
 
 	assert.Len(t, res.Projects, 2)
 
@@ -95,7 +96,7 @@ func TestListProjectsInvalidArgument(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 
-			s := service.NewMockProjectService(ctrl)
+			s := mock_service.NewMockProjectService(ctrl)
 
 			uc := usecase.NewProjectUseCase(s)
 
@@ -106,7 +107,7 @@ func TestListProjectsInvalidArgument(t *testing.T) {
 
 			expectedJson, _ := json.Marshal(tc.expected)
 			assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
-			assert.Equal(t, usecase.ErrorCode("invalid argument"), ucErr.Code())
+			assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
 			assert.Equal(t, tc.expected, *ucErr.Response())
 
 			assert.Nil(t, res)
@@ -118,11 +119,11 @@ func TestListProjectsServiceError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	s := service.NewMockProjectService(ctrl)
+	s := mock_service.NewMockProjectService(ctrl)
 
 	s.EXPECT().
 		ListProjects(gomock.Any()).
-		Return(nil, fmt.Errorf("service error"))
+		Return(nil, service.Errorf(service.RepositoryFailurePanic, "service error"))
 
 	uc := usecase.NewProjectUseCase(s)
 
@@ -130,9 +131,9 @@ func TestListProjectsServiceError(t *testing.T) {
 		User: model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
 	})
 	assert.Error(t, ucErr)
-	assert.Equal(t, usecase.ErrorCode("internal error"), ucErr.Code())
-	assert.Nil(t, ucErr.Response())
 	assert.Equal(t, "internal error: service error", ucErr.Error())
+	assert.Equal(t, usecase.InternalErrorPanic, ucErr.Code())
+	assert.Nil(t, ucErr.Response())
 	assert.Nil(t, res)
 }
 
@@ -177,7 +178,7 @@ func TestCreateProjectValidEntity(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			s := service.NewMockProjectService(ctrl)
+			s := mock_service.NewMockProjectService(ctrl)
 
 			id, err := domain.NewProjectIdObject("0000000000000001")
 			assert.NoError(t, err)
@@ -203,11 +204,11 @@ func TestCreateProjectValidEntity(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, err := uc.CreateProject(model.ProjectCreateRequest{
+			res, ucErr := uc.CreateProject(model.ProjectCreateRequest{
 				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
 				Project: tc.project,
 			})
-			assert.Nil(t, err)
+			assert.Nil(t, ucErr)
 
 			assert.Equal(t, "0000000000000001", res.Project.Id)
 			assert.Equal(t, tc.project.Name, res.Project.Name)
@@ -304,7 +305,7 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			s := service.NewMockProjectService(ctrl)
+			s := mock_service.NewMockProjectService(ctrl)
 
 			uc := usecase.NewProjectUseCase(s)
 
@@ -316,7 +317,7 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 
 			expectedJson, _ := json.Marshal(tc.expected)
 			assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
-			assert.Equal(t, usecase.ErrorCode("invalid argument"), ucErr.Code())
+			assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
 			assert.Equal(t, tc.expected, *ucErr.Response())
 
 			assert.Nil(t, res)
@@ -328,11 +329,11 @@ func TestCreateProjectServiceError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	s := service.NewMockProjectService(ctrl)
+	s := mock_service.NewMockProjectService(ctrl)
 
 	s.EXPECT().
 		CreateProject(gomock.Any(), gomock.Any()).
-		Return(nil, fmt.Errorf("service error"))
+		Return(nil, service.Errorf(service.RepositoryFailurePanic, "service error"))
 
 	uc := usecase.NewProjectUseCase(s)
 
@@ -343,8 +344,8 @@ func TestCreateProjectServiceError(t *testing.T) {
 		},
 	})
 	assert.Error(t, ucErr)
-	assert.Equal(t, usecase.ErrorCode("internal error"), ucErr.Code())
-	assert.Nil(t, ucErr.Response())
 	assert.Equal(t, "internal error: service error", ucErr.Error())
+	assert.Equal(t, usecase.InternalErrorPanic, ucErr.Code())
+	assert.Nil(t, ucErr.Response())
 	assert.Nil(t, res)
 }

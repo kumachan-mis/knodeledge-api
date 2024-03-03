@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"fmt"
-
 	"cloud.google.com/go/firestore"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
@@ -13,8 +11,8 @@ import (
 const ProjectCollection = "projects"
 
 type ProjectRepository interface {
-	FetchUserProjects(userId string) (map[string]record.ProjectEntry, error)
-	InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, error)
+	FetchUserProjects(userId string) (map[string]record.ProjectEntry, *Error)
+	InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error)
 }
 
 type projectRepository struct {
@@ -25,7 +23,7 @@ func NewProjectRepository(client firestore.Client) ProjectRepository {
 	return projectRepository{client: client}
 }
 
-func (r projectRepository) FetchUserProjects(userId string) (map[string]record.ProjectEntry, error) {
+func (r projectRepository) FetchUserProjects(userId string) (map[string]record.ProjectEntry, *Error) {
 	iter := r.client.Collection(ProjectCollection).
 		Where("userId", "==", userId).
 		Documents(db.FirestoreContext())
@@ -41,7 +39,7 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 		var entry record.ProjectEntry
 		err = snapshot.DataTo(&entry)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert snapshot to entry: %w", err)
+			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
 		}
 
 		projects[snapshot.Ref.ID] = entry
@@ -50,7 +48,7 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 	return projects, nil
 }
 
-func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, error) {
+func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error) {
 	ref, _, err := r.client.Collection(ProjectCollection).
 		Add(db.FirestoreContext(), map[string]any{
 			"name":        entry.Name,
@@ -60,18 +58,18 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 			"updatedAt":   firestore.ServerTimestamp,
 		})
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to insert project: %w", err)
+		return "", nil, Errorf(WriteFailurePanic, "failed to insert project: %w", err)
 	}
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to get inserted project: %w", err)
+		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project: %w", err)
 	}
 
 	var entryWithTimestamp record.ProjectEntry
 	err = snapshot.DataTo(&entryWithTimestamp)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to convert snapshot to entry: %w", err)
+		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
 	}
 
 	return ref.ID, &entryWithTimestamp, nil

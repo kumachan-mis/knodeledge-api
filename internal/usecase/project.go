@@ -33,11 +33,11 @@ func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 		)
 	}
 
-	entities, err := uc.service.ListProjects(*uid)
-	if err != nil {
+	entities, sErr := uc.service.ListProjects(*uid)
+	if sErr != nil {
 		return nil, NewMessageBasedError[model.ProjectListErrorResponse](
-			InternalError,
-			err.Error(),
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
 		)
 	}
 
@@ -90,11 +90,11 @@ func (uc projectUseCase) CreateProject(req model.ProjectCreateRequest) (
 
 	project := domain.NewProjectWithoutAutofieldEntity(*pname, *pdesc)
 
-	entity, err := uc.service.CreateProject(*uid, *project)
-	if err != nil {
+	entity, sErr := uc.service.CreateProject(*uid, *project)
+	if sErr != nil {
 		return nil, NewMessageBasedError[model.ProjectCreateErrorResponse](
-			InternalError,
-			err.Error(),
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
 		)
 	}
 
