@@ -85,6 +85,102 @@ func TestFetchUserProjectsInvalidDocument(t *testing.T) {
 	}
 }
 
+func TestFetchProjectValidDocument(t *testing.T) {
+	tt := []struct {
+		name      string
+		projectId string
+		expected  record.ProjectEntry
+	}{
+		{
+			name:      "should return project without description",
+			projectId: "PROJECT_WITHOUT_DESCRIPTION",
+			expected: record.ProjectEntry{
+				Name:        "No Description Project",
+				Description: "",
+				UserId:      testutil.ReadOnlyUserId(),
+				CreatedAt:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				UpdatedAt:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			name:      "should return project with description",
+			projectId: "PROJECT_WITH_DESCRIPTION",
+			expected: record.ProjectEntry{
+				Name:        "Described Project",
+				Description: "This is project description",
+				UserId:      testutil.ReadOnlyUserId(),
+				CreatedAt:   time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC),
+				UpdatedAt:   time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
+
+			project, rErr := r.FetchProject(tc.projectId)
+
+			assert.Nil(t, rErr)
+
+			assert.Equal(t, tc.expected.Name, project.Name)
+			assert.Equal(t, tc.expected.Description, project.Description)
+			assert.Equal(t, tc.expected.UserId, project.UserId)
+			assert.Equal(t, tc.expected.CreatedAt, project.CreatedAt)
+			assert.Equal(t, tc.expected.UpdatedAt, project.UpdatedAt)
+		})
+	}
+}
+
+func TestFetchProjectNoDocument(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewProjectRepository(*client)
+
+	projectId := "UNKNOWN_PROJECT"
+	project, rErr := r.FetchProject(projectId)
+
+	assert.NotNil(t, rErr)
+	assert.Equal(t, repository.NotFoundError, rErr.Code())
+	assert.Equal(t, "not found: failed to get project", rErr.Error())
+	assert.Nil(t, project)
+}
+
+func TestFetchProjectInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		projectId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when project name is invalid",
+			projectId: "PROJECT_WITH_NAME_ERROR",
+			expectedError: "failed to convert snapshot to entry: record.ProjectEntry.name: " +
+				"firestore: cannot set type string to int",
+		},
+		{
+			name:      "should return error when project description is invalid",
+			projectId: "PROJECT_WITH_DESCRIPTION_ERROR",
+			expectedError: "failed to convert snapshot to entry: record.ProjectEntry.description: " +
+				"firestore: cannot set type string to bool",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
+
+			project, rErr := r.FetchProject(tc.projectId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %s", tc.expectedError), rErr.Error())
+			assert.Nil(t, project)
+		})
+	}
+}
+
 func TestInsertProjectValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)

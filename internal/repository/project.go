@@ -12,6 +12,7 @@ const ProjectCollection = "projects"
 
 type ProjectRepository interface {
 	FetchUserProjects(userId string) (map[string]record.ProjectEntry, *Error)
+	FetchProject(projectId string) (*record.ProjectEntry, *Error)
 	InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error)
 }
 
@@ -48,6 +49,23 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 	return projects, nil
 }
 
+func (r projectRepository) FetchProject(projectId string) (*record.ProjectEntry, *Error) {
+	snapshot, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(NotFoundError, "failed to get project")
+	}
+
+	var entry record.ProjectEntry
+	err = snapshot.DataTo(&entry)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
+	}
+
+	return &entry, nil
+}
+
 func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error) {
 	ref, _, err := r.client.Collection(ProjectCollection).
 		Add(db.FirestoreContext(), map[string]any{
@@ -58,12 +76,12 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 			"updatedAt":   firestore.ServerTimestamp,
 		})
 	if err != nil {
-		return "", nil, Errorf(WriteFailurePanic, "failed to insert project: %w", err)
+		return "", nil, Errorf(WriteFailurePanic, "failed to insert project")
 	}
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project: %w", err)
+		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project")
 	}
 
 	var entryWithTimestamp record.ProjectEntry
