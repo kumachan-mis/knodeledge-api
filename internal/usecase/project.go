@@ -29,7 +29,7 @@ func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 	if uidErr != nil {
 		return nil, NewModelBasedError(
 			InvalidArgumentError,
-			model.ProjectListErrorResponse{User: model.UserError{Id: uidErr.Error()}},
+			model.ProjectListErrorResponse{User: model.UserOnlyIdError{Id: uidErr.Error()}},
 		)
 	}
 
@@ -77,7 +77,7 @@ func (uc projectUseCase) CreateProject(req model.ProjectCreateRequest) (
 		return nil, NewModelBasedError(
 			InvalidArgumentError,
 			model.ProjectCreateErrorResponse{
-				User: model.UserError{
+				User: model.UserOnlyIdError{
 					Id: uidMsg,
 				},
 				Project: model.ProjectWithoutAutofieldError{

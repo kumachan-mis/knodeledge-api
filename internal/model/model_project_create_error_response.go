@@ -15,7 +15,7 @@ type ProjectCreateErrorResponse struct {
 	// Error message when request body format is invalid
 	Message string `json:"message,omitempty"`
 
-	User UserError `json:"user,omitempty"`
+	User UserOnlyIdError `json:"user,omitempty"`
 
 	Project ProjectWithoutAutofieldError `json:"project,omitempty"`
 }

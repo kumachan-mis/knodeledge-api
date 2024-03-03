@@ -57,7 +57,7 @@ func TestListProjectsValidEntity(t *testing.T) {
 	uc := usecase.NewProjectUseCase(s)
 
 	res, err := uc.ListProjects(model.ProjectListRequest{
-		User: model.User{Id: testutil.ReadOnlyUserId()},
+		User: model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
 	})
 	assert.Nil(t, err)
 
@@ -87,7 +87,7 @@ func TestListProjectsInvalidArgument(t *testing.T) {
 			name:   "empty user id",
 			userId: "",
 			expected: model.ProjectListErrorResponse{
-				User: model.UserError{Id: "user id is required, but got ''"},
+				User: model.UserOnlyIdError{Id: "user id is required, but got ''"},
 			},
 		},
 	}
@@ -100,7 +100,7 @@ func TestListProjectsInvalidArgument(t *testing.T) {
 			uc := usecase.NewProjectUseCase(s)
 
 			res, ucErr := uc.ListProjects(model.ProjectListRequest{
-				User: model.User{Id: tc.userId},
+				User: model.UserOnlyId{Id: tc.userId},
 			})
 			assert.Error(t, ucErr)
 
@@ -127,7 +127,7 @@ func TestListProjectsServiceError(t *testing.T) {
 	uc := usecase.NewProjectUseCase(s)
 
 	res, ucErr := uc.ListProjects(model.ProjectListRequest{
-		User: model.User{Id: testutil.ReadOnlyUserId()},
+		User: model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
 	})
 	assert.Error(t, ucErr)
 	assert.Equal(t, usecase.ErrorCode("internal error"), ucErr.Code())
@@ -204,7 +204,7 @@ func TestCreateProjectValidEntity(t *testing.T) {
 			uc := usecase.NewProjectUseCase(s)
 
 			res, err := uc.CreateProject(model.ProjectCreateRequest{
-				User:    model.User{Id: testutil.ModifyOnlyUserId()},
+				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
 				Project: tc.project,
 			})
 			assert.Nil(t, err)
@@ -235,7 +235,7 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 				Description: "This is a project",
 			},
 			expected: model.ProjectCreateErrorResponse{
-				User: model.UserError{
+				User: model.UserOnlyIdError{
 					Id: "user id is required, but got ''",
 				},
 			},
@@ -289,7 +289,7 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 			userId:  "",
 			project: model.ProjectWithoutAutofield{},
 			expected: model.ProjectCreateErrorResponse{
-				User: model.UserError{
+				User: model.UserOnlyIdError{
 					Id: "user id is required, but got ''",
 				},
 				Project: model.ProjectWithoutAutofieldError{
@@ -309,7 +309,7 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 			uc := usecase.NewProjectUseCase(s)
 
 			res, ucErr := uc.CreateProject(model.ProjectCreateRequest{
-				User:    model.User{Id: tc.userId},
+				User:    model.UserOnlyId{Id: tc.userId},
 				Project: tc.project,
 			})
 			assert.Error(t, ucErr)
@@ -337,7 +337,7 @@ func TestCreateProjectServiceError(t *testing.T) {
 	uc := usecase.NewProjectUseCase(s)
 
 	res, ucErr := uc.CreateProject(model.ProjectCreateRequest{
-		User: model.User{Id: testutil.ModifyOnlyUserId()},
+		User: model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
 		Project: model.ProjectWithoutAutofield{
 			Name: "Project Name",
 		},

@@ -9,9 +9,9 @@
 
 package model
 
-// User - User object
-type User struct {
+// UserOnlyIdError - Error Message for UserOnlyId object
+type UserOnlyIdError struct {
 
-	// User ID
-	Id string `json:"id"`
+	// Error message for user ID
+	Id string `json:"id,omitempty"`
 }
