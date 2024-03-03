@@ -7,8 +7,9 @@ import (
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
+	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
-	"github.com/kumachan-mis/knodeledge-api/mock/repository"
+	mock_repository "github.com/kumachan-mis/knodeledge-api/mock/repository"
 	"github.com/kumachan-mis/knodeledge-api/test/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -21,7 +22,7 @@ func TestListProjectsValidEntry(t *testing.T) {
 	maxLengthProjectName := testutil.RandomString(100)
 	maxLengthProjectDescription := testutil.RandomString(400)
 
-	r := repository.NewMockProjectRepository(ctrl)
+	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
 		FetchUserProjects(testutil.ReadOnlyUserId()).
 		Return(map[string]record.ProjectEntry{
@@ -52,8 +53,8 @@ func TestListProjectsValidEntry(t *testing.T) {
 	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 	assert.NoError(t, err)
 
-	projects, err := s.ListProjects(*userId)
-	assert.NoError(t, err)
+	projects, sErr := s.ListProjects(*userId)
+	assert.Nil(t, sErr)
 
 	assert.Len(t, projects, 3)
 
@@ -83,7 +84,7 @@ func TestListProjectsNoEntry(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	r := repository.NewMockProjectRepository(ctrl)
+	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
 		FetchUserProjects(testutil.ReadOnlyUserId()).
 		Return(map[string]record.ProjectEntry{}, nil)
@@ -93,8 +94,8 @@ func TestListProjectsNoEntry(t *testing.T) {
 	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 	assert.NoError(t, err)
 
-	projects, err := s.ListProjects(*userId)
-	assert.NoError(t, err)
+	projects, sErr := s.ListProjects(*userId)
+	assert.Nil(t, sErr)
 
 	assert.Empty(t, projects)
 }
@@ -169,7 +170,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			r := repository.NewMockProjectRepository(ctrl)
+			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
 				FetchUserProjects(testutil.ReadOnlyUserId()).
 				Return(map[string]record.ProjectEntry{
@@ -181,8 +182,10 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 			assert.NoError(t, err)
 
-			projects, err := s.ListProjects(*userId)
-			assert.ErrorContains(t, err, tc.expectedError)
+			projects, sErr := s.ListProjects(*userId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
 			assert.Nil(t, projects)
 		})
 	}
@@ -192,10 +195,10 @@ func TestListProjectsRepositoryError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	r := repository.NewMockProjectRepository(ctrl)
+	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
 		FetchUserProjects(testutil.ReadOnlyUserId()).
-		Return(nil, fmt.Errorf("repository error"))
+		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
 
 	s := service.NewProjectService(r)
 
@@ -203,7 +206,8 @@ func TestListProjectsRepositoryError(t *testing.T) {
 	assert.NoError(t, err)
 
 	projects, err := s.ListProjects(*userId)
-	assert.ErrorContains(t, err, "failed to fetch user projects: repository error")
+	assert.NotNil(t, err)
+	assert.Equal(t, "repository failure: failed to fetch user projects: repository error", err.Error())
 	assert.Nil(t, projects)
 }
 
@@ -241,7 +245,7 @@ func TestCreateProjectValidEntry(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		r := repository.NewMockProjectRepository(ctrl)
+		r := mock_repository.NewMockProjectRepository(ctrl)
 		r.EXPECT().
 			InsertProject(tc.project).
 			Return(tc.projectId, &record.ProjectEntry{
@@ -264,8 +268,8 @@ func TestCreateProjectValidEntry(t *testing.T) {
 
 		project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
-		createdProject, err := s.CreateProject(*userId, *project)
-		assert.NoError(t, err)
+		createdProject, sErr := s.CreateProject(*userId, *project)
+		assert.Nil(t, sErr)
 
 		assert.Equal(t, tc.projectId, createdProject.Id().Value())
 		assert.Equal(t, tc.project.Name, createdProject.Name().Value())
@@ -332,7 +336,7 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			r := repository.NewMockProjectRepository(ctrl)
+			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
 				InsertProject(record.ProjectWithoutAutofieldEntry{
 					Name:        "New Project",
@@ -353,8 +357,10 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 
 			project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
-			createdProject, err := s.CreateProject(*userId, *project)
-			assert.ErrorContains(t, err, tc.expectedError)
+			createdProject, sErr := s.CreateProject(*userId, *project)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
 			assert.Nil(t, createdProject)
 		})
 	}
@@ -364,10 +370,10 @@ func TestCreateProjectRepositoryError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	r := repository.NewMockProjectRepository(ctrl)
+	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
 		InsertProject(gomock.Any()).
-		Return("", nil, fmt.Errorf("repository error"))
+		Return("", nil, repository.Errorf(repository.WriteFailurePanic, "repository error"))
 
 	s := service.NewProjectService(r)
 
@@ -381,7 +387,9 @@ func TestCreateProjectRepositoryError(t *testing.T) {
 
 	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
-	createdProject, err := s.CreateProject(*userId, *project)
-	assert.ErrorContains(t, err, "failed to insert project: repository error")
+	createdProject, sErr := s.CreateProject(*userId, *project)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
+	assert.Equal(t, "repository failure: failed to insert project: repository error", sErr.Error())
 	assert.Nil(t, createdProject)
 }

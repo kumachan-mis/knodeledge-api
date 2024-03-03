@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -16,9 +17,9 @@ func TestFetchUserProjectsValidDocument(t *testing.T) {
 	r := repository.NewProjectRepository(*client)
 
 	userId := testutil.ReadOnlyUserId()
-	projects, err := r.FetchUserProjects(userId)
+	projects, rErr := r.FetchUserProjects(userId)
 
-	assert.NoError(t, err)
+	assert.Nil(t, rErr)
 
 	assert.Len(t, projects, 2)
 
@@ -42,25 +43,30 @@ func TestFetchUserProjectsNoDocument(t *testing.T) {
 	r := repository.NewProjectRepository(*client)
 
 	userId := testutil.UnknownUserId()
-	projects, err := r.FetchUserProjects(userId)
+	projects, rErr := r.FetchUserProjects(userId)
 
-	assert.NoError(t, err)
+	assert.Nil(t, rErr)
 
 	assert.Empty(t, projects)
 }
 
 func TestFetchUserProjectsInvalidDocument(t *testing.T) {
 	tt := []struct {
-		name   string
-		userId string
+		name          string
+		userId        string
+		expectedError string
 	}{
 		{
 			name:   "should return error when project name is invalid",
 			userId: testutil.ErrorUserId(0),
+			expectedError: "failed to convert snapshot to entry: record.ProjectEntry.name: " +
+				"firestore: cannot set type string to int",
 		},
 		{
 			name:   "should return error when project description is invalid",
 			userId: testutil.ErrorUserId(1),
+			expectedError: "failed to convert snapshot to entry: record.ProjectEntry.description: " +
+				"firestore: cannot set type string to bool",
 		},
 	}
 
@@ -69,9 +75,11 @@ func TestFetchUserProjectsInvalidDocument(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewProjectRepository(*client)
 
-			projects, err := r.FetchUserProjects(tc.userId)
+			projects, rErr := r.FetchUserProjects(tc.userId)
 
-			assert.ErrorContains(t, err, "failed to convert snapshot to entry:")
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %s", tc.expectedError), rErr.Error())
 			assert.Nil(t, projects)
 		})
 	}
@@ -88,10 +96,10 @@ func TestInsertProjectValidEntry(t *testing.T) {
 		UserId:      userId,
 	}
 
-	id, project, err := r.InsertProject(entry)
+	id, project, rErr := r.InsertProject(entry)
 	now := time.Now()
 
-	assert.NoError(t, err)
+	assert.Nil(t, rErr)
 
 	assert.NotEmpty(t, id)
 	assert.Equal(t, entry.Name, project.Name)

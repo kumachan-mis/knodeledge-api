@@ -30,20 +30,20 @@ func (api projectApi) HandleList(c *gin.Context) {
 		return
 	}
 
-	res, err := api.usecase.ListProjects(request)
+	res, ucErr := api.usecase.ListProjects(request)
 
-	if err != nil && err.Code() == usecase.InvalidArgumentError {
-		resErr := UseCaseErrorToResponse(err)
+	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+		resErr := UseCaseErrorToResponse(ucErr)
 		c.JSON(http.StatusBadRequest, model.ProjectListErrorResponse{
-			Message: UseCaseErrorToMessage(err),
+			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 		})
 		return
 	}
 
-	if err != nil {
+	if ucErr != nil {
 		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
-			Message: UseCaseErrorToMessage(err),
+			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
@@ -60,21 +60,21 @@ func (api projectApi) HandleCreate(c *gin.Context) {
 		return
 	}
 
-	res, err := api.usecase.CreateProject(request)
+	res, ucErr := api.usecase.CreateProject(request)
 
-	if err != nil && err.Code() == usecase.InvalidArgumentError {
-		resErr := UseCaseErrorToResponse(err)
+	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+		resErr := UseCaseErrorToResponse(ucErr)
 		c.JSON(http.StatusBadRequest, model.ProjectCreateErrorResponse{
-			Message: UseCaseErrorToMessage(err),
+			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
 		})
 		return
 	}
 
-	if err != nil {
+	if ucErr != nil {
 		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
-			Message: UseCaseErrorToMessage(err),
+			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
