@@ -61,6 +61,7 @@ func main() {
 
 	router.POST("/api/projects/list", projectApi.HandleList)
 	router.POST("/api/projects/create", projectApi.HandleCreate)
+	router.POST("/api/projects/find", projectApi.HandleFind)
 
 	err = router.Run(":8080")
 	if err != nil {

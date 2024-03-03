@@ -64,6 +64,7 @@ func TestListProjectsValidEntry(t *testing.T) {
 	assert.Equal(t, "This is my first project", project.Description().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), project.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), project.UpdatedAt().Value())
+	assert.True(t, project.AuthoredBy(userId))
 
 	project = projects[1]
 	assert.Equal(t, "0000000000000002", project.Id().Value())
@@ -71,6 +72,7 @@ func TestListProjectsValidEntry(t *testing.T) {
 	assert.Equal(t, "", project.Description().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), project.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), project.UpdatedAt().Value())
+	assert.True(t, project.AuthoredBy(userId))
 
 	project = projects[2]
 	assert.Equal(t, "0000000000000003", project.Id().Value())
@@ -78,6 +80,7 @@ func TestListProjectsValidEntry(t *testing.T) {
 	assert.Equal(t, maxLengthProjectDescription, project.Description().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), project.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), project.UpdatedAt().Value())
+	assert.True(t, project.AuthoredBy(userId))
 }
 
 func TestListProjectsNoEntry(t *testing.T) {
@@ -211,6 +214,226 @@ func TestListProjectsRepositoryError(t *testing.T) {
 	assert.Nil(t, projects)
 }
 
+func TestFindProjectValidEntry(t *testing.T) {
+	maxLengthProjectName := testutil.RandomString(100)
+	maxLengthProjectDescription := testutil.RandomString(400)
+
+	tt := []struct {
+		name      string
+		projectId string
+		project   record.ProjectEntry
+	}{
+		{
+			name:      "should return project with valid entry",
+			projectId: "0000000000000001",
+			project: record.ProjectEntry{
+				Name:        "New Project",
+				Description: "This is new project",
+				UserId:      testutil.ReadOnlyUserId(),
+				CreatedAt:   testutil.Date(),
+				UpdatedAt:   testutil.Date(),
+			},
+		},
+		{
+			name:      "should return project with max-length valid entry",
+			projectId: "0000000000000002",
+			project: record.ProjectEntry{
+				Name:        maxLengthProjectName,
+				Description: maxLengthProjectDescription,
+				UserId:      testutil.ReadOnlyUserId(),
+				CreatedAt:   testutil.Date(),
+				UpdatedAt:   testutil.Date(),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		r := mock_repository.NewMockProjectRepository(ctrl)
+		r.EXPECT().
+			FetchProject(tc.projectId).
+			Return(&tc.project, nil)
+
+		s := service.NewProjectService(r)
+
+		userId, err := domain.NewUserIdObject(tc.project.UserId)
+		assert.NoError(t, err)
+
+		projectId, err := domain.NewProjectIdObject(tc.projectId)
+		assert.NoError(t, err)
+
+		project, sErr := s.FindProject(*userId, *projectId)
+		assert.Nil(t, sErr)
+
+		assert.Equal(t, tc.projectId, project.Id().Value())
+		assert.Equal(t, tc.project.Name, project.Name().Value())
+		assert.Equal(t, tc.project.Description, project.Description().Value())
+		assert.Equal(t, tc.project.CreatedAt, project.CreatedAt().Value())
+		assert.Equal(t, tc.project.UpdatedAt, project.UpdatedAt().Value())
+		assert.True(t, project.AuthoredBy(userId))
+	}
+}
+
+func TestFindProjectNoEntry(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockProjectRepository(ctrl)
+	r.EXPECT().
+		FetchProject("0000000000000001").
+		Return(nil, repository.Errorf(repository.NotFoundError, "failed to get project"))
+
+	s := service.NewProjectService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+	assert.NoError(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.NoError(t, err)
+
+	project, sErr := s.FindProject(*userId, *projectId)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.NotFoundError, sErr.Code())
+	assert.Equal(t, "not found: failed to find project", sErr.Error())
+	assert.Nil(t, project)
+}
+
+func TestFindProjectUnauthoredEntry(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockProjectRepository(ctrl)
+	r.EXPECT().
+		FetchProject("0000000000000001").
+		Return(&record.ProjectEntry{
+			Name:      "Project",
+			UserId:    testutil.ModifyOnlyUserId(),
+			CreatedAt: testutil.Date(),
+			UpdatedAt: testutil.Date(),
+		}, nil)
+
+	s := service.NewProjectService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+	assert.NoError(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.NoError(t, err)
+
+	project, sErr := s.FindProject(*userId, *projectId)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.NotFoundError, sErr.Code())
+	assert.Equal(t, "not found: failed to find project", sErr.Error())
+	assert.Nil(t, project)
+}
+
+func TestFindProjectInvalidEntry(t *testing.T) {
+	tooLongProjectName := testutil.RandomString(101)
+	tooLongProjectDescription := testutil.RandomString(401)
+
+	tt := []struct {
+		name          string
+		projectId     string
+		project       record.ProjectEntry
+		expectedError string
+	}{
+		{
+			name:      "should return error when project name is empty",
+			projectId: "0000000000000001",
+			project: record.ProjectEntry{
+				Name:      "",
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (name): project name is required, but got ''",
+		},
+		{
+			name:      "should return error when project name is too long",
+			projectId: "0000000000000001",
+			project: record.ProjectEntry{
+				Name:      tooLongProjectName,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (name): " +
+				fmt.Sprintf(
+					"project name cannot be longer than 100 characters, but got '%s'",
+					tooLongProjectName,
+				),
+		},
+		{
+			name:      "should return error when project description is too long",
+			projectId: "0000000000000001",
+			project: record.ProjectEntry{
+				Name:        "Project",
+				Description: tooLongProjectDescription,
+				UserId:      testutil.ReadOnlyUserId(),
+				CreatedAt:   testutil.Date(),
+				UpdatedAt:   testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (description): " +
+				fmt.Sprintf(
+					"project description cannot be longer than 400 characters, but got '%s'",
+					tooLongProjectDescription,
+				),
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockProjectRepository(ctrl)
+			r.EXPECT().
+				FetchProject(tc.projectId).
+				Return(&tc.project, nil)
+
+			s := service.NewProjectService(r)
+
+			userId, err := domain.NewUserIdObject(tc.project.UserId)
+			assert.NoError(t, err)
+
+			projectId, err := domain.NewProjectIdObject(tc.projectId)
+			assert.NoError(t, err)
+
+			project, sErr := s.FindProject(*userId, *projectId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Nil(t, project)
+		})
+	}
+}
+
+func TestFindProjectRepositoryError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockProjectRepository(ctrl)
+	r.EXPECT().
+		FetchProject("0000000000000001").
+		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
+
+	s := service.NewProjectService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+	assert.NoError(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.NoError(t, err)
+
+	project, sErr := s.FindProject(*userId, *projectId)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
+	assert.Equal(t, "repository failure: failed to fetch project: repository error", sErr.Error())
+	assert.Nil(t, project)
+}
+
 func TestCreateProjectValidEntry(t *testing.T) {
 	maxLengthProjectName := testutil.RandomString(100)
 	maxLengthProjectDescription := testutil.RandomString(400)
@@ -276,6 +499,7 @@ func TestCreateProjectValidEntry(t *testing.T) {
 		assert.Equal(t, tc.project.Description, createdProject.Description().Value())
 		assert.Equal(t, testutil.Date(), createdProject.CreatedAt().Value())
 		assert.Equal(t, testutil.Date(), createdProject.UpdatedAt().Value())
+		assert.True(t, createdProject.AuthoredBy(userId))
 	}
 }
 

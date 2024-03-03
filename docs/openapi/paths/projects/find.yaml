@@ -1,26 +1,32 @@
 post:
   tags:
     - Projects
-  operationId: create
-  summary: Create new project
+  operationId: find
+  summary: Find project
   requestBody:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/ProjectCreateRequest.yaml
+          $ref: ../../schemas/ProjectFindRequest.yaml
   responses:
-    "201":
-      description: Created - Returns newly created project
+    "200":
+      description: OK - Returns found project
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectCreateResponse.yaml
+            $ref: ../../schemas/ProjectFindResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectCreateErrorResponse.yaml
+            $ref: ../../schemas/ProjectFindErrorResponse.yaml
+    "404":
+      description: Not Found - Project not found
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/ProjectFindErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:

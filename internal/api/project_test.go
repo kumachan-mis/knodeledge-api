@@ -141,6 +141,248 @@ func TestProjectListInternalError(t *testing.T) {
 	}, responseBody)
 }
 
+func TestProjectFind(t *testing.T) {
+	tt := []struct {
+		name             string
+		request          map[string]any
+		expectedResponse map[string]any
+	}{
+		{
+			name: "should find project without description",
+			request: map[string]any{
+				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
+				"project": map[string]any{"id": "PROJECT_WITHOUT_DESCRIPTION"},
+			},
+			expectedResponse: map[string]any{
+				"project": map[string]any{
+					"id":   "PROJECT_WITHOUT_DESCRIPTION",
+					"name": "No Description Project",
+				},
+			},
+		},
+		{
+			name: "should find project with description",
+			request: map[string]any{
+				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
+				"project": map[string]any{"id": "PROJECT_WITH_DESCRIPTION"},
+			},
+			expectedResponse: map[string]any{
+				"project": map[string]any{
+					"id":          "PROJECT_WITH_DESCRIPTION",
+					"name":        "Described Project",
+					"description": "This is project description",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusOK, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+
+			assert.Equal(t, responseBody, tc.expectedResponse)
+		})
+	}
+}
+
+func TestProjectFindNotFound(t *testing.T) {
+	tt := []struct {
+		name    string
+		request map[string]any
+	}{
+		{
+			name: "should return not found when project id is not found",
+			request: map[string]any{
+				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
+				"project": map[string]any{"id": "NOT_FOUND_PROJECT"},
+			},
+		},
+		{
+			name: "should return not found when user is not author of the project",
+			request: map[string]any{
+				"user":    map[string]any{"id": testutil.ModifyOnlyUserId()},
+				"project": map[string]any{"id": "PROJECT_WITHOUT_DESCRIPTION"},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "not found",
+				"user":    map[string]any{},
+				"project": map[string]any{},
+			}, responseBody)
+		})
+	}
+}
+
+func TestProjectFindInvalidArgument(t *testing.T) {
+	tt := []struct {
+		name             string
+		request          map[string]any
+		expectedResponse map[string]any
+	}{
+		{
+			name: "should return error when user id is empty",
+			request: map[string]any{
+				"user":    map[string]any{"id": ""},
+				"project": map[string]any{"id": "PROJECT_WITHOUT_DESCRIPTION"},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when project id is empty",
+			request: map[string]any{
+				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
+				"project": map[string]any{"id": ""},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{},
+				"project": map[string]any{
+					"id": "project id is required, but got ''",
+				},
+			},
+		},
+		{
+			name:    "should return error when empty object is passed",
+			request: map[string]any{},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{
+					"id": "project id is required, but got ''",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "invalid request value",
+				"user":    tc.expectedResponse["user"],
+				"project": tc.expectedResponse["project"],
+			}, responseBody)
+		})
+	}
+}
+
+func TestProjectFindInvalidRequestFormat(t *testing.T) {
+	tt := []struct {
+		name    string
+		request string
+	}{
+		{
+			name:    "should return error when user id is not string",
+			request: `{"user": {"id":123}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}}`,
+		},
+		{
+			name:    "should return error when project id is not string",
+			request: `{"user": {"id": "user-id"}, "project": {"id": 123}}`,
+		},
+		{
+			name:    "should return error when user is not object",
+			request: `{"user": 123, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}}`,
+		},
+		{
+			name:    "should return error when project is not object",
+			request: `{"user": {"id": "user-id"}, "project": "PROJECT_WITHOUT_DESCRIPTION"}`,
+		},
+		{
+			name:    "should return error when request body is invalid JSON",
+			request: `{"user": {"id": "user-id", "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}`,
+		},
+		{
+			name:    "should return error when request body is empty",
+			request: "",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(tc.request))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "invalid request format",
+				"user":    map[string]any{},
+				"project": map[string]any{},
+			}, responseBody)
+		})
+	}
+}
+
+func TestProjectFindInternalError(t *testing.T) {
+	router := setupProjectRouter()
+
+	recorder := httptest.NewRecorder()
+	requestBody, _ := json.Marshal(map[string]any{
+		"user":    map[string]any{"id": testutil.ErrorUserId(0)},
+		"project": map[string]any{"id": "PROJECT_WITH_NAME_ERROR"},
+	})
+	req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+
+	var responseBody map[string]any
+	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+	assert.Equal(t, map[string]any{
+		"message": "internal error",
+	}, responseBody)
+}
+
 func TestProjectCreate(t *testing.T) {
 	maxLengthProjectName := testutil.RandomString(100)
 	maxLengthProjectDescription := testutil.RandomString(400)
@@ -367,5 +609,6 @@ func setupProjectRouter() *gin.Engine {
 
 	router.POST("/api/projects/list", a.HandleList)
 	router.POST("/api/projects/create", a.HandleCreate)
+	router.POST("/api/projects/find", a.HandleFind)
 	return router
 }

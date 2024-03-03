@@ -11,7 +11,7 @@ package model
 
 // ProjectCreateRequest - Request Body for Project Create API
 type ProjectCreateRequest struct {
-	User User `json:"user"`
+	User UserOnlyId `json:"user"`
 
 	Project ProjectWithoutAutofield `json:"project"`
 }

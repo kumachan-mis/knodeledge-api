@@ -9,7 +9,9 @@
 
 package model
 
-// ProjectListRequest - Request Body for Project List API
-type ProjectListRequest struct {
-	User UserOnlyId `json:"user"`
+// UserOnlyId - User object with only ID
+type UserOnlyId struct {
+
+	// User ID
+	Id string `json:"id"`
 }

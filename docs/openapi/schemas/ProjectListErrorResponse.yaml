@@ -6,4 +6,4 @@ properties:
     description: Error message when request body format is invalid
     example: unexpected EOF
   user:
-    $ref: ./UserError.yaml
+    $ref: ./UserOnlyIdError.yaml

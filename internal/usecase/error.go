@@ -9,6 +9,7 @@ type ErrorCode string
 type ErrorMessage string
 
 const (
+	NotFoundError        ErrorCode = "not found"
 	InvalidArgumentError ErrorCode = "invalid argument"
 	InternalErrorPanic   ErrorCode = "internal error"
 )

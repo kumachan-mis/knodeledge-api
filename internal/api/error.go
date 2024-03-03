@@ -13,6 +13,8 @@ func UseCaseErrorToMessage[ErrorResponse any](err *usecase.Error[ErrorResponse])
 	switch err.Code() {
 	case usecase.InvalidArgumentError:
 		return "invalid request value"
+	case usecase.NotFoundError:
+		return "not found"
 	default:
 		logrus.WithError(err).Error("internal error")
 		return "internal error"

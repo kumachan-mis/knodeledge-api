@@ -9,11 +9,13 @@
 
 package model
 
-// ProjectListErrorResponse - Error Response Body for Project List API
-type ProjectListErrorResponse struct {
+// ProjectFindErrorResponse - Error Response Body for Project Find API
+type ProjectFindErrorResponse struct {
 
 	// Error message when request body format is invalid
 	Message string `json:"message,omitempty"`
 
 	User UserOnlyIdError `json:"user,omitempty"`
+
+	Project ProjectOnlyIdError `json:"project,omitempty"`
 }
