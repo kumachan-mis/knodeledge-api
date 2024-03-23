@@ -526,3 +526,238 @@ func TestCreateProjectServiceError(t *testing.T) {
 	assert.Nil(t, ucErr.Response())
 	assert.Nil(t, res)
 }
+
+func TestUpdateProjectValidEntity(t *testing.T) {
+	maxLengthProjectName := testutil.RandomString(100)
+	maxLengthProjectDescription := testutil.RandomString(400)
+
+	tt := []struct {
+		name    string
+		project model.ProjectWithoutAutofield
+	}{
+		{
+			name: "should update project with description",
+			project: model.ProjectWithoutAutofield{
+				Name:        "Project With Description",
+				Description: "This is a project",
+			},
+		},
+		{
+			name: "should update project without description",
+			project: model.ProjectWithoutAutofield{
+				Name: "Project Without Description",
+			},
+		},
+		{
+			name: "should update project with max length name",
+			project: model.ProjectWithoutAutofield{
+				Name: maxLengthProjectName,
+			},
+		},
+		{
+			name: "should update project with max length description",
+			project: model.ProjectWithoutAutofield{
+				Name:        "Project With Max Length Description",
+				Description: maxLengthProjectDescription,
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			s := mock_service.NewMockProjectService(ctrl)
+
+			id, err := domain.NewProjectIdObject("0000000000000001")
+			assert.NoError(t, err)
+			name, err := domain.NewProjectNameObject(tc.project.Name)
+			assert.NoError(t, err)
+			description, err := domain.NewProjectDescriptionObject(tc.project.Description)
+			assert.NoError(t, err)
+			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
+			assert.NoError(t, err)
+			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
+			assert.NoError(t, err)
+			authorId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.NoError(t, err)
+
+			project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId)
+
+			s.EXPECT().
+				UpdateProject(gomock.Any(), gomock.Any(), gomock.Any()).
+				Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject, project domain.ProjectWithoutAutofieldEntity) {
+					assert.Equal(t, testutil.ModifyOnlyUserId(), userId.Value())
+					assert.Equal(t, "0000000000000001", projectId.Value())
+					assert.Equal(t, tc.project.Name, project.Name().Value())
+					assert.Equal(t, tc.project.Description, project.Description().Value())
+				}).Return(project, nil)
+
+			uc := usecase.NewProjectUseCase(s)
+
+			res, ucErr := uc.UpdateProject(model.ProjectUpdateRequest{
+				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+				Project: model.Project{Id: "0000000000000001", Name: tc.project.Name, Description: tc.project.Description},
+			})
+			assert.Nil(t, ucErr)
+
+			assert.Equal(t, "0000000000000001", res.Project.Id)
+			assert.Equal(t, tc.project.Name, res.Project.Name)
+			assert.Equal(t, tc.project.Description, res.Project.Description)
+		})
+	}
+}
+
+func TestUpdateProjectInvalidArgument(t *testing.T) {
+	tooLongProjectName := testutil.RandomString(101)
+	tooLongProjectDescription := testutil.RandomString(401)
+
+	tt := []struct {
+		name     string
+		userId   string
+		project  model.Project
+		expected model.ProjectUpdateErrorResponse
+	}{
+		{
+			name:   "should return error when user id is empty",
+			userId: "",
+			project: model.Project{
+				Id:          "0000000000000001",
+				Name:        "Project With Description",
+				Description: "This is a project",
+			},
+			expected: model.ProjectUpdateErrorResponse{
+				User: model.UserOnlyIdError{
+					Id: "user id is required, but got ''",
+				},
+			},
+		},
+		{
+			name:   "should return error when project id is empty",
+			userId: testutil.ModifyOnlyUserId(),
+			project: model.Project{
+				Id:          "",
+				Name:        "Project With Description",
+				Description: "This is a project",
+			},
+			expected: model.ProjectUpdateErrorResponse{
+				Project: model.ProjectError{
+					Id: "project id is required, but got ''",
+				},
+			},
+		},
+		{
+			name:   "should return error when project name is empty",
+			userId: testutil.ModifyOnlyUserId(),
+			project: model.Project{
+				Id:          "0000000000000001",
+				Name:        "",
+				Description: "This is a project",
+			},
+			expected: model.ProjectUpdateErrorResponse{
+				Project: model.ProjectError{
+					Name: "project name is required, but got ''",
+				},
+			},
+		},
+		{
+			name:   "should return error when project name is too long",
+			userId: testutil.ModifyOnlyUserId(),
+			project: model.Project{
+				Id:          "0000000000000001",
+				Name:        tooLongProjectName,
+				Description: "This is a project",
+			},
+			expected: model.ProjectUpdateErrorResponse{
+				Project: model.ProjectError{
+					Name: fmt.Sprintf(
+						"project name cannot be longer than 100 characters, but got '%s'",
+						tooLongProjectName,
+					),
+				},
+			},
+		},
+		{
+			name:   "should return error when project description is too long",
+			userId: testutil.ModifyOnlyUserId(),
+			project: model.Project{
+				Id:          "0000000000000001",
+				Name:        "Project With Description",
+				Description: tooLongProjectDescription,
+			},
+			expected: model.ProjectUpdateErrorResponse{
+				Project: model.ProjectError{
+					Description: fmt.Sprintf(
+						"project description cannot be longer than 400 characters, but got '%s'",
+						tooLongProjectDescription,
+					),
+				},
+			},
+		},
+		{
+			name:    "should return error when all fields are empty",
+			userId:  "",
+			project: model.Project{},
+			expected: model.ProjectUpdateErrorResponse{
+				User: model.UserOnlyIdError{
+					Id: "user id is required, but got ''",
+				},
+				Project: model.ProjectError{
+					Id:   "project id is required, but got ''",
+					Name: "project name is required, but got ''",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			s := mock_service.NewMockProjectService(ctrl)
+
+			uc := usecase.NewProjectUseCase(s)
+
+			res, ucErr := uc.UpdateProject(model.ProjectUpdateRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: tc.project,
+			})
+			assert.Error(t, ucErr)
+
+			expectedJson, _ := json.Marshal(tc.expected)
+			assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
+			assert.Equal(t, tc.expected, *ucErr.Response())
+
+			assert.Nil(t, res)
+		})
+	}
+}
+
+func TestUpdateProjectServiceError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	s := mock_service.NewMockProjectService(ctrl)
+
+	s.EXPECT().
+		UpdateProject(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, service.Errorf(service.RepositoryFailurePanic, "service error"))
+
+	uc := usecase.NewProjectUseCase(s)
+
+	res, ucErr := uc.UpdateProject(model.ProjectUpdateRequest{
+		User: model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+		Project: model.Project{
+			Id:   "0000000000000001",
+			Name: "Project Name",
+		},
+	})
+	assert.Error(t, ucErr)
+	assert.Equal(t, "internal error: service error", ucErr.Error())
+	assert.Equal(t, usecase.InternalErrorPanic, ucErr.Code())
+	assert.Nil(t, ucErr.Response())
+	assert.Nil(t, res)
+}

@@ -15,6 +15,8 @@ type ProjectUseCase interface {
 		*model.ProjectFindResponse, *Error[model.ProjectFindErrorResponse])
 	CreateProject(req model.ProjectCreateRequest) (
 		*model.ProjectCreateResponse, *Error[model.ProjectCreateErrorResponse])
+	UpdateProject(req model.ProjectUpdateRequest) (
+		*model.ProjectUpdateResponse, *Error[model.ProjectUpdateErrorResponse])
 }
 
 type projectUseCase struct {
@@ -148,6 +150,71 @@ func (uc projectUseCase) CreateProject(req model.ProjectCreateRequest) (
 	}
 
 	return &model.ProjectCreateResponse{
+		Project: model.Project{
+			Id:          entity.Id().Value(),
+			Name:        entity.Name().Value(),
+			Description: entity.Description().Value(),
+		},
+	}, nil
+}
+
+func (uc projectUseCase) UpdateProject(req model.ProjectUpdateRequest) (
+	*model.ProjectUpdateResponse, *Error[model.ProjectUpdateErrorResponse]) {
+	uid, uidErr := domain.NewUserIdObject(req.User.Id)
+	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
+	pname, pnameErr := domain.NewProjectNameObject(req.Project.Name)
+	pdesc, pdescErr := domain.NewProjectDescriptionObject(req.Project.Description)
+
+	uidMsg := ""
+	if uidErr != nil {
+		uidMsg = uidErr.Error()
+	}
+	pidMsg := ""
+	if pidErr != nil {
+		pidMsg = pidErr.Error()
+	}
+	pnameMsg := ""
+	if pnameErr != nil {
+		pnameMsg = pnameErr.Error()
+	}
+	pdescMsg := ""
+	if pdescErr != nil {
+		pdescMsg = pdescErr.Error()
+	}
+
+	if uidErr != nil || pidErr != nil || pnameErr != nil || pdescErr != nil {
+		return nil, NewModelBasedError(
+			InvalidArgumentError,
+			model.ProjectUpdateErrorResponse{
+				User: model.UserOnlyIdError{
+					Id: uidMsg,
+				},
+				Project: model.ProjectError{
+					Id:          pidMsg,
+					Name:        pnameMsg,
+					Description: pdescMsg,
+				},
+			},
+		)
+	}
+
+	project := domain.NewProjectWithoutAutofieldEntity(*pname, *pdesc)
+
+	entity, sErr := uc.service.UpdateProject(*uid, *pid, *project)
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.ProjectUpdateErrorResponse](
+			NotFoundError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil {
+		return nil, NewMessageBasedError[model.ProjectUpdateErrorResponse](
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
+		)
+	}
+
+	return &model.ProjectUpdateResponse{
 		Project: model.Project{
 			Id:          entity.Id().Value(),
 			Name:        entity.Name().Value(),
