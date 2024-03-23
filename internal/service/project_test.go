@@ -617,3 +617,274 @@ func TestCreateProjectRepositoryError(t *testing.T) {
 	assert.Equal(t, "repository failure: failed to insert project: repository error", sErr.Error())
 	assert.Nil(t, createdProject)
 }
+
+func TestEditProjectValidEntry(t *testing.T) {
+	maxLengthProjectName := testutil.RandomString(100)
+	maxLengthProjectDescription := testutil.RandomString(400)
+
+	tt := []struct {
+		name      string
+		projectId string
+		project   record.ProjectWithoutAutofieldEntry
+	}{
+		{
+			name:      "should return project with valid entry",
+			projectId: "0000000000000001",
+			project: record.ProjectWithoutAutofieldEntry{
+				Name:        "Updated Project",
+				Description: "This is updated project",
+				UserId:      testutil.ModifyOnlyUserId(),
+			},
+		},
+		{
+			name:      "should return project with max-length valid entry",
+			projectId: "0000000000000002",
+			project: record.ProjectWithoutAutofieldEntry{
+				Name:        maxLengthProjectName,
+				Description: maxLengthProjectDescription,
+				UserId:      testutil.ModifyOnlyUserId(),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		r := mock_repository.NewMockProjectRepository(ctrl)
+		r.EXPECT().
+			UpdateProject(tc.projectId, tc.project).
+			Return(&record.ProjectEntry{
+				Name:        tc.project.Name,
+				Description: tc.project.Description,
+				UserId:      tc.project.UserId,
+				CreatedAt:   testutil.Date(),
+				UpdatedAt:   testutil.Date(),
+			}, nil)
+
+		s := service.NewProjectService(r)
+
+		userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+		assert.NoError(t, err)
+
+		projectId, err := domain.NewProjectIdObject(tc.projectId)
+		assert.NoError(t, err)
+
+		name, err := domain.NewProjectNameObject(tc.project.Name)
+		assert.NoError(t, err)
+		description, err := domain.NewProjectDescriptionObject(tc.project.Description)
+		assert.NoError(t, err)
+
+		project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
+
+		editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+		assert.Nil(t, sErr)
+
+		assert.Equal(t, tc.projectId, editedProject.Id().Value())
+		assert.Equal(t, tc.project.Name, editedProject.Name().Value())
+		assert.Equal(t, tc.project.Description, editedProject.Description().Value())
+		assert.Equal(t, testutil.Date(), editedProject.CreatedAt().Value())
+		assert.Equal(t, testutil.Date(), editedProject.UpdatedAt().Value())
+		assert.True(t, editedProject.AuthoredBy(userId))
+	}
+}
+
+func TestEditProjectNoEntry(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockProjectRepository(ctrl)
+	r.EXPECT().
+		UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
+			Name:        "Updated Project",
+			Description: "This is updated project",
+			UserId:      testutil.ModifyOnlyUserId(),
+		}).
+		Return(nil, repository.Errorf(repository.NotFoundError, "failed to update project"))
+
+	s := service.NewProjectService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+	assert.NoError(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.NoError(t, err)
+
+	name, err := domain.NewProjectNameObject("Updated Project")
+	assert.NoError(t, err)
+	description, err := domain.NewProjectDescriptionObject("This is updated project")
+	assert.NoError(t, err)
+
+	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
+
+	editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.NotFoundError, sErr.Code())
+	assert.Equal(t, "not found: failed to edit project", sErr.Error())
+	assert.Nil(t, editedProject)
+}
+
+func TestEditProjectUnauthoredEntry(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockProjectRepository(ctrl)
+	r.EXPECT().
+		UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
+			Name:        "Updated Project",
+			Description: "This is updated project",
+			UserId:      testutil.ModifyOnlyUserId(),
+		}).
+		Return(&record.ProjectEntry{
+			Name:      "Updated Project",
+			UserId:    testutil.ReadOnlyUserId(),
+			CreatedAt: testutil.Date(),
+			UpdatedAt: testutil.Date(),
+		}, nil)
+
+	s := service.NewProjectService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+	assert.NoError(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.NoError(t, err)
+
+	name, err := domain.NewProjectNameObject("Updated Project")
+	assert.NoError(t, err)
+	description, err := domain.NewProjectDescriptionObject("This is updated project")
+	assert.NoError(t, err)
+
+	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
+
+	editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.NotFoundError, sErr.Code())
+	assert.Equal(t, "not found: failed to edit project", sErr.Error())
+	assert.Nil(t, editedProject)
+}
+
+func TestEditProjectInvalidEditedEntry(t *testing.T) {
+	tooLongProjectName := testutil.RandomString(101)
+	tooLongProjectDescription := testutil.RandomString(401)
+
+	tt := []struct {
+		name          string
+		editedProject record.ProjectEntry
+		expectedError string
+	}{
+		{
+			name: "should return error when project name is empty",
+			editedProject: record.ProjectEntry{
+				Name:        "",
+				Description: "This is updated project",
+				UserId:      testutil.ModifyOnlyUserId(),
+				CreatedAt:   testutil.Date(),
+				UpdatedAt:   testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (name): project name is required, but got ''",
+		},
+		{
+			name: "should return error when project name is too long",
+			editedProject: record.ProjectEntry{
+				Name:        tooLongProjectName,
+				Description: "This is updated project",
+				UserId:      testutil.ModifyOnlyUserId(),
+				CreatedAt:   testutil.Date(),
+				UpdatedAt:   testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (name): " +
+				fmt.Sprintf(
+					"project name cannot be longer than 100 characters, but got '%s'",
+					tooLongProjectName,
+				),
+		},
+		{
+			name: "should return error when project description is too long",
+			editedProject: record.ProjectEntry{
+				Name:        "Updated Project",
+				Description: tooLongProjectDescription,
+				UserId:      testutil.ModifyOnlyUserId(),
+				CreatedAt:   testutil.Date(),
+				UpdatedAt:   testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (description): " +
+				fmt.Sprintf(
+					"project description cannot be longer than 400 characters, but got '%s'",
+					tooLongProjectDescription,
+				),
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockProjectRepository(ctrl)
+			r.EXPECT().
+				UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
+					Name:        "Updated Project",
+					Description: "This is updated project",
+					UserId:      testutil.ModifyOnlyUserId(),
+				}).
+				Return(&tc.editedProject, nil)
+
+			s := service.NewProjectService(r)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.NoError(t, err)
+
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.NoError(t, err)
+
+			name, err := domain.NewProjectNameObject("Updated Project")
+			assert.NoError(t, err)
+			description, err := domain.NewProjectDescriptionObject("This is updated project")
+			assert.NoError(t, err)
+
+			project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
+
+			editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Nil(t, editedProject)
+		})
+	}
+}
+
+func TestEditProjectRepositoryError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockProjectRepository(ctrl)
+	r.EXPECT().
+		UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
+			Name:        "Updated Project",
+			Description: "This is updated project",
+			UserId:      testutil.ModifyOnlyUserId(),
+		}).
+		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
+
+	s := service.NewProjectService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+	assert.NoError(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.NoError(t, err)
+
+	name, err := domain.NewProjectNameObject("Updated Project")
+	assert.NoError(t, err)
+	description, err := domain.NewProjectDescriptionObject("This is updated project")
+	assert.NoError(t, err)
+
+	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
+
+	editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
+	assert.Equal(t, "repository failure: failed to update project: repository error", sErr.Error())
+	assert.Nil(t, editedProject)
+}
