@@ -14,6 +14,7 @@ type ProjectRepository interface {
 	FetchUserProjects(userId string) (map[string]record.ProjectEntry, *Error)
 	FetchProject(projectId string) (*record.ProjectEntry, *Error)
 	InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error)
+	UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error)
 }
 
 type projectRepository struct {
@@ -29,7 +30,7 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 		Where("userId", "==", userId).
 		Documents(db.FirestoreContext())
 
-	projects := make(map[string]record.ProjectEntry)
+	entries := make(map[string]record.ProjectEntry)
 
 	for {
 		snapshot, err := iter.Next()
@@ -43,10 +44,10 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
 		}
 
-		projects[snapshot.Ref.ID] = entry
+		entries[snapshot.Ref.ID] = entry
 	}
 
-	return projects, nil
+	return entries, nil
 }
 
 func (r projectRepository) FetchProject(projectId string) (*record.ProjectEntry, *Error) {
@@ -84,11 +85,40 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project")
 	}
 
-	var entryWithTimestamp record.ProjectEntry
-	err = snapshot.DataTo(&entryWithTimestamp)
+	var entryWithAutofield record.ProjectEntry
+	err = snapshot.DataTo(&entryWithAutofield)
 	if err != nil {
 		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
 	}
 
-	return ref.ID, &entryWithTimestamp, nil
+	return ref.ID, &entryWithAutofield, nil
+}
+
+func (r projectRepository) UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error) {
+	_, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Update(db.FirestoreContext(), []firestore.Update{
+			{Path: "name", Value: entry.Name},
+			{Path: "description", Value: entry.Description},
+			{Path: "userId", Value: entry.UserId},
+			{Path: "updatedAt", Value: firestore.ServerTimestamp},
+		})
+	if err != nil {
+		return nil, Errorf(WriteFailurePanic, "failed to update project")
+	}
+
+	snapshot, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to get updated project")
+	}
+
+	var entryWithAutofield record.ProjectEntry
+	err = snapshot.DataTo(&entryWithAutofield)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
+	}
+
+	return &entryWithAutofield, nil
 }

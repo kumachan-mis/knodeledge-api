@@ -182,25 +182,121 @@ func TestFetchProjectInvalidDocument(t *testing.T) {
 }
 
 func TestInsertProjectValidEntry(t *testing.T) {
+	tt := []struct {
+		name    string
+		project record.ProjectWithoutAutofieldEntry
+	}{
+		{
+			name: "should insert project without description",
+			project: record.ProjectWithoutAutofieldEntry{
+				Name:        "New Project",
+				Description: "This is new project",
+				UserId:      testutil.ModifyOnlyUserId(),
+			},
+		},
+		{
+			name: "should insert project with description",
+			project: record.ProjectWithoutAutofieldEntry{
+				Name:        "New Project",
+				Description: "This is new project",
+				UserId:      testutil.ModifyOnlyUserId(),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
+
+			userId := testutil.ModifyOnlyUserId()
+			entry := record.ProjectWithoutAutofieldEntry{
+				Name:        "New Project",
+				Description: "This is new project",
+				UserId:      userId,
+			}
+
+			id, createdProject, rErr := r.InsertProject(entry)
+			now := time.Now()
+
+			assert.Nil(t, rErr)
+
+			assert.NotEmpty(t, id)
+			assert.Equal(t, entry.Name, createdProject.Name)
+			assert.Equal(t, entry.Description, createdProject.Description)
+			assert.Equal(t, entry.UserId, createdProject.UserId)
+			assert.Less(t, now.Sub(createdProject.CreatedAt), time.Second)
+			assert.Less(t, now.Sub(createdProject.UpdatedAt), time.Second)
+		})
+	}
+}
+
+func TestUpdateProjectValidEntry(t *testing.T) {
+	tt := []struct {
+		name    string
+		id      string
+		project record.ProjectWithoutAutofieldEntry
+	}{
+		{
+			name: "should update project without description",
+			id:   "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION",
+			project: record.ProjectWithoutAutofieldEntry{
+				Name:        "Updated Project",
+				Description: "This is updated project",
+				UserId:      testutil.ModifyOnlyUserId(),
+			},
+		},
+		{
+			name: "should update project with description",
+			id:   "PROJECT_TO_UPDATE_WITH_DESCRIPTION",
+			project: record.ProjectWithoutAutofieldEntry{
+				Name:        "Updated Project",
+				Description: "This is updated project",
+				UserId:      testutil.ModifyOnlyUserId(),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
+
+			entry := record.ProjectWithoutAutofieldEntry{
+				Name:        "Updated Project",
+				Description: "This is updated project",
+				UserId:      testutil.ModifyOnlyUserId(),
+			}
+
+			updatedProject, rErr := r.UpdateProject(tc.id, tc.project)
+			now := time.Now()
+
+			assert.Nil(t, rErr)
+
+			assert.Equal(t, entry.Name, updatedProject.Name)
+			assert.Equal(t, entry.Description, updatedProject.Description)
+			assert.Equal(t, entry.UserId, updatedProject.UserId)
+			assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), updatedProject.CreatedAt)
+			assert.Less(t, now.Sub(updatedProject.UpdatedAt), time.Second)
+		})
+	}
+}
+
+func TestUpdateProjectNoDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 
-	userId := testutil.ModifyOnlyUserId()
+	projectId := "UNKNOWN_PROJECT"
 	entry := record.ProjectWithoutAutofieldEntry{
-		Name:        "New Project",
-		Description: "This is new project",
-		UserId:      userId,
+		Name:        "Updated Project",
+		Description: "This is updated project",
+		UserId:      testutil.ModifyOnlyUserId(),
 	}
 
-	id, project, rErr := r.InsertProject(entry)
-	now := time.Now()
+	project, rErr := r.UpdateProject(projectId, entry)
 
-	assert.Nil(t, rErr)
-
-	assert.NotEmpty(t, id)
-	assert.Equal(t, entry.Name, project.Name)
-	assert.Equal(t, entry.Description, project.Description)
-	assert.Equal(t, entry.UserId, project.UserId)
-	assert.Less(t, now.Sub(project.CreatedAt), time.Second)
-	assert.Less(t, now.Sub(project.UpdatedAt), time.Second)
+	assert.NotNil(t, rErr)
+	assert.Equal(t, repository.WriteFailurePanic, rErr.Code())
+	assert.Equal(t, "write failure: failed to update project", rErr.Error())
+	assert.Nil(t, project)
 }
