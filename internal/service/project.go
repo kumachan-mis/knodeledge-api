@@ -22,7 +22,7 @@ type ProjectService interface {
 		userId domain.UserIdObject,
 		project domain.ProjectWithoutAutofieldEntity,
 	) (*domain.ProjectEntity, *Error)
-	EditProject(
+	UpdateProject(
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
 		project domain.ProjectWithoutAutofieldEntity,
@@ -108,7 +108,7 @@ func (s projectService) CreateProject(
 	return entryToEntity(key, *entry)
 }
 
-func (s projectService) EditProject(
+func (s projectService) UpdateProject(
 	userId domain.UserIdObject,
 	projectId domain.ProjectIdObject,
 	project domain.ProjectWithoutAutofieldEntity,
@@ -121,7 +121,7 @@ func (s projectService) EditProject(
 
 	entry, rErr := s.repository.UpdateProject(projectId.Value(), entryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return nil, Errorf(NotFoundError, "failed to edit project")
+		return nil, Errorf(NotFoundError, "failed to update project")
 	}
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to update project: %w", rErr.Unwrap())
@@ -133,7 +133,7 @@ func (s projectService) EditProject(
 	}
 
 	if !entity.AuthoredBy(&userId) {
-		return nil, Errorf(NotFoundError, "failed to edit project")
+		return nil, Errorf(NotFoundError, "failed to update project")
 	}
 
 	return entity, nil

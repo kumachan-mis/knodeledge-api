@@ -677,7 +677,7 @@ func TestEditProjectValidEntry(t *testing.T) {
 
 		project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
-		editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+		editedProject, sErr := s.UpdateProject(*userId, *projectId, *project)
 		assert.Nil(t, sErr)
 
 		assert.Equal(t, tc.projectId, editedProject.Id().Value())
@@ -717,10 +717,10 @@ func TestEditProjectNoEntry(t *testing.T) {
 
 	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
-	editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+	editedProject, sErr := s.UpdateProject(*userId, *projectId, *project)
 	assert.NotNil(t, sErr)
 	assert.Equal(t, service.NotFoundError, sErr.Code())
-	assert.Equal(t, "not found: failed to edit project", sErr.Error())
+	assert.Equal(t, "not found: failed to update project", sErr.Error())
 	assert.Nil(t, editedProject)
 }
 
@@ -757,10 +757,10 @@ func TestEditProjectUnauthoredEntry(t *testing.T) {
 
 	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
-	editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+	editedProject, sErr := s.UpdateProject(*userId, *projectId, *project)
 	assert.NotNil(t, sErr)
 	assert.Equal(t, service.NotFoundError, sErr.Code())
-	assert.Equal(t, "not found: failed to edit project", sErr.Error())
+	assert.Equal(t, "not found: failed to update project", sErr.Error())
 	assert.Nil(t, editedProject)
 }
 
@@ -845,7 +845,7 @@ func TestEditProjectInvalidEditedEntry(t *testing.T) {
 
 			project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
-			editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+			editedProject, sErr := s.UpdateProject(*userId, *projectId, *project)
 			assert.NotNil(t, sErr)
 			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
 			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
@@ -882,7 +882,7 @@ func TestEditProjectRepositoryError(t *testing.T) {
 
 	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
 
-	editedProject, sErr := s.EditProject(*userId, *projectId, *project)
+	editedProject, sErr := s.UpdateProject(*userId, *projectId, *project)
 	assert.NotNil(t, sErr)
 	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
 	assert.Equal(t, "repository failure: failed to update project: repository error", sErr.Error())
