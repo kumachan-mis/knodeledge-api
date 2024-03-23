@@ -1,0 +1,10 @@
+type: object
+description: Request Body for Project Update API
+properties:
+  user:
+    $ref: ./UserOnlyId.yaml
+  project:
+    $ref: ./Project.yaml
+required:
+  - user
+  - project

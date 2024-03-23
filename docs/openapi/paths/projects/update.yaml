@@ -1,32 +1,32 @@
 post:
   tags:
     - Projects
-  operationId: find
-  summary: Find project
+  operationId: update
+  summary: Update project
   requestBody:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/ProjectFindRequest.yaml
+          $ref: ../../schemas/ProjectUpdateRequest.yaml
   responses:
     "200":
-      description: OK - Returns found project
+      description: OK - Returns updated project
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectFindResponse.yaml
+            $ref: ../../schemas/ProjectUpdateResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectFindErrorResponse.yaml
+            $ref: ../../schemas/ProjectUpdateErrorResponse.yaml
     "404":
       description: Not Found - Project not found or not authorized
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectFindErrorResponse.yaml
+            $ref: ../../schemas/ProjectUpdateErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:
