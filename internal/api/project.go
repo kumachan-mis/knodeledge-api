@@ -12,6 +12,7 @@ type ProjectApi interface {
 	HandleList(c *gin.Context)
 	HandleFind(c *gin.Context)
 	HandleCreate(c *gin.Context)
+	HandleUpdate(c *gin.Context)
 }
 
 type projectApi struct {
@@ -119,4 +120,42 @@ func (api projectApi) HandleCreate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, res)
+}
+
+func (api projectApi) HandleUpdate(c *gin.Context) {
+	var request model.ProjectUpdateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, model.ProjectUpdateErrorResponse{
+			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	res, ucErr := api.usecase.UpdateProject(request)
+
+	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+		resErr := UseCaseErrorToResponse(ucErr)
+		c.JSON(http.StatusBadRequest, model.ProjectUpdateErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+			User:    resErr.User,
+			Project: resErr.Project,
+		})
+		return
+	}
+
+	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
+		c.JSON(http.StatusNotFound, model.ProjectUpdateErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	if ucErr != nil {
+		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }

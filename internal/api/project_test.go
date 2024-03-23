@@ -598,6 +598,278 @@ func TestProjectCreateInvalidRequestFormat(t *testing.T) {
 	}
 }
 
+func TestProjectUpdate(t *testing.T) {
+	tt := []struct {
+		name    string
+		project map[string]any
+	}{
+		{
+			name: "should update project name",
+			project: map[string]any{
+				"id":   "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION",
+				"name": "Updated Project",
+			},
+		},
+		{
+			name: "should update project name and description",
+			project: map[string]any{
+				"id":          "PROJECT_TO_UPDATE_WITH_DESCRIPTION",
+				"name":        "Updated Project",
+				"description": "Updated project description",
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(map[string]any{
+				"user":    map[string]any{"id": testutil.ModifyOnlyUserId()},
+				"project": tc.project,
+			})
+			req, _ := http.NewRequest("POST", "/api/projects/update", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusOK, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+
+			assert.Equal(t, responseBody, map[string]any{
+				"project": tc.project,
+			})
+		})
+	}
+}
+
+func TestProjectUpdateNotFound(t *testing.T) {
+	tt := []struct {
+		name    string
+		project map[string]any
+	}{
+		{
+			name: "should return not found when project id is not found",
+			project: map[string]any{
+				"id":   "NOT_FOUND_PROJECT",
+				"name": "Updated Project",
+			},
+		},
+		{
+			name: "should return not found when user is not author of the project",
+			project: map[string]any{
+				"id":   "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION",
+				"name": "Updated Project",
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(map[string]any{
+				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
+				"project": tc.project,
+			})
+			req, _ := http.NewRequest("POST", "/api/projects/update", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "not found",
+				"user":    map[string]any{},
+				"project": map[string]any{},
+			}, responseBody)
+		})
+	}
+}
+
+func TestProjectUpdateInvalidArgument(t *testing.T) {
+	tooLongProjectName := testutil.RandomString(101)
+	tooLongProjectDescription := testutil.RandomString(401)
+
+	tt := []struct {
+		name             string
+		request          map[string]any
+		expectedResponse map[string]any
+	}{
+		{
+			name: "should return error when user id is empty",
+			request: map[string]any{
+				"user": map[string]any{"id": ""},
+				"project": map[string]any{
+					"id":   "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION",
+					"name": "Updated Project",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when project id is empty",
+			request: map[string]any{
+				"user": map[string]any{"id": testutil.ModifyOnlyUserId()},
+				"project": map[string]any{
+					"id":   "",
+					"name": "Updated Project",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{},
+				"project": map[string]any{
+					"id": "project id is required, but got ''",
+				},
+			},
+		},
+		{
+			name: "should return error when project name is empty",
+			request: map[string]any{
+				"user": map[string]any{"id": testutil.ModifyOnlyUserId()},
+				"project": map[string]any{
+					"id":   "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION",
+					"name": "",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{},
+				"project": map[string]any{
+					"name": "project name is required, but got ''",
+				},
+			},
+		},
+		{
+			name: "should return error when project properties are too long",
+			request: map[string]any{
+				"user": map[string]any{"id": ""},
+				"project": map[string]any{
+					"id":          "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION",
+					"name":        tooLongProjectName,
+					"description": tooLongProjectDescription,
+				},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{
+					"name": fmt.Sprintf(
+						"project name cannot be longer than 100 characters, but got '%s'",
+						tooLongProjectName,
+					),
+					"description": fmt.Sprintf(
+						"project description cannot be longer than 400 characters, but got '%s'",
+						tooLongProjectDescription,
+					),
+				},
+			},
+		},
+		{
+			name:    "should return error when empty object is passed",
+			request: map[string]any{},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{
+					"id":   "project id is required, but got ''",
+					"name": "project name is required, but got ''",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/projects/update", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "invalid request value",
+				"user":    tc.expectedResponse["user"],
+				"project": tc.expectedResponse["project"],
+			}, responseBody)
+		})
+	}
+}
+
+func TestProjectUpdateInvalidRequestFormat(t *testing.T) {
+	tt := []struct {
+		name    string
+		request string
+	}{
+		{
+			name:    "should return error when user id is not string",
+			request: `{ "user": { "id": 123 }, "project": { "id": "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION", "name": "Updated Project" } }`,
+		},
+		{
+			name:    "should return error when project id is not string",
+			request: `{ "user": { "id": "user-id" }, "project": { "id": 123, "name": "Updated Project" } }`,
+		},
+		{
+			name:    "should return error when project name is not string",
+			request: `{ "user": { "id": "user-id" }, "project": { "id": "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION", "name": 123 } }`,
+		},
+		{
+			name:    "should return error when user is not object",
+			request: `{ "user": 123, "project": { "id": "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION", "name": "Updated Project" } }`,
+		},
+		{
+			name:    "should return error when project is not object",
+			request: `{ "user": { "id": "user-id" }, "project": "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION" }`,
+		},
+		{
+			name:    "should return error when request body is invalid JSON",
+			request: `{ "user": { "id": "user-id", "project": { "id": "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION", "name": "Updated Project" }`,
+		},
+		{
+			name:    "should return error when request body is empty",
+			request: "",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/api/projects/update", strings.NewReader(tc.request))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "invalid request format",
+				"user":    map[string]any{},
+				"project": map[string]any{},
+			}, responseBody)
+		})
+	}
+}
+
 func setupProjectRouter() *gin.Engine {
 	router := gin.Default()
 
@@ -610,5 +882,6 @@ func setupProjectRouter() *gin.Engine {
 	router.POST("/api/projects/list", a.HandleList)
 	router.POST("/api/projects/create", a.HandleCreate)
 	router.POST("/api/projects/find", a.HandleFind)
+	router.POST("/api/projects/update", a.HandleUpdate)
 	return router
 }
