@@ -113,18 +113,12 @@ func (s projectService) UpdateProject(
 	projectId domain.ProjectIdObject,
 	project domain.ProjectWithoutAutofieldEntity,
 ) (*domain.ProjectEntity, *Error) {
-	entryWithoutAutofield := record.ProjectWithoutAutofieldEntry{
-		Name:        project.Name().Value(),
-		Description: project.Description().Value(),
-		UserId:      userId.Value(),
-	}
-
-	entry, rErr := s.repository.UpdateProject(projectId.Value(), entryWithoutAutofield)
+	entry, rErr := s.repository.FetchProject(projectId.Value())
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return nil, Errorf(NotFoundError, "failed to update project")
 	}
 	if rErr != nil {
-		return nil, Errorf(RepositoryFailurePanic, "failed to update project: %w", rErr.Unwrap())
+		return nil, Errorf(RepositoryFailurePanic, "failed to fetch project: %w", rErr.Unwrap())
 	}
 
 	entity, err := entryToEntity(projectId.Value(), *entry)
@@ -136,7 +130,18 @@ func (s projectService) UpdateProject(
 		return nil, Errorf(NotFoundError, "failed to update project")
 	}
 
-	return entity, nil
+	entryWithoutAutofield := record.ProjectWithoutAutofieldEntry{
+		Name:        project.Name().Value(),
+		Description: project.Description().Value(),
+		UserId:      userId.Value(),
+	}
+
+	entry, rErr = s.repository.UpdateProject(projectId.Value(), entryWithoutAutofield)
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to update project: %w", rErr.Unwrap())
+	}
+
+	return entryToEntity(projectId.Value(), *entry)
 }
 
 func entryToEntity(key string, entry record.ProjectEntry) (*domain.ProjectEntity, *Error) {

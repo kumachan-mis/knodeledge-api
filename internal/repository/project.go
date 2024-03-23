@@ -104,7 +104,7 @@ func (r projectRepository) UpdateProject(projectId string, entry record.ProjectW
 			{Path: "updatedAt", Value: firestore.ServerTimestamp},
 		})
 	if err != nil {
-		return nil, Errorf(NotFoundError, "failed to update project")
+		return nil, Errorf(WriteFailurePanic, "failed to update project")
 	}
 
 	snapshot, err := r.client.Collection(ProjectCollection).

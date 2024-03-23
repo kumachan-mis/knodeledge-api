@@ -296,7 +296,7 @@ func TestUpdateProjectNoDocument(t *testing.T) {
 	project, rErr := r.UpdateProject(projectId, entry)
 
 	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: failed to update project", rErr.Error())
+	assert.Equal(t, repository.WriteFailurePanic, rErr.Code())
+	assert.Equal(t, "write failure: failed to update project", rErr.Error())
 	assert.Nil(t, project)
 }
