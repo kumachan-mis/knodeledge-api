@@ -2,9 +2,9 @@ type: object
 description: Request Body for Project Create API
 properties:
   user:
-    $ref: ./UserOnlyId.yaml
+    $ref: ../../../entity/user/UserOnlyId.yaml
   project:
-    $ref: ./ProjectWithoutAutofield.yaml
+    $ref: ../../../entity/project/ProjectWithoutAutofield.yaml
 required:
   - user
   - project

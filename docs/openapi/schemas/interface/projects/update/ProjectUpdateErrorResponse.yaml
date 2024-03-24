@@ -1,11 +1,11 @@
 type: object
-description: Error Response Body for Project Create API
+description: Error Response Body for Project Update API
 properties:
   message:
     type: string
     description: Error message when request body format is invalid
     example: unexpected EOF
   user:
-    $ref: ./UserOnlyIdError.yaml
+    $ref: ../../../entity/user/UserOnlyIdError.yaml
   project:
-    $ref: ./ProjectWithoutAutofieldError.yaml
+    $ref: ../../../entity/project/ProjectError.yaml

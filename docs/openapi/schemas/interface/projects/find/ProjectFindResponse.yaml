@@ -2,6 +2,6 @@ type: object
 description: Response Body for Project Find API
 properties:
   project:
-    $ref: ./Project.yaml
+    $ref: ../../../entity/project/Project.yaml
 required:
   - project

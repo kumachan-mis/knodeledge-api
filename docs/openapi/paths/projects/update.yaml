@@ -7,29 +7,29 @@ post:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/ProjectUpdateRequest.yaml
+          $ref: ../../schemas/interface/projects/update/ProjectUpdateRequest.yaml
   responses:
     "200":
       description: OK - Returns updated project
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectUpdateResponse.yaml
+            $ref: ../../schemas/interface/projects/update/ProjectUpdateResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectUpdateErrorResponse.yaml
+            $ref: ../../schemas/interface/projects/update/ProjectUpdateErrorResponse.yaml
     "404":
       description: Not Found - Project not found or not authorized
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectUpdateErrorResponse.yaml
+            $ref: ../../schemas/interface/projects/update/ProjectUpdateErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ApplicationErrorResponse.yaml
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

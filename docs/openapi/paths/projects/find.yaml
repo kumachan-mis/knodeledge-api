@@ -7,29 +7,29 @@ post:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/ProjectFindRequest.yaml
+          $ref: ../../schemas/interface/projects/find/ProjectFindRequest.yaml
   responses:
     "200":
       description: OK - Returns found project
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectFindResponse.yaml
+            $ref: ../../schemas/interface/projects/find/ProjectFindResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectFindErrorResponse.yaml
+            $ref: ../../schemas/interface/projects/find/ProjectFindErrorResponse.yaml
     "404":
       description: Not Found - Project not found or not authorized
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectFindErrorResponse.yaml
+            $ref: ../../schemas/interface/projects/find/ProjectFindErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ApplicationErrorResponse.yaml
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml
