@@ -1,0 +1,15 @@
+type: object
+description: Section object
+properties:
+  id:
+    type: string
+    description: Auto-generated section ID
+    example: 123e4567-e89b-12d3-a456-426614174000
+  name:
+    type: string
+    maxLength: 100
+    description: Section name
+    example: Overview
+required:
+  - id
+  - name
