@@ -1,0 +1,9 @@
+type: object
+description: Response Body for Chapter List API
+properties:
+  chapters:
+    type: array
+    items:
+      $ref: ./Chapter.yaml
+required:
+  - chapters

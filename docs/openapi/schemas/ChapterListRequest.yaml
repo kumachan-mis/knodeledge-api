@@ -1,0 +1,10 @@
+type: object
+description: Request Body for Chapter List API
+properties:
+  user:
+    $ref: ./UserOnlyId.yaml
+  project:
+    $ref: ./ProjectOnlyId.yaml
+required:
+  - user
+  - project
