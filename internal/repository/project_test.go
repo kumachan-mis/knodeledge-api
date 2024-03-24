@@ -189,9 +189,8 @@ func TestInsertProjectValidEntry(t *testing.T) {
 		{
 			name: "should insert project without description",
 			project: record.ProjectWithoutAutofieldEntry{
-				Name:        "New Project",
-				Description: "This is new project",
-				UserId:      testutil.ModifyOnlyUserId(),
+				Name:   "New Project",
+				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
@@ -209,22 +208,15 @@ func TestInsertProjectValidEntry(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewProjectRepository(*client)
 
-			userId := testutil.ModifyOnlyUserId()
-			entry := record.ProjectWithoutAutofieldEntry{
-				Name:        "New Project",
-				Description: "This is new project",
-				UserId:      userId,
-			}
-
-			id, createdProject, rErr := r.InsertProject(entry)
+			id, createdProject, rErr := r.InsertProject(tc.project)
 			now := time.Now()
 
 			assert.Nil(t, rErr)
 
 			assert.NotEmpty(t, id)
-			assert.Equal(t, entry.Name, createdProject.Name)
-			assert.Equal(t, entry.Description, createdProject.Description)
-			assert.Equal(t, entry.UserId, createdProject.UserId)
+			assert.Equal(t, tc.project.Name, createdProject.Name)
+			assert.Equal(t, tc.project.Description, createdProject.Description)
+			assert.Equal(t, tc.project.UserId, createdProject.UserId)
 			assert.Less(t, now.Sub(createdProject.CreatedAt), time.Second)
 			assert.Less(t, now.Sub(createdProject.UpdatedAt), time.Second)
 		})
@@ -239,16 +231,15 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 	}{
 		{
 			name: "should update project without description",
-			id:   "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION",
+			id:   "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			project: record.ProjectWithoutAutofieldEntry{
-				Name:        "Updated Project",
-				Description: "This is updated project",
-				UserId:      testutil.ModifyOnlyUserId(),
+				Name:   "Updated Project",
+				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
 			name: "should update project with description",
-			id:   "PROJECT_TO_UPDATE_WITH_DESCRIPTION",
+			id:   "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:        "Updated Project",
 				Description: "This is updated project",
@@ -262,20 +253,14 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewProjectRepository(*client)
 
-			entry := record.ProjectWithoutAutofieldEntry{
-				Name:        "Updated Project",
-				Description: "This is updated project",
-				UserId:      testutil.ModifyOnlyUserId(),
-			}
-
 			updatedProject, rErr := r.UpdateProject(tc.id, tc.project)
 			now := time.Now()
 
 			assert.Nil(t, rErr)
 
-			assert.Equal(t, entry.Name, updatedProject.Name)
-			assert.Equal(t, entry.Description, updatedProject.Description)
-			assert.Equal(t, entry.UserId, updatedProject.UserId)
+			assert.Equal(t, tc.project.Name, updatedProject.Name)
+			assert.Equal(t, tc.project.Description, updatedProject.Description)
+			assert.Equal(t, tc.project.UserId, updatedProject.UserId)
 			assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), updatedProject.CreatedAt)
 			assert.Less(t, now.Sub(updatedProject.UpdatedAt), time.Second)
 		})
