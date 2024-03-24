@@ -8,7 +8,7 @@
 *.log
 
 mock/
-tmp/
+build/
 
 ### Firebase ###
 .idea
