@@ -606,14 +606,14 @@ func TestProjectUpdate(t *testing.T) {
 		{
 			name: "should update project name",
 			project: map[string]any{
-				"id":   "PROJECT_TO_UPDATE_WITHOUT_DESCRIPTION",
+				"id":   "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
 				"name": "Updated Project",
 			},
 		},
 		{
 			name: "should update project name and description",
 			project: map[string]any{
-				"id":          "PROJECT_TO_UPDATE_WITH_DESCRIPTION",
+				"id":          "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
 				"name":        "Updated Project",
 				"description": "Updated project description",
 			},

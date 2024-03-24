@@ -11,3 +11,6 @@ jobs:
   release:
     needs: [test, docstest]
     uses: ./.github/workflows/reusable-release.yml
+  ghpages:
+    needs: [release]
+    uses: ./.github/workflows/reusable-ghpages.yml
