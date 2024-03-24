@@ -7,23 +7,23 @@ post:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/ChapterListRequest.yaml
+          $ref: ../../schemas/interface/chapters/list/ChapterListRequest.yaml
   responses:
     "200":
       description: OK - Returns list of chapters for a project
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ChapterListResponse.yaml
+            $ref: ../../schemas/interface/chapters/list/ChapterListResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ChapterListErrorResponse.yaml
+            $ref: ../../schemas/interface/chapters/list/ChapterListErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ApplicationErrorResponse.yaml
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml
