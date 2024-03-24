@@ -4,6 +4,6 @@ properties:
   projects:
     type: array
     items:
-      $ref: ./Project.yaml
+      $ref: ../../../entity/project/Project.yaml
 required:
   - projects

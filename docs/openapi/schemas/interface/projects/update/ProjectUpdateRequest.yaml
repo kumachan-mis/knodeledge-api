@@ -2,9 +2,9 @@ type: object
 description: Request Body for Project Update API
 properties:
   user:
-    $ref: ./UserOnlyId.yaml
+    $ref: ../../../entity/user/UserOnlyId.yaml
   project:
-    $ref: ./Project.yaml
+    $ref: ../../../entity/project/Project.yaml
 required:
   - user
   - project
