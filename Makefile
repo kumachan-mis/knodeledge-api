@@ -3,13 +3,14 @@ UI_REPOSITORY_ROOT  := $(shell dirname ${API_REPOSITORY_ROOT})/knodeledge-ui
 
 BUILD_DIR    := build
 SRC_MAIN     := cmd/app/main.go
-APP_DIST     := ${BUILD_DIR}/app
+APP_DST      := ${BUILD_DIR}/app
 FIXTURES_DIR := ${API_REPOSITORY_ROOT}/fixtures
 
 OPEN_API_DOCS_SERVER := openapi-docs-server
 OPEN_API_INDEX       := docs/openapi/_index.yaml
-OPEN_API_BUNDLE_DIST := ${BUILD_DIR}/openapi-bundle.yaml
-OPEN_API_DOCS_DIST   := ${BUILD_DIR}/openapi-docs.html
+OPEN_API_DST 	     := openapi-build
+OPEN_API_BUNDLE_DST  := ${OPEN_API_DST}/index.yaml
+OPEN_API_DOCS_DST    := ${OPEN_API_DST}/index.html
 
 OPEN_API_GO_GENERATOR := go-gin-server
 OPEN_API_GO_PACKAGE   := model
@@ -40,7 +41,7 @@ lint:
 	go vet ./...
 
 build:
-	go build -o ${APP_DIST} ${SRC_MAIN}
+	go build -o ${APP_DST} ${SRC_MAIN}
 
 test:
 	firebase emulators:exec --only firestore --import ${FIXTURES_DIR} 'go test ./...'
@@ -79,21 +80,21 @@ build-docs:
 	docker run --rm -v "${API_REPOSITORY_ROOT}:/api" \
 		redocly/cli build-docs \
 		/api/${OPEN_API_INDEX} \
-		--output /api/${OPEN_API_DOCS_DIST}
+		--output /api/${OPEN_API_DOCS_DST}
 
 gen-openapi-go:
 	rm -Rf \
-		${API_REPOSITORY_ROOT}/${OPEN_API_BUNDLE_DIST} \
+		${API_REPOSITORY_ROOT}/${OPEN_API_BUNDLE_DST} \
 		${API_REPOSITORY_ROOT}/${OPEN_API_GO_DST}
 	
 	docker run --rm -v "${API_REPOSITORY_ROOT}:/api" \
 		redocly/cli bundle \
 		/api/${OPEN_API_INDEX} \
-		--output /api/${OPEN_API_BUNDLE_DIST}
+		--output /api/${OPEN_API_BUNDLE_DST}
 
 	docker run --rm -v "${API_REPOSITORY_ROOT}:/api" \
 		openapitools/openapi-generator-cli generate \
-		--input-spec /api/${OPEN_API_BUNDLE_DIST} \
+		--input-spec /api/${OPEN_API_BUNDLE_DST} \
 		--generator-name ${OPEN_API_GO_GENERATOR} \
 		--global-property models,modelDocs=false \
 		--additional-properties apiPath="",packageName=${OPEN_API_GO_PACKAGE} \
@@ -101,17 +102,17 @@ gen-openapi-go:
 
 gen-openapi-node:
 	rm -Rf \
-		${API_REPOSITORY_ROOT}/${OPEN_API_BUNDLE_DIST} \
+		${API_REPOSITORY_ROOT}/${OPEN_API_BUNDLE_DST} \
 		${UI_REPOSITORY_ROOT}/${OPEN_API_NODE_DST}
 	
 	docker run --rm -v "${API_REPOSITORY_ROOT}:/api" \
 		redocly/cli bundle \
 		/api/${OPEN_API_INDEX} \
-		--output /api/${OPEN_API_BUNDLE_DIST}
+		--output /api/${OPEN_API_BUNDLE_DST}
 
 	docker run --rm -v "${API_REPOSITORY_ROOT}:/api" -v "${UI_REPOSITORY_ROOT}:/ui" \
 		openapitools/openapi-generator-cli generate \
-		--input-spec /api/${OPEN_API_BUNDLE_DIST} \
+		--input-spec /api/${OPEN_API_BUNDLE_DST} \
 		--generator-name ${OPEN_API_NODE_GENERATOR} \
 		--output /ui/${OPEN_API_NODE_DST}
 	
