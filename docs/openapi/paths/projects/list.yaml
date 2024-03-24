@@ -7,23 +7,23 @@ post:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/ProjectListRequest.yaml
+          $ref: ../../schemas/interface/projects/list/ProjectListRequest.yaml
   responses:
     "200":
       description: OK - Returns list of projects
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectListResponse.yaml
+            $ref: ../../schemas/interface/projects/list/ProjectListResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectListErrorResponse.yaml
+            $ref: ../../schemas/interface/projects/list/ProjectListErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ApplicationErrorResponse.yaml
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

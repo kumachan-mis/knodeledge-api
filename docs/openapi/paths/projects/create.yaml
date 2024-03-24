@@ -7,23 +7,23 @@ post:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/ProjectCreateRequest.yaml
+          $ref: ../../schemas/interface/projects/create/ProjectCreateRequest.yaml
   responses:
     "201":
       description: Created - Returns newly created project
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectCreateResponse.yaml
+            $ref: ../../schemas/interface/projects/create/ProjectCreateResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ProjectCreateErrorResponse.yaml
+            $ref: ../../schemas/interface/projects/create/ProjectCreateErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:
         application/json:
           schema:
-            $ref: ../../schemas/ApplicationErrorResponse.yaml
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

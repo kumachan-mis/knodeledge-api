@@ -2,9 +2,9 @@ type: object
 description: Request Body for Project Find API
 properties:
   user:
-    $ref: ./UserOnlyId.yaml
+    $ref: ../../../entity/user/UserOnlyId.yaml
   project:
-    $ref: ./ProjectOnlyId.yaml
+    $ref: ../../../entity/project/ProjectOnlyId.yaml
 required:
   - user
   - project
