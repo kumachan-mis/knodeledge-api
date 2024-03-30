@@ -1,7 +1,7 @@
 post:
   tags:
     - Projects
-  operationId: list
+  operationId: projects-list
   summary: Get list of projects
   requestBody:
     content:

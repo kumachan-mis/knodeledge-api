@@ -1,7 +1,7 @@
 post:
   tags:
     - Projects
-  operationId: update
+  operationId: projects-update
   summary: Update project
   requestBody:
     content:

@@ -1,7 +1,7 @@
 post:
   tags:
     - Chapters
-  operationId: list
+  operationId: chapters-list
   summary: Get list of chapters for a project
   requestBody:
     content:
