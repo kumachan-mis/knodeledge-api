@@ -3,6 +3,7 @@ package repository
 import (
 	"cloud.google.com/go/firestore"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
+	"github.com/kumachan-mis/knodeledge-api/internal/document"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
 )
 
@@ -26,8 +27,15 @@ func (r chapterRepository) FetchProjectChapters(projectId string) (map[string]re
 	docref := r.client.Collection(ProjectCollection).
 		Doc(projectId)
 
-	if _, err := docref.Get(db.FirestoreContext()); err != nil {
-		return nil, Errorf(NotFoundError, "parent collection not found")
+	projectSnapshot, err := docref.Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(NotFoundError, "parent document not found")
+	}
+
+	var projectValues document.ProjectValues
+	err = projectSnapshot.DataTo(&projectValues)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
 	iter := docref.
@@ -42,14 +50,24 @@ func (r chapterRepository) FetchProjectChapters(projectId string) (map[string]re
 			break
 		}
 
-		var entry record.ChapterEntry
-		err = snapshot.DataTo(&entry)
+		var values document.ChapterValues
+		err = snapshot.DataTo(&values)
 		if err != nil {
-			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
+			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 		}
 
-		entries[snapshot.Ref.ID] = entry
+		entries[snapshot.Ref.ID] = *r.valuesToEntry(values, projectValues.UserId)
 	}
 
 	return entries, nil
+}
+
+func (r chapterRepository) valuesToEntry(values document.ChapterValues, userId string) *record.ChapterEntry {
+	return &record.ChapterEntry{
+		Name:      values.Name,
+		Number:    values.Number,
+		UserId:    userId,
+		CreatedAt: values.CreatedAt,
+		UpdatedAt: values.UpdatedAt,
+	}
 }

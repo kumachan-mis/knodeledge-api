@@ -52,7 +52,7 @@ func TestFetchProjectChaptersNoProject(t *testing.T) {
 
 	assert.NotNil(t, rErr)
 	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: parent collection not found", rErr.Error())
+	assert.Equal(t, "not found: parent document not found", rErr.Error())
 	assert.Nil(t, chapters)
 }
 
@@ -65,13 +65,13 @@ func TestFetchProjectChaptersInvalidDocument(t *testing.T) {
 		{
 			name:      "should return error when chapter name is invalid",
 			projectId: "PROJECT_WITH_INVALID_CHAPTER_NAME",
-			expectedError: "failed to convert snapshot to entry: record.ChapterEntry.name: " +
+			expectedError: "failed to convert snapshot to values: document.ChapterValues.name: " +
 				"firestore: cannot set type string to bool",
 		},
 		{
 			name:      "should return error when chapter number is invalid",
 			projectId: "PROJECT_WITH_INVALID_CHAPTER_NUMBER",
-			expectedError: "failed to convert snapshot to entry: record.ChapterEntry.number: " +
+			expectedError: "failed to convert snapshot to values: document.ChapterValues.number: " +
 				"firestore: cannot set type int to string",
 		},
 	}
