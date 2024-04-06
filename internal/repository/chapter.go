@@ -6,6 +6,8 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
+
 const ChapterCollection = "chapters"
 
 type ChapterRepository interface {

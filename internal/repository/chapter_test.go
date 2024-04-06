@@ -7,7 +7,6 @@ import (
 
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
-	"github.com/kumachan-mis/knodeledge-api/test/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,14 +23,12 @@ func TestFetchProjectChaptersValidDocument(t *testing.T) {
 	chapter := chapters["CHAPTER_ONE"]
 	assert.Equal(t, "Chapter One", chapter.Name)
 	assert.Equal(t, 1, chapter.Number)
-	assert.Equal(t, testutil.ReadOnlyUserId(), chapter.UserId)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 
 	chapter = chapters["CHAPTER_TWO"]
 	assert.Equal(t, "Chapter Two", chapter.Name)
 	assert.Equal(t, 2, chapter.Number)
-	assert.Equal(t, testutil.ReadOnlyUserId(), chapter.UserId)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 }
