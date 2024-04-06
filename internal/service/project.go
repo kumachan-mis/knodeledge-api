@@ -45,16 +45,14 @@ func (s projectService) ListProjects(
 		return nil, Errorf(RepositoryFailurePanic, "failed to fetch user projects: %w", rErr.Unwrap())
 	}
 
-	projects := make([]domain.ProjectEntity, len(entries))
-	i := 0
+	projects := []domain.ProjectEntity{}
 	for key, entry := range entries {
-		project, err := entryToEntity(key, entry)
+		project, err := s.entryToEntity(key, entry)
 		if err != nil {
 			return nil, err
 		}
 
-		projects[i] = *project
-		i++
+		projects = append(projects, *project)
 	}
 
 	sort.Slice(projects, func(i, j int) bool {
@@ -78,7 +76,7 @@ func (s projectService) FindProject(
 		return nil, Errorf(RepositoryFailurePanic, "failed to fetch project: %w", rErr.Unwrap())
 	}
 
-	entity, err := entryToEntity(projectId.Value(), *entry)
+	entity, err := s.entryToEntity(projectId.Value(), *entry)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +103,7 @@ func (s projectService) CreateProject(
 		return nil, Errorf(RepositoryFailurePanic, "failed to insert project: %w", rErr.Unwrap())
 	}
 
-	return entryToEntity(key, *entry)
+	return s.entryToEntity(key, *entry)
 }
 
 func (s projectService) UpdateProject(
@@ -121,7 +119,7 @@ func (s projectService) UpdateProject(
 		return nil, Errorf(RepositoryFailurePanic, "failed to fetch project: %w", rErr.Unwrap())
 	}
 
-	entity, err := entryToEntity(projectId.Value(), *entry)
+	entity, err := s.entryToEntity(projectId.Value(), *entry)
 	if err != nil {
 		return nil, err
 	}
@@ -141,10 +139,10 @@ func (s projectService) UpdateProject(
 		return nil, Errorf(RepositoryFailurePanic, "failed to update project: %w", rErr.Unwrap())
 	}
 
-	return entryToEntity(projectId.Value(), *entry)
+	return s.entryToEntity(projectId.Value(), *entry)
 }
 
-func entryToEntity(key string, entry record.ProjectEntry) (*domain.ProjectEntity, *Error) {
+func (s projectService) entryToEntity(key string, entry record.ProjectEntry) (*domain.ProjectEntity, *Error) {
 	id, err := domain.NewProjectIdObject(key)
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (id): %w", err)
