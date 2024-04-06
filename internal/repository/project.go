@@ -3,6 +3,7 @@ package repository
 import (
 	"cloud.google.com/go/firestore"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
+	"github.com/kumachan-mis/knodeledge-api/internal/document"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
 )
 
@@ -38,13 +39,13 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 			break
 		}
 
-		var entry record.ProjectEntry
-		err = snapshot.DataTo(&entry)
+		var values document.ProjectValues
+		err = snapshot.DataTo(&values)
 		if err != nil {
-			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
+			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 		}
 
-		entries[snapshot.Ref.ID] = entry
+		entries[snapshot.Ref.ID] = *valuesToEntry(values)
 	}
 
 	return entries, nil
@@ -58,13 +59,13 @@ func (r projectRepository) FetchProject(projectId string) (*record.ProjectEntry,
 		return nil, Errorf(NotFoundError, "failed to get project")
 	}
 
-	var entry record.ProjectEntry
-	err = snapshot.DataTo(&entry)
+	var values document.ProjectValues
+	err = snapshot.DataTo(&values)
 	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return &entry, nil
+	return valuesToEntry(values), nil
 }
 
 func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error) {
@@ -85,13 +86,13 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project")
 	}
 
-	var entryWithAutofield record.ProjectEntry
-	err = snapshot.DataTo(&entryWithAutofield)
+	var values document.ProjectValues
+	err = snapshot.DataTo(&values)
 	if err != nil {
-		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
+		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return ref.ID, &entryWithAutofield, nil
+	return ref.ID, valuesToEntry(values), nil
 }
 
 func (r projectRepository) UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error) {
@@ -114,11 +115,21 @@ func (r projectRepository) UpdateProject(projectId string, entry record.ProjectW
 		return nil, Errorf(ReadFailurePanic, "failed to get updated project")
 	}
 
-	var entryWithAutofield record.ProjectEntry
-	err = snapshot.DataTo(&entryWithAutofield)
+	var values document.ProjectValues
+	err = snapshot.DataTo(&values)
 	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to entry: %w", err)
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return &entryWithAutofield, nil
+	return valuesToEntry(values), nil
+}
+
+func valuesToEntry(values document.ProjectValues) *record.ProjectEntry {
+	return &record.ProjectEntry{
+		Name:        values.Name,
+		Description: values.Description,
+		UserId:      values.UserId,
+		CreatedAt:   values.CreatedAt,
+		UpdatedAt:   values.UpdatedAt,
+	}
 }
