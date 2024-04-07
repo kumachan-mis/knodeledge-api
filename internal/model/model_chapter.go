@@ -21,5 +21,5 @@ type Chapter struct {
 	// Chapter number
 	Number int32 `json:"number"`
 
-	Sections []Section `json:"sections,omitempty"`
+	Sections []Section `json:"sections"`
 }

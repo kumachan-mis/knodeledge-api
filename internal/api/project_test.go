@@ -35,7 +35,7 @@ func TestProjectList(t *testing.T) {
 
 	var responseBody map[string]any
 	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-	assert.Equal(t, responseBody, map[string]any{
+	assert.Equal(t, map[string]any{
 		"projects": []any{
 			map[string]any{
 				"id":   "PROJECT_WITHOUT_DESCRIPTION",
@@ -47,32 +47,55 @@ func TestProjectList(t *testing.T) {
 				"description": "This is project description",
 			},
 		},
-	})
+	}, responseBody)
 }
 
 func TestProjectListInvalidArgument(t *testing.T) {
-	router := setupProjectRouter()
-
-	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": "",
+	tt := []struct {
+		name             string
+		request          map[string]any
+		expectedResponse map[string]any
+	}{
+		{
+			name: "should return error when user id is empty",
+			request: map[string]any{
+				"user": map[string]any{"id": ""},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+			},
 		},
-	})
-	req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(string(requestBody)))
-
-	router.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-	var responseBody map[string]any
-	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-	assert.Equal(t, map[string]any{
-		"message": "invalid request value",
-		"user": map[string]any{
-			"id": "user id is required, but got ''",
+		{
+			name:    "should return error when empty object is passed",
+			request: map[string]any{},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+			},
 		},
-	}, responseBody)
+	}
+
+	for _, tc := range tt {
+		router := setupProjectRouter()
+
+		recorder := httptest.NewRecorder()
+		requestBody, _ := json.Marshal(tc.request)
+		req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(string(requestBody)))
+
+		router.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+		var responseBody map[string]any
+		assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+		assert.Equal(t, map[string]any{
+			"message": "invalid request value",
+			"user":    tc.expectedResponse["user"],
+		}, responseBody)
+	}
 }
 
 func TestProjectListInvalidRequestFormat(t *testing.T) {
@@ -191,7 +214,7 @@ func TestProjectFind(t *testing.T) {
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
 
-			assert.Equal(t, responseBody, tc.expectedResponse)
+			assert.Equal(t, tc.expectedResponse, responseBody)
 		})
 	}
 }
@@ -437,9 +460,9 @@ func TestProjectCreate(t *testing.T) {
 
 			projectWithId := tc.project
 			projectWithId["id"] = projectId
-			assert.Equal(t, responseBody, map[string]any{
+			assert.Equal(t, map[string]any{
 				"project": projectWithId,
-			})
+			}, responseBody)
 		})
 	}
 }
@@ -638,9 +661,9 @@ func TestProjectUpdate(t *testing.T) {
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
 
-			assert.Equal(t, responseBody, map[string]any{
+			assert.Equal(t, map[string]any{
 				"project": tc.project,
-			})
+			}, responseBody)
 		})
 	}
 }

@@ -54,15 +54,26 @@ func main() {
 		log.Fatalf("Failed to get firestore client")
 	}
 
-	projectRepository := repository.NewProjectRepository(*client)
-	projectService := service.NewProjectService(projectRepository)
-	projectUseCase := usecase.NewProjectUseCase(projectService)
-	projectApi := api.NewProjectApi(projectUseCase)
+	{
+		projectRepository := repository.NewProjectRepository(*client)
+		projectService := service.NewProjectService(projectRepository)
+		projectUseCase := usecase.NewProjectUseCase(projectService)
+		projectApi := api.NewProjectApi(projectUseCase)
 
-	router.POST("/api/projects/list", projectApi.HandleList)
-	router.POST("/api/projects/create", projectApi.HandleCreate)
-	router.POST("/api/projects/find", projectApi.HandleFind)
-	router.POST("/api/projects/update", projectApi.HandleUpdate)
+		router.POST("/api/projects/list", projectApi.HandleList)
+		router.POST("/api/projects/create", projectApi.HandleCreate)
+		router.POST("/api/projects/find", projectApi.HandleFind)
+		router.POST("/api/projects/update", projectApi.HandleUpdate)
+	}
+
+	{
+		chapterRepository := repository.NewChapterRepository(*client)
+		chapterService := service.NewChapterService(chapterRepository)
+		chapterUseCase := usecase.NewChapterUseCase(chapterService)
+		chapterApi := api.NewChapterApi(chapterUseCase)
+
+		router.POST("/api/chapters/list", chapterApi.HandleList)
+	}
 
 	err = router.Run(":8080")
 	if err != nil {

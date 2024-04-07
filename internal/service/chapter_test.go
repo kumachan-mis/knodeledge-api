@@ -7,6 +7,7 @@ import (
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
+	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	mock_repository "github.com/kumachan-mis/knodeledge-api/mock/repository"
 	"github.com/kumachan-mis/knodeledge-api/test/testutil"
@@ -254,4 +255,28 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			assert.Nil(t, chapters)
 		})
 	}
+}
+
+func TestListChaptersRepositoryError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockChapterRepository(ctrl)
+	r.EXPECT().
+		FetchProjectChapters("0000000000000001").
+		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
+
+	s := service.NewChapterService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+	assert.Nil(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.Nil(t, err)
+
+	chapters, sErr := s.ListChapters(*userId, *projectId)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
+	assert.Equal(t, "repository failure: failed to fetch project chapters: repository error", sErr.Error())
+	assert.Nil(t, chapters)
 }
