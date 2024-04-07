@@ -1,26 +1,26 @@
 post:
   tags:
-    - Projects
-  operationId: projects-list
-  summary: Get list of projects
+    - Chapters
+  operationId: chapters-list
+  summary: Get list of chapters for a project
   requestBody:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/interface/projects/list/ProjectListRequest.yaml
+          $ref: ../../schemas/interface/chapters/list/ChapterListRequest.yaml
   responses:
     "200":
-      description: OK - Returns list of projects
+      description: OK - Returns list of chapters for a project
       content:
         application/json:
           schema:
-            $ref: ../../schemas/interface/projects/list/ProjectListResponse.yaml
+            $ref: ../../schemas/interface/chapters/list/ChapterListResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/interface/projects/list/ProjectListErrorResponse.yaml
+            $ref: ../../schemas/interface/chapters/list/ChapterListErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:

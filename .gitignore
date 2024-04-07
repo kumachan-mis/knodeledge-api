@@ -9,6 +9,7 @@
 
 mock/
 build/
+openapi-build/
 
 ### Firebase ###
 .idea

@@ -1,7 +1,7 @@
 post:
   tags:
     - Projects
-  operationId: create
+  operationId: projects-create
   summary: Create new project
   requestBody:
     content:

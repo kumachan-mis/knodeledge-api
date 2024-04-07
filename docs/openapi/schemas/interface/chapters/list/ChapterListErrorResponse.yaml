@@ -1,0 +1,11 @@
+type: object
+description: Error Response Body for Chapter List API
+properties:
+  message:
+    type: string
+    description: Error message when request body format is invalid
+    example: unexpected EOF
+  user:
+    $ref: ../../../entity/user/UserOnlyIdError.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyIdError.yaml

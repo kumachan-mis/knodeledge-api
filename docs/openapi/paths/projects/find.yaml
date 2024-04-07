@@ -1,7 +1,7 @@
 post:
   tags:
     - Projects
-  operationId: find
+  operationId: projects-find
   summary: Find project
   requestBody:
     content:

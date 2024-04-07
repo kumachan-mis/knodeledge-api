@@ -45,7 +45,7 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 		}
 
-		entries[snapshot.Ref.ID] = *valuesToEntry(values)
+		entries[snapshot.Ref.ID] = *r.valuesToEntry(values)
 	}
 
 	return entries, nil
@@ -65,7 +65,7 @@ func (r projectRepository) FetchProject(projectId string) (*record.ProjectEntry,
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return valuesToEntry(values), nil
+	return r.valuesToEntry(values), nil
 }
 
 func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error) {
@@ -92,7 +92,7 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return ref.ID, valuesToEntry(values), nil
+	return ref.ID, r.valuesToEntry(values), nil
 }
 
 func (r projectRepository) UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error) {
@@ -121,10 +121,10 @@ func (r projectRepository) UpdateProject(projectId string, entry record.ProjectW
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return valuesToEntry(values), nil
+	return r.valuesToEntry(values), nil
 }
 
-func valuesToEntry(values document.ProjectValues) *record.ProjectEntry {
+func (r projectRepository) valuesToEntry(values document.ProjectValues) *record.ProjectEntry {
 	return &record.ProjectEntry{
 		Name:        values.Name,
 		Description: values.Description,
