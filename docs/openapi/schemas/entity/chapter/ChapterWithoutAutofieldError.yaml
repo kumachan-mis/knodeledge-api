@@ -1,0 +1,11 @@
+type: object
+description: Error Message for ChapterWithoutAutofield object
+properties:
+  name:
+    type: string
+    description: Error message for chapter name
+    example: chapter name is required, but got ''
+  number:
+    type: string
+    description: Error message for chapter number
+    example: chapter number must be greater than 0, but got 0

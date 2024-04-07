@@ -1,0 +1,13 @@
+type: object
+description: Request Body for Chapter Create API
+properties:
+  user:
+    $ref: ../../../entity/user/UserOnlyId.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyId.yaml
+  chapter:
+    $ref: ../../../entity/chapter/ChapterWithoutAutofield.yaml
+required:
+  - user
+  - project
+  - chapter

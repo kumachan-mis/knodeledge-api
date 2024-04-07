@@ -1,0 +1,7 @@
+type: object
+description: Response Body for Chapter Create API
+properties:
+  chapter:
+    $ref: ../../../entity/chapter/Chapter.yaml
+required:
+  - chapter

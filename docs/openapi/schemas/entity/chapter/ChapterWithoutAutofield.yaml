@@ -1,0 +1,16 @@
+type: object
+description: Chapter object without auto-generated fields
+properties:
+  name:
+    type: string
+    maxLength: 100
+    description: Chapter name
+    example: Introduction
+  number:
+    type: integer
+    minimum: 1
+    description: Chapter number
+    example: 1
+required:
+  - name
+  - number

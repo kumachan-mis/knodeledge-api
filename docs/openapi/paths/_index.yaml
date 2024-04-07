@@ -8,3 +8,5 @@
   $ref: ./projects/update.yaml
 /api/chapters/list:
   $ref: ./chapters/list.yaml
+/api/chapters/create:
+  $ref: ./chapters/create.yaml
