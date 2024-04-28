@@ -6,7 +6,6 @@ type ChapterEntity struct {
 	number    ChapterNumberObject
 	createdAt CreatedAtObject
 	updatedAt UpdatedAtObject
-	authorId  UserIdObject
 }
 
 func NewChapterEntity(
@@ -15,7 +14,6 @@ func NewChapterEntity(
 	number ChapterNumberObject,
 	createdAt CreatedAtObject,
 	updatedAt UpdatedAtObject,
-	authorId UserIdObject,
 
 ) *ChapterEntity {
 	return &ChapterEntity{
@@ -24,7 +22,6 @@ func NewChapterEntity(
 		number:    number,
 		createdAt: createdAt,
 		updatedAt: updatedAt,
-		authorId:  authorId,
 	}
 }
 
@@ -46,8 +43,4 @@ func (e *ChapterEntity) CreatedAt() *CreatedAtObject {
 
 func (e *ChapterEntity) UpdatedAt() *UpdatedAtObject {
 	return &e.updatedAt
-}
-
-func (e *ChapterEntity) AuthoredBy(userId *UserIdObject) bool {
-	return e.authorId.Equals(userId)
 }

@@ -390,8 +390,12 @@ func TestProjectFindInternalError(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
-		"user":    map[string]any{"id": testutil.ErrorUserId(0)},
-		"project": map[string]any{"id": "PROJECT_WITH_NAME_ERROR"},
+		"user": map[string]any{
+			"id": testutil.ErrorUserId(0),
+		},
+		"project": map[string]any{
+			"id": "PROJECT_WITH_NAME_ERROR",
+		},
 	})
 	req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
 
@@ -891,6 +895,32 @@ func TestProjectUpdateInvalidRequestFormat(t *testing.T) {
 			}, responseBody)
 		})
 	}
+}
+
+func TestProjectUpdateInternalError(t *testing.T) {
+	router := setupProjectRouter()
+
+	recorder := httptest.NewRecorder()
+	requestBody, _ := json.Marshal(map[string]any{
+		"user": map[string]any{
+			"id": testutil.ErrorUserId(0),
+		},
+		"project": map[string]any{
+			"id":   "PROJECT_WITH_NAME_ERROR",
+			"name": "Updated Project",
+		},
+	})
+	req, _ := http.NewRequest("POST", "/api/projects/update", strings.NewReader(string(requestBody)))
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+
+	var responseBody map[string]any
+	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+	assert.Equal(t, map[string]any{
+		"message": "internal error",
+	}, responseBody)
 }
 
 func setupProjectRouter() *gin.Engine {

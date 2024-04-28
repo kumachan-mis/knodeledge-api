@@ -7,6 +7,7 @@ import (
 
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
+	"github.com/kumachan-mis/knodeledge-api/test/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +15,7 @@ func TestFetchProjectChaptersValidDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
-	chapters, rErr := r.FetchProjectChapters("PROJECT_WITHOUT_DESCRIPTION")
+	chapters, rErr := r.FetchProjectChapters(testutil.ReadOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION")
 
 	assert.Nil(t, rErr)
 
@@ -37,7 +38,7 @@ func TestFetchProjectChaptersNoDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
-	chapters, rErr := r.FetchProjectChapters("PROJECT_WITH_DESCRIPTION")
+	chapters, rErr := r.FetchProjectChapters(testutil.ReadOnlyUserId(), "PROJECT_WITH_DESCRIPTION")
 
 	assert.Nil(t, rErr)
 
@@ -48,7 +49,19 @@ func TestFetchProjectChaptersNoProject(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
-	chapters, rErr := r.FetchProjectChapters("UNKNOWN_PROJECT")
+	chapters, rErr := r.FetchProjectChapters(testutil.ReadOnlyUserId(), "UNKNOWN_PROJECT")
+
+	assert.NotNil(t, rErr)
+	assert.Equal(t, repository.NotFoundError, rErr.Code())
+	assert.Equal(t, "not found: parent document not found", rErr.Error())
+	assert.Nil(t, chapters)
+}
+
+func TestFetchProjectChaptersUnauthorizedProject(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewChapterRepository(*client)
+
+	chapters, rErr := r.FetchProjectChapters(testutil.ModifyOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION")
 
 	assert.NotNil(t, rErr)
 	assert.Equal(t, repository.NotFoundError, rErr.Code())
@@ -59,17 +72,20 @@ func TestFetchProjectChaptersNoProject(t *testing.T) {
 func TestFetchProjectChaptersInvalidDocument(t *testing.T) {
 	tt := []struct {
 		name          string
+		userId        string
 		projectId     string
 		expectedError string
 	}{
 		{
 			name:      "should return error when chapter name is invalid",
+			userId:    testutil.ErrorUserId(2),
 			projectId: "PROJECT_WITH_INVALID_CHAPTER_NAME",
 			expectedError: "failed to convert snapshot to values: document.ChapterValues.name: " +
 				"firestore: cannot set type string to bool",
 		},
 		{
 			name:      "should return error when chapter number is invalid",
+			userId:    testutil.ErrorUserId(3),
 			projectId: "PROJECT_WITH_INVALID_CHAPTER_NUMBER",
 			expectedError: "failed to convert snapshot to values: document.ChapterValues.number: " +
 				"firestore: cannot set type int to string",
@@ -81,7 +97,7 @@ func TestFetchProjectChaptersInvalidDocument(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewChapterRepository(*client)
 
-			chapters, rErr := r.FetchProjectChapters(tc.projectId)
+			chapters, rErr := r.FetchProjectChapters(tc.userId, tc.projectId)
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
