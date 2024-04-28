@@ -22,36 +22,38 @@ func TestListChaptersValidEntry(t *testing.T) {
 	maxLengthChapterName := testutil.RandomString(100)
 
 	r := mock_repository.NewMockChapterRepository(ctrl)
-	r.EXPECT().FetchProjectChapters("0000000000000001").Return(map[string]record.ChapterEntry{
-		"1000000000000003": {
-			Name:      "Chapter 3",
-			Number:    3,
-			UserId:    testutil.ReadOnlyUserId(),
-			CreatedAt: testutil.Date().Add(-3 * time.Hour),
-			UpdatedAt: testutil.Date().Add(-3 * time.Hour),
-		},
-		"1000000000000001": {
-			Name:      "Chapter 1",
-			Number:    1,
-			UserId:    testutil.ReadOnlyUserId(),
-			CreatedAt: testutil.Date().Add(-2 * time.Hour),
-			UpdatedAt: testutil.Date().Add(-2 * time.Hour),
-		},
-		"1000000000000004": {
-			Name:      maxLengthChapterName,
-			Number:    4,
-			UserId:    testutil.ReadOnlyUserId(),
-			CreatedAt: testutil.Date().Add(-4 * time.Hour),
-			UpdatedAt: testutil.Date().Add(-4 * time.Hour),
-		},
-		"1000000000000002": {
-			Name:      "Chapter 2",
-			Number:    2,
-			UserId:    testutil.ReadOnlyUserId(),
-			CreatedAt: testutil.Date().Add(-1 * time.Hour),
-			UpdatedAt: testutil.Date().Add(-1 * time.Hour),
-		},
-	}, nil)
+	r.EXPECT().
+		FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
+		Return(map[string]record.ChapterEntry{
+			"1000000000000003": {
+				Name:      "Chapter 3",
+				Number:    3,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date().Add(-3 * time.Hour),
+				UpdatedAt: testutil.Date().Add(-3 * time.Hour),
+			},
+			"1000000000000001": {
+				Name:      "Chapter 1",
+				Number:    1,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date().Add(-2 * time.Hour),
+				UpdatedAt: testutil.Date().Add(-2 * time.Hour),
+			},
+			"1000000000000004": {
+				Name:      maxLengthChapterName,
+				Number:    4,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date().Add(-4 * time.Hour),
+				UpdatedAt: testutil.Date().Add(-4 * time.Hour),
+			},
+			"1000000000000002": {
+				Name:      "Chapter 2",
+				Number:    2,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date().Add(-1 * time.Hour),
+				UpdatedAt: testutil.Date().Add(-1 * time.Hour),
+			},
+		}, nil)
 
 	s := service.NewChapterService(r)
 
@@ -72,7 +74,6 @@ func TestListChaptersValidEntry(t *testing.T) {
 	assert.Equal(t, 1, chapter.Number().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), chapter.UpdatedAt().Value())
-	assert.True(t, chapter.AuthoredBy(userId))
 
 	chapter = chapters[1]
 	assert.Equal(t, "1000000000000002", chapter.Id().Value())
@@ -80,7 +81,6 @@ func TestListChaptersValidEntry(t *testing.T) {
 	assert.Equal(t, 2, chapter.Number().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), chapter.UpdatedAt().Value())
-	assert.True(t, chapter.AuthoredBy(userId))
 
 	chapter = chapters[2]
 	assert.Equal(t, "1000000000000003", chapter.Id().Value())
@@ -88,7 +88,6 @@ func TestListChaptersValidEntry(t *testing.T) {
 	assert.Equal(t, 3, chapter.Number().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), chapter.UpdatedAt().Value())
-	assert.True(t, chapter.AuthoredBy(userId))
 
 	chapter = chapters[3]
 	assert.Equal(t, "1000000000000004", chapter.Id().Value())
@@ -96,7 +95,6 @@ func TestListChaptersValidEntry(t *testing.T) {
 	assert.Equal(t, 4, chapter.Number().Value())
 	assert.Equal(t, testutil.Date().Add(-4*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-4*time.Hour), chapter.UpdatedAt().Value())
-	assert.True(t, chapter.AuthoredBy(userId))
 }
 
 func TestListChaptersNoEntry(t *testing.T) {
@@ -104,43 +102,9 @@ func TestListChaptersNoEntry(t *testing.T) {
 	defer ctrl.Finish()
 
 	r := mock_repository.NewMockChapterRepository(ctrl)
-	r.EXPECT().FetchProjectChapters("0000000000000001").Return(map[string]record.ChapterEntry{}, nil)
-
-	s := service.NewChapterService(r)
-
-	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
-	assert.Nil(t, err)
-
-	projectId, err := domain.NewProjectIdObject("0000000000000001")
-	assert.Nil(t, err)
-
-	chapters, sErr := s.ListChapters(*userId, *projectId)
-	assert.Nil(t, sErr)
-
-	assert.Len(t, chapters, 0)
-}
-
-func TestListChaptersUnauthorizedEntry(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	r := mock_repository.NewMockChapterRepository(ctrl)
-	r.EXPECT().FetchProjectChapters("0000000000000001").Return(map[string]record.ChapterEntry{
-		"1000000000000001": {
-			Name:      "Chapter 1",
-			Number:    1,
-			UserId:    testutil.ModifyOnlyUserId(),
-			CreatedAt: testutil.Date(),
-			UpdatedAt: testutil.Date(),
-		},
-		"1000000000000002": {
-			Name:      "Chapter 2",
-			Number:    2,
-			UserId:    testutil.ModifyOnlyUserId(),
-			CreatedAt: testutil.Date(),
-			UpdatedAt: testutil.Date(),
-		},
-	}, nil)
+	r.EXPECT().
+		FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
+		Return(map[string]record.ChapterEntry{}, nil)
 
 	s := service.NewChapterService(r)
 
@@ -219,26 +183,16 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (number): chapter number must be greater than 0, but got 0",
 		},
-		{
-			name:      "should return error when chapter author id is empty",
-			chapterId: "1000000000000001",
-			chapter: record.ChapterEntry{
-				Name:      "Chapter 1",
-				Number:    1,
-				UserId:    "",
-				CreatedAt: testutil.Date(),
-				UpdatedAt: testutil.Date(),
-			},
-			expectedError: "failed to convert entry to entity (authorId): user id is required, but got ''",
-		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			r := mock_repository.NewMockChapterRepository(ctrl)
-			r.EXPECT().FetchProjectChapters("0000000000000001").Return(map[string]record.ChapterEntry{
-				tc.chapterId: tc.chapter,
-			}, nil)
+			r.EXPECT().
+				FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
+				Return(map[string]record.ChapterEntry{
+					tc.chapterId: tc.chapter,
+				}, nil)
 
 			s := service.NewChapterService(r)
 
@@ -263,7 +217,7 @@ func TestListChaptersRepositoryError(t *testing.T) {
 
 	r := mock_repository.NewMockChapterRepository(ctrl)
 	r.EXPECT().
-		FetchProjectChapters("0000000000000001").
+		FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
 		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
 
 	s := service.NewChapterService(r)

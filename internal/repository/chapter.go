@@ -12,7 +12,7 @@ import (
 const ChapterCollection = "chapters"
 
 type ChapterRepository interface {
-	FetchProjectChapters(projectId string) (map[string]record.ChapterEntry, *Error)
+	FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error)
 }
 
 type chapterRepository struct {
@@ -23,7 +23,7 @@ func NewChapterRepository(client firestore.Client) ChapterRepository {
 	return chapterRepository{client: client}
 }
 
-func (r chapterRepository) FetchProjectChapters(projectId string) (map[string]record.ChapterEntry, *Error) {
+func (r chapterRepository) FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error) {
 	docref := r.client.Collection(ProjectCollection).
 		Doc(projectId)
 
@@ -36,6 +36,10 @@ func (r chapterRepository) FetchProjectChapters(projectId string) (map[string]re
 	err = projectSnapshot.DataTo(&projectValues)
 	if err != nil {
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	if projectValues.UserId != userId {
+		return nil, Errorf(NotFoundError, "parent document not found")
 	}
 
 	iter := docref.

@@ -29,7 +29,7 @@ func (s chapterService) ListChapters(
 	userId domain.UserIdObject,
 	projectId domain.ProjectIdObject,
 ) ([]domain.ChapterEntity, *Error) {
-	entries, rErr := s.repository.FetchProjectChapters(projectId.Value())
+	entries, rErr := s.repository.FetchProjectChapters(userId.Value(), projectId.Value())
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return []domain.ChapterEntity{}, nil
 	}
@@ -43,10 +43,6 @@ func (s chapterService) ListChapters(
 		chapter, err := s.entryToEntity(key, entry)
 		if err != nil {
 			return nil, err
-		}
-
-		if !chapter.AuthoredBy(&userId) {
-			continue
 		}
 
 		chapters = append(chapters, *chapter)
@@ -80,10 +76,6 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
 	}
-	authorId, err := domain.NewUserIdObject(entry.UserId)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (authorId): %w", err)
-	}
 
-	return domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt, *authorId), nil
+	return domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt), nil
 }

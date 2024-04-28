@@ -6,7 +6,6 @@ type ProjectEntity struct {
 	description ProjectDescriptionObject
 	createdAt   CreatedAtObject
 	updatedAt   UpdatedAtObject
-	authorId    UserIdObject
 }
 
 func NewProjectEntity(
@@ -15,7 +14,6 @@ func NewProjectEntity(
 	description ProjectDescriptionObject,
 	createdAt CreatedAtObject,
 	updatedAt UpdatedAtObject,
-	authorId UserIdObject,
 ) *ProjectEntity {
 	return &ProjectEntity{
 		id:          id,
@@ -23,7 +21,6 @@ func NewProjectEntity(
 		description: description,
 		createdAt:   createdAt,
 		updatedAt:   updatedAt,
-		authorId:    authorId,
 	}
 }
 
@@ -45,8 +42,4 @@ func (e *ProjectEntity) CreatedAt() *CreatedAtObject {
 
 func (e *ProjectEntity) UpdatedAt() *UpdatedAtObject {
 	return &e.updatedAt
-}
-
-func (e *ProjectEntity) AuthoredBy(userId *UserIdObject) bool {
-	return e.authorId.Equals(userId)
 }
