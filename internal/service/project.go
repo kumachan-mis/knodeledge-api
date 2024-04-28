@@ -40,7 +40,7 @@ func NewProjectService(repository repository.ProjectRepository) ProjectService {
 func (s projectService) ListProjects(
 	userId domain.UserIdObject,
 ) ([]domain.ProjectEntity, *Error) {
-	entries, rErr := s.repository.FetchUserProjects(userId.Value())
+	entries, rErr := s.repository.FetchProjects(userId.Value())
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to fetch user projects: %w", rErr.Unwrap())
 	}
@@ -68,7 +68,7 @@ func (s projectService) FindProject(
 	userId domain.UserIdObject,
 	projectId domain.ProjectIdObject,
 ) (*domain.ProjectEntity, *Error) {
-	entry, rErr := s.repository.FetchProject(projectId.Value())
+	entry, rErr := s.repository.FetchProject(userId.Value(), projectId.Value())
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return nil, Errorf(NotFoundError, "failed to find project")
 	}
@@ -79,10 +79,6 @@ func (s projectService) FindProject(
 	entity, err := s.entryToEntity(projectId.Value(), *entry)
 	if err != nil {
 		return nil, err
-	}
-
-	if !entity.AuthoredBy(&userId) {
-		return nil, Errorf(NotFoundError, "failed to find project")
 	}
 
 	return entity, nil
@@ -111,30 +107,16 @@ func (s projectService) UpdateProject(
 	projectId domain.ProjectIdObject,
 	project domain.ProjectWithoutAutofieldEntity,
 ) (*domain.ProjectEntity, *Error) {
-	entry, rErr := s.repository.FetchProject(projectId.Value())
-	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return nil, Errorf(NotFoundError, "failed to update project")
-	}
-	if rErr != nil {
-		return nil, Errorf(RepositoryFailurePanic, "failed to fetch project: %w", rErr.Unwrap())
-	}
-
-	entity, err := s.entryToEntity(projectId.Value(), *entry)
-	if err != nil {
-		return nil, err
-	}
-
-	if !entity.AuthoredBy(&userId) {
-		return nil, Errorf(NotFoundError, "failed to update project")
-	}
-
 	entryWithoutAutofield := record.ProjectWithoutAutofieldEntry{
 		Name:        project.Name().Value(),
 		Description: project.Description().Value(),
 		UserId:      userId.Value(),
 	}
 
-	entry, rErr = s.repository.UpdateProject(projectId.Value(), entryWithoutAutofield)
+	entry, rErr := s.repository.UpdateProject(projectId.Value(), entryWithoutAutofield)
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to update project")
+	}
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to update project: %w", rErr.Unwrap())
 	}
@@ -163,10 +145,6 @@ func (s projectService) entryToEntity(key string, entry record.ProjectEntry) (*d
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
 	}
-	authorId, err := domain.NewUserIdObject(entry.UserId)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (authorId): %w", err)
-	}
 
-	return domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId), nil
+	return domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt), nil
 }

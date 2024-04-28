@@ -32,10 +32,8 @@ func TestListProjectsValidEntity(t *testing.T) {
 	assert.NoError(t, err)
 	updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 	assert.NoError(t, err)
-	authorId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
-	assert.NoError(t, err)
 
-	projectWithDesc := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId)
+	projectWithDesc := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 
 	id, err = domain.NewProjectIdObject("0000000000000002")
 	assert.NoError(t, err)
@@ -47,10 +45,8 @@ func TestListProjectsValidEntity(t *testing.T) {
 	assert.NoError(t, err)
 	updatedAt, err = domain.NewUpdatedAtObject(testutil.Date().Add(-1 * time.Hour))
 	assert.NoError(t, err)
-	authorId, err = domain.NewUserIdObject(testutil.ReadOnlyUserId())
-	assert.NoError(t, err)
 
-	projectWithoutDesc := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId)
+	projectWithoutDesc := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 
 	s.EXPECT().
 		ListProjects(gomock.Any()).
@@ -178,10 +174,8 @@ func TestFindProjectValidEntity(t *testing.T) {
 		assert.NoError(t, err)
 		updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 		assert.NoError(t, err)
-		authorId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
-		assert.NoError(t, err)
 
-		project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId)
+		project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 
 		s.EXPECT().
 			FindProject(gomock.Any(), gomock.Any()).
@@ -365,10 +359,8 @@ func TestCreateProjectValidEntity(t *testing.T) {
 			assert.NoError(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 			assert.NoError(t, err)
-			authorId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
-			assert.NoError(t, err)
 
-			project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId)
+			project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 
 			s.EXPECT().
 				CreateProject(gomock.Any(), gomock.Any()).
@@ -580,10 +572,8 @@ func TestUpdateProjectValidEntity(t *testing.T) {
 			assert.NoError(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 			assert.NoError(t, err)
-			authorId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
-			assert.NoError(t, err)
 
-			project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt, *authorId)
+			project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 
 			s.EXPECT().
 				UpdateProject(gomock.Any(), gomock.Any(), gomock.Any()).

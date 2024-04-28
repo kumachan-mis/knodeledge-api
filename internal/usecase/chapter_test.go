@@ -31,10 +31,8 @@ func TestListChaptersValidEntity(t *testing.T) {
 	assert.Nil(t, err)
 	updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
-	authorId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
-	assert.Nil(t, err)
 
-	chapter1 := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt, *authorId)
+	chapter1 := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
 
 	id, err = domain.NewChapterIdObject("1000000000000002")
 	assert.Nil(t, err)
@@ -46,12 +44,11 @@ func TestListChaptersValidEntity(t *testing.T) {
 	assert.Nil(t, err)
 	updatedAt, err = domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
-	authorId, err = domain.NewUserIdObject(testutil.ReadOnlyUserId())
-	assert.Nil(t, err)
 
-	chapter2 := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt, *authorId)
+	chapter2 := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
 
-	s.EXPECT().ListChapters(gomock.Any(), gomock.Any()).
+	s.EXPECT().
+		ListChapters(gomock.Any(), gomock.Any()).
 		Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject) {
 			assert.Equal(t, testutil.ReadOnlyUserId(), userId.Value())
 			assert.Equal(t, "0000000000000001", projectId.Value())
@@ -137,7 +134,8 @@ func TestListChaptersServiceError(t *testing.T) {
 
 	s := mock_service.NewMockChapterService(ctrl)
 
-	s.EXPECT().ListChapters(gomock.Any(), gomock.Any()).
+	s.EXPECT().
+		ListChapters(gomock.Any(), gomock.Any()).
 		Return(nil, service.Errorf(service.RepositoryFailurePanic, "service error"))
 
 	uc := usecase.NewChapterUseCase(s)

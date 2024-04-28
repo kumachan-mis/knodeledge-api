@@ -242,7 +242,7 @@ func TestChapterListInternalError(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
-			"id": testutil.ReadOnlyUserId(),
+			"id": testutil.ErrorUserId(2),
 		},
 		"project": map[string]any{
 			"id": "PROJECT_WITH_INVALID_CHAPTER_NAME",

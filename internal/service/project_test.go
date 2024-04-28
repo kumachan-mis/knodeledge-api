@@ -24,7 +24,7 @@ func TestListProjectsValidEntry(t *testing.T) {
 
 	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchUserProjects(testutil.ReadOnlyUserId()).
+		FetchProjects(testutil.ReadOnlyUserId()).
 		Return(map[string]record.ProjectEntry{
 			"0000000000000003": {
 				Name:        maxLengthProjectName,
@@ -64,7 +64,6 @@ func TestListProjectsValidEntry(t *testing.T) {
 	assert.Equal(t, "This is my first project", project.Description().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), project.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), project.UpdatedAt().Value())
-	assert.True(t, project.AuthoredBy(userId))
 
 	project = projects[1]
 	assert.Equal(t, "0000000000000002", project.Id().Value())
@@ -72,7 +71,6 @@ func TestListProjectsValidEntry(t *testing.T) {
 	assert.Equal(t, "", project.Description().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), project.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), project.UpdatedAt().Value())
-	assert.True(t, project.AuthoredBy(userId))
 
 	project = projects[2]
 	assert.Equal(t, "0000000000000003", project.Id().Value())
@@ -80,7 +78,7 @@ func TestListProjectsValidEntry(t *testing.T) {
 	assert.Equal(t, maxLengthProjectDescription, project.Description().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), project.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), project.UpdatedAt().Value())
-	assert.True(t, project.AuthoredBy(userId))
+
 }
 
 func TestListProjectsNoEntry(t *testing.T) {
@@ -89,7 +87,7 @@ func TestListProjectsNoEntry(t *testing.T) {
 
 	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchUserProjects(testutil.ReadOnlyUserId()).
+		FetchProjects(testutil.ReadOnlyUserId()).
 		Return(map[string]record.ProjectEntry{}, nil)
 
 	s := service.NewProjectService(r)
@@ -175,7 +173,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				FetchUserProjects(testutil.ReadOnlyUserId()).
+				FetchProjects(testutil.ReadOnlyUserId()).
 				Return(map[string]record.ProjectEntry{
 					tc.projectId: tc.project,
 				}, nil)
@@ -200,7 +198,7 @@ func TestListProjectsRepositoryError(t *testing.T) {
 
 	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchUserProjects(testutil.ReadOnlyUserId()).
+		FetchProjects(testutil.ReadOnlyUserId()).
 		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
 
 	s := service.NewProjectService(r)
@@ -253,7 +251,7 @@ func TestFindProjectValidEntry(t *testing.T) {
 
 		r := mock_repository.NewMockProjectRepository(ctrl)
 		r.EXPECT().
-			FetchProject(tc.projectId).
+			FetchProject(tc.project.UserId, tc.projectId).
 			Return(&tc.project, nil)
 
 		s := service.NewProjectService(r)
@@ -272,7 +270,6 @@ func TestFindProjectValidEntry(t *testing.T) {
 		assert.Equal(t, tc.project.Description, project.Description().Value())
 		assert.Equal(t, tc.project.CreatedAt, project.CreatedAt().Value())
 		assert.Equal(t, tc.project.UpdatedAt, project.UpdatedAt().Value())
-		assert.True(t, project.AuthoredBy(userId))
 	}
 }
 
@@ -282,37 +279,8 @@ func TestFindProjectNoEntry(t *testing.T) {
 
 	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchProject("0000000000000001").
+		FetchProject(testutil.ReadOnlyUserId(), "0000000000000001").
 		Return(nil, repository.Errorf(repository.NotFoundError, "failed to get project"))
-
-	s := service.NewProjectService(r)
-
-	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
-	assert.NoError(t, err)
-
-	projectId, err := domain.NewProjectIdObject("0000000000000001")
-	assert.NoError(t, err)
-
-	project, sErr := s.FindProject(*userId, *projectId)
-	assert.NotNil(t, sErr)
-	assert.Equal(t, service.NotFoundError, sErr.Code())
-	assert.Equal(t, "not found: failed to find project", sErr.Error())
-	assert.Nil(t, project)
-}
-
-func TestFindProjectUnauthoredEntry(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	r := mock_repository.NewMockProjectRepository(ctrl)
-	r.EXPECT().
-		FetchProject("0000000000000001").
-		Return(&record.ProjectEntry{
-			Name:      "Project",
-			UserId:    testutil.ModifyOnlyUserId(),
-			CreatedAt: testutil.Date(),
-			UpdatedAt: testutil.Date(),
-		}, nil)
 
 	s := service.NewProjectService(r)
 
@@ -390,7 +358,7 @@ func TestFindProjectInvalidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				FetchProject(tc.projectId).
+				FetchProject(tc.project.UserId, tc.projectId).
 				Return(&tc.project, nil)
 
 			s := service.NewProjectService(r)
@@ -416,7 +384,7 @@ func TestFindProjectRepositoryError(t *testing.T) {
 
 	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchProject("0000000000000001").
+		FetchProject(testutil.ReadOnlyUserId(), "0000000000000001").
 		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
 
 	s := service.NewProjectService(r)
@@ -499,7 +467,6 @@ func TestCreateProjectValidEntry(t *testing.T) {
 		assert.Equal(t, tc.project.Description, createdProject.Description().Value())
 		assert.Equal(t, testutil.Date(), createdProject.CreatedAt().Value())
 		assert.Equal(t, testutil.Date(), createdProject.UpdatedAt().Value())
-		assert.True(t, createdProject.AuthoredBy(userId))
 	}
 }
 
@@ -653,15 +620,6 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 
 		r := mock_repository.NewMockProjectRepository(ctrl)
 		r.EXPECT().
-			FetchProject(tc.projectId).
-			Return(&record.ProjectEntry{
-				Name:        "Project",
-				Description: "This is project",
-				UserId:      testutil.ModifyOnlyUserId(),
-				CreatedAt:   testutil.Date(),
-				UpdatedAt:   testutil.Date(),
-			}, nil)
-		r.EXPECT().
 			UpdateProject(tc.projectId, tc.project).
 			Return(&record.ProjectEntry{
 				Name:        tc.project.Name,
@@ -694,7 +652,6 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 		assert.Equal(t, tc.project.Description, updatedProject.Description().Value())
 		assert.Equal(t, testutil.Date(), updatedProject.CreatedAt().Value())
 		assert.Equal(t, testutil.Date(), updatedProject.UpdatedAt().Value())
-		assert.True(t, updatedProject.AuthoredBy(userId))
 	}
 }
 
@@ -704,44 +661,12 @@ func TestUpdateProjectNoEntry(t *testing.T) {
 
 	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		FetchProject("0000000000000001").
-		Return(nil, repository.Errorf(repository.NotFoundError, "failed to get project"))
-
-	s := service.NewProjectService(r)
-
-	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
-	assert.NoError(t, err)
-
-	projectId, err := domain.NewProjectIdObject("0000000000000001")
-	assert.NoError(t, err)
-
-	name, err := domain.NewProjectNameObject("Updated Project")
-	assert.NoError(t, err)
-	description, err := domain.NewProjectDescriptionObject("This is updated project")
-	assert.NoError(t, err)
-
-	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
-
-	updatedProject, sErr := s.UpdateProject(*userId, *projectId, *project)
-	assert.NotNil(t, sErr)
-	assert.Equal(t, service.NotFoundError, sErr.Code())
-	assert.Equal(t, "not found: failed to update project", sErr.Error())
-	assert.Nil(t, updatedProject)
-}
-
-func TestUpdateProjectUnauthoredEntry(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	r := mock_repository.NewMockProjectRepository(ctrl)
-	r.EXPECT().
-		FetchProject("0000000000000001").
-		Return(&record.ProjectEntry{
-			Name:      "Updated Project",
-			UserId:    testutil.ReadOnlyUserId(),
-			CreatedAt: testutil.Date(),
-			UpdatedAt: testutil.Date(),
-		}, nil)
+		UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
+			Name:        "Updated Project",
+			Description: "This is updated project",
+			UserId:      testutil.ModifyOnlyUserId(),
+		}).
+		Return(nil, repository.Errorf(repository.NotFoundError, "failed to update project"))
 
 	s := service.NewProjectService(r)
 
@@ -824,14 +749,6 @@ func TestUpdateProjectInvalidUpdatedEntry(t *testing.T) {
 
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				FetchProject("0000000000000001").
-				Return(&record.ProjectEntry{
-					Name:      "Project",
-					UserId:    testutil.ModifyOnlyUserId(),
-					CreatedAt: testutil.Date(),
-					UpdatedAt: testutil.Date(),
-				}, nil)
-			r.EXPECT().
 				UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
 					Name:        "Updated Project",
 					Description: "This is updated project",
@@ -863,50 +780,11 @@ func TestUpdateProjectInvalidUpdatedEntry(t *testing.T) {
 	}
 }
 
-func TestUpdateProjectRepositoryFetchError(t *testing.T) {
+func TestUpdateProjectRepositoryError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	r := mock_repository.NewMockProjectRepository(ctrl)
-	r.EXPECT().
-		FetchProject("0000000000000001").
-		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
-
-	s := service.NewProjectService(r)
-
-	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
-	assert.NoError(t, err)
-
-	projectId, err := domain.NewProjectIdObject("0000000000000001")
-	assert.NoError(t, err)
-
-	name, err := domain.NewProjectNameObject("Updated Project")
-	assert.NoError(t, err)
-	description, err := domain.NewProjectDescriptionObject("This is updated project")
-	assert.NoError(t, err)
-
-	project := domain.NewProjectWithoutAutofieldEntity(*name, *description)
-
-	updatedProject, sErr := s.UpdateProject(*userId, *projectId, *project)
-	assert.NotNil(t, sErr)
-	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
-	assert.Equal(t, "repository failure: failed to fetch project: repository error", sErr.Error())
-	assert.Nil(t, updatedProject)
-}
-
-func TestUpdateProjectRepositoryUpdateError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	r := mock_repository.NewMockProjectRepository(ctrl)
-	r.EXPECT().
-		FetchProject("0000000000000001").
-		Return(&record.ProjectEntry{
-			Name:      "Project",
-			UserId:    testutil.ModifyOnlyUserId(),
-			CreatedAt: testutil.Date(),
-			UpdatedAt: testutil.Date(),
-		}, nil)
 	r.EXPECT().
 		UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
 			Name:        "Updated Project",

@@ -12,8 +12,8 @@ import (
 const ProjectCollection = "projects"
 
 type ProjectRepository interface {
-	FetchUserProjects(userId string) (map[string]record.ProjectEntry, *Error)
-	FetchProject(projectId string) (*record.ProjectEntry, *Error)
+	FetchProjects(userId string) (map[string]record.ProjectEntry, *Error)
+	FetchProject(userId string, projectId string) (*record.ProjectEntry, *Error)
 	InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error)
 	UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error)
 }
@@ -26,7 +26,7 @@ func NewProjectRepository(client firestore.Client) ProjectRepository {
 	return projectRepository{client: client}
 }
 
-func (r projectRepository) FetchUserProjects(userId string) (map[string]record.ProjectEntry, *Error) {
+func (r projectRepository) FetchProjects(userId string) (map[string]record.ProjectEntry, *Error) {
 	iter := r.client.Collection(ProjectCollection).
 		Where("userId", "==", userId).
 		Documents(db.FirestoreContext())
@@ -51,7 +51,7 @@ func (r projectRepository) FetchUserProjects(userId string) (map[string]record.P
 	return entries, nil
 }
 
-func (r projectRepository) FetchProject(projectId string) (*record.ProjectEntry, *Error) {
+func (r projectRepository) FetchProject(userId string, projectId string) (*record.ProjectEntry, *Error) {
 	snapshot, err := r.client.Collection(ProjectCollection).
 		Doc(projectId).
 		Get(db.FirestoreContext())
@@ -63,6 +63,10 @@ func (r projectRepository) FetchProject(projectId string) (*record.ProjectEntry,
 	err = snapshot.DataTo(&values)
 	if err != nil {
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	if values.UserId != userId {
+		return nil, Errorf(NotFoundError, "failed to get project")
 	}
 
 	return r.valuesToEntry(values), nil
@@ -96,21 +100,34 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 }
 
 func (r projectRepository) UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error) {
-	_, err := r.client.Collection(ProjectCollection).
-		Doc(projectId).
-		Update(db.FirestoreContext(), []firestore.Update{
-			{Path: "name", Value: entry.Name},
-			{Path: "description", Value: entry.Description},
-			{Path: "userId", Value: entry.UserId},
-			{Path: "updatedAt", Value: firestore.ServerTimestamp},
-		})
+	docref := r.client.Collection(ProjectCollection).
+		Doc(projectId)
+
+	snapshotToBeUpdated, err := docref.Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(NotFoundError, "failed to update project")
+	}
+
+	var valuesToBeUpdated document.ProjectValues
+	err = snapshotToBeUpdated.DataTo(&valuesToBeUpdated)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	if valuesToBeUpdated.UserId != entry.UserId {
+		return nil, Errorf(NotFoundError, "failed to update project")
+	}
+
+	_, err = docref.Update(db.FirestoreContext(), []firestore.Update{
+		{Path: "name", Value: entry.Name},
+		{Path: "description", Value: entry.Description},
+		{Path: "updatedAt", Value: firestore.ServerTimestamp},
+	})
 	if err != nil {
 		return nil, Errorf(WriteFailurePanic, "failed to update project")
 	}
 
-	snapshot, err := r.client.Collection(ProjectCollection).
-		Doc(projectId).
-		Get(db.FirestoreContext())
+	snapshot, err := docref.Get(db.FirestoreContext())
 	if err != nil {
 		return nil, Errorf(ReadFailurePanic, "failed to get updated project")
 	}

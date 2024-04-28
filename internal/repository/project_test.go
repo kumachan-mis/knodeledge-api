@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFetchUserProjectsValidDocument(t *testing.T) {
+func TestFetchProjectsValidDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 
 	userId := testutil.ReadOnlyUserId()
-	projects, rErr := r.FetchUserProjects(userId)
+	projects, rErr := r.FetchProjects(userId)
 
 	assert.Nil(t, rErr)
 
@@ -38,19 +38,19 @@ func TestFetchUserProjectsValidDocument(t *testing.T) {
 	assert.Equal(t, time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC), project.UpdatedAt)
 }
 
-func TestFetchUserProjectsNoDocument(t *testing.T) {
+func TestFetchProjectsNoDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 
 	userId := testutil.UnknownUserId()
-	projects, rErr := r.FetchUserProjects(userId)
+	projects, rErr := r.FetchProjects(userId)
 
 	assert.Nil(t, rErr)
 
 	assert.Empty(t, projects)
 }
 
-func TestFetchUserProjectsInvalidDocument(t *testing.T) {
+func TestFetchProjectsInvalidDocument(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -75,7 +75,7 @@ func TestFetchUserProjectsInvalidDocument(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewProjectRepository(*client)
 
-			projects, rErr := r.FetchUserProjects(tc.userId)
+			projects, rErr := r.FetchProjects(tc.userId)
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
@@ -120,7 +120,7 @@ func TestFetchProjectValidDocument(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewProjectRepository(*client)
 
-			project, rErr := r.FetchProject(tc.projectId)
+			project, rErr := r.FetchProject(testutil.ReadOnlyUserId(), tc.projectId)
 
 			assert.Nil(t, rErr)
 
@@ -137,8 +137,19 @@ func TestFetchProjectNoDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 
-	projectId := "UNKNOWN_PROJECT"
-	project, rErr := r.FetchProject(projectId)
+	project, rErr := r.FetchProject(testutil.ReadOnlyUserId(), "UNKNOWN_PROJECT")
+
+	assert.NotNil(t, rErr)
+	assert.Equal(t, repository.NotFoundError, rErr.Code())
+	assert.Equal(t, "not found: failed to get project", rErr.Error())
+	assert.Nil(t, project)
+}
+
+func TestFetchProjectUnauthorizedProject(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewProjectRepository(*client)
+
+	project, rErr := r.FetchProject(testutil.ModifyOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION")
 
 	assert.NotNil(t, rErr)
 	assert.Equal(t, repository.NotFoundError, rErr.Code())
@@ -149,17 +160,20 @@ func TestFetchProjectNoDocument(t *testing.T) {
 func TestFetchProjectInvalidDocument(t *testing.T) {
 	tt := []struct {
 		name          string
+		userId        string
 		projectId     string
 		expectedError string
 	}{
 		{
 			name:      "should return error when project name is invalid",
+			userId:    testutil.ErrorUserId(0),
 			projectId: "PROJECT_WITH_NAME_ERROR",
 			expectedError: "failed to convert snapshot to values: document.ProjectValues.name: " +
 				"firestore: cannot set type string to int",
 		},
 		{
 			name:      "should return error when project description is invalid",
+			userId:    testutil.ErrorUserId(1),
 			projectId: "PROJECT_WITH_DESCRIPTION_ERROR",
 			expectedError: "failed to convert snapshot to values: document.ProjectValues.description: " +
 				"firestore: cannot set type string to bool",
@@ -171,7 +185,7 @@ func TestFetchProjectInvalidDocument(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewProjectRepository(*client)
 
-			project, rErr := r.FetchProject(tc.projectId)
+			project, rErr := r.FetchProject(tc.userId, tc.projectId)
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
@@ -225,21 +239,21 @@ func TestInsertProjectValidEntry(t *testing.T) {
 
 func TestUpdateProjectValidEntry(t *testing.T) {
 	tt := []struct {
-		name    string
-		id      string
-		project record.ProjectWithoutAutofieldEntry
+		name      string
+		projectId string
+		project   record.ProjectWithoutAutofieldEntry
 	}{
 		{
-			name: "should update project without description",
-			id:   "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			name:      "should update project without description",
+			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:   "Updated Project",
 				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
-			name: "should update project with description",
-			id:   "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			name:      "should update project with description",
+			projectId: "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:        "Updated Project",
 				Description: "This is updated project",
@@ -253,7 +267,7 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewProjectRepository(*client)
 
-			updatedProject, rErr := r.UpdateProject(tc.id, tc.project)
+			updatedProject, rErr := r.UpdateProject(tc.projectId, tc.project)
 			now := time.Now()
 
 			assert.Nil(t, rErr)
@@ -281,7 +295,68 @@ func TestUpdateProjectNoDocument(t *testing.T) {
 	project, rErr := r.UpdateProject(projectId, entry)
 
 	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.WriteFailurePanic, rErr.Code())
-	assert.Equal(t, "write failure: failed to update project", rErr.Error())
+	assert.Equal(t, repository.NotFoundError, rErr.Code())
+	assert.Equal(t, "not found: failed to update project", rErr.Error())
 	assert.Nil(t, project)
+}
+
+func TestUpdateProjectUnauthorizedProject(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewProjectRepository(*client)
+
+	projectId := "PROJECT_WITHOUT_DESCRIPTION"
+	entry := record.ProjectWithoutAutofieldEntry{
+		Name:        "Updated Project",
+		Description: "This is updated project",
+		UserId:      testutil.ModifyOnlyUserId(),
+	}
+
+	project, rErr := r.UpdateProject(projectId, entry)
+
+	assert.NotNil(t, rErr)
+	assert.Equal(t, repository.NotFoundError, rErr.Code())
+	assert.Equal(t, "not found: failed to update project", rErr.Error())
+	assert.Nil(t, project)
+}
+
+func TestUpdateProjectInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when project name is invalid",
+			userId:    testutil.ErrorUserId(0),
+			projectId: "PROJECT_WITH_NAME_ERROR",
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.name: " +
+				"firestore: cannot set type string to int",
+		},
+		{
+			name:      "should return error when project description is invalid",
+			userId:    testutil.ErrorUserId(1),
+			projectId: "PROJECT_WITH_DESCRIPTION_ERROR",
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.description: " +
+				"firestore: cannot set type string to bool",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
+
+			project, rErr := r.UpdateProject(tc.projectId, record.ProjectWithoutAutofieldEntry{
+				Name:        "Updated Project",
+				Description: "This is updated project",
+				UserId:      tc.userId,
+			})
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %s", tc.expectedError), rErr.Error())
+			assert.Nil(t, project)
+		})
+	}
 }
