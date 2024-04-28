@@ -318,3 +318,45 @@ func TestUpdateProjectUnauthorizedProject(t *testing.T) {
 	assert.Equal(t, "not found: failed to update project", rErr.Error())
 	assert.Nil(t, project)
 }
+
+func TestUpdateProjectInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when project name is invalid",
+			userId:    testutil.ErrorUserId(0),
+			projectId: "PROJECT_WITH_NAME_ERROR",
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.name: " +
+				"firestore: cannot set type string to int",
+		},
+		{
+			name:      "should return error when project description is invalid",
+			userId:    testutil.ErrorUserId(1),
+			projectId: "PROJECT_WITH_DESCRIPTION_ERROR",
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.description: " +
+				"firestore: cannot set type string to bool",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
+
+			project, rErr := r.UpdateProject(tc.projectId, record.ProjectWithoutAutofieldEntry{
+				Name:        "Updated Project",
+				Description: "This is updated project",
+				UserId:      tc.userId,
+			})
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %s", tc.expectedError), rErr.Error())
+			assert.Nil(t, project)
+		})
+	}
+}
