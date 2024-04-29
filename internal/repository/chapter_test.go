@@ -221,40 +221,26 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	}, chapters)
 }
 
-func TestInsertProjectChaptersInvalidEntry(t *testing.T) {
-	tt := []struct {
-		name          string
-		projectId     string
-		entry         record.ChapterWithoutAutofieldEntry
-		expectedError string
-	}{
-		{
-			name:      "should return error when next id does not exist",
-			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
-			entry: record.ChapterWithoutAutofieldEntry{
-				Name:   "Chapter One",
-				NextId: "UNKNOWN_CHAPTER",
-				UserId: testutil.ModifyOnlyUserId(),
-			},
-			expectedError: "invalid argument: next chapter id does not exist",
-		},
+func TestInsertProjectChaptersInvalidArgument(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewChapterRepository(*client)
+
+	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
+
+	entry := record.ChapterWithoutAutofieldEntry{
+		Name:   "Chapter One",
+		NextId: "UNKNOWN_CHAPTER",
+		UserId: testutil.ModifyOnlyUserId(),
 	}
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			client := db.FirestoreClient()
-			r := repository.NewChapterRepository(*client)
+	id, createdChapter, rErr := r.InsertChapter(projectId, entry)
 
-			id, createdChapter, rErr := r.InsertChapter(tc.projectId, tc.entry)
+	assert.NotNil(t, rErr)
 
-			assert.NotNil(t, rErr)
-
-			assert.Empty(t, id)
-			assert.Equal(t, repository.InvalidArgument, rErr.Code())
-			assert.Equal(t, tc.expectedError, rErr.Error())
-			assert.Nil(t, createdChapter)
-		})
-	}
+	assert.Empty(t, id)
+	assert.Equal(t, repository.InvalidArgument, rErr.Code())
+	assert.Equal(t, "invalid argument: id of next chapter does not exist", rErr.Error())
+	assert.Nil(t, createdChapter)
 }
 
 func TestInsertProjectChaptersNoProject(t *testing.T) {

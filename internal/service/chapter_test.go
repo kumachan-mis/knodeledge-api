@@ -363,26 +363,29 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 	}
 }
 
-func TestCreateChapterInvalidEntryUserId(t *testing.T) {
+func TestCreateChapterInvalidArgumentError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	r := mock_repository.NewMockChapterRepository(ctrl)
 	r.EXPECT().
-		InsertChapter("0000000000000001", gomock.Any()).
-		Return("", nil, repository.Errorf(repository.InvalidArgument, "next chapter id does not exist"))
+		InsertChapter("0000000000000001", record.ChapterWithoutAutofieldEntry{
+			Name:   "Chapter One",
+			NextId: "UNKNOWN_CHAPTER",
+			UserId: testutil.ModifyOnlyUserId(),
+		}).
+		Return("", nil, repository.Errorf(repository.InvalidArgument, "id of next chapter does not exist"))
 
 	s := service.NewChapterService(r)
 
 	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 	assert.Nil(t, err)
-
 	projectId, err := domain.NewProjectIdObject("0000000000000001")
 	assert.Nil(t, err)
 
 	name, err := domain.NewChapterNameObject("Chapter One")
 	assert.Nil(t, err)
-	nextId, err := domain.NewChapterNextIdObject("9999999999999999")
+	nextId, err := domain.NewChapterNextIdObject("UNKNOWN_CHAPTER")
 	assert.Nil(t, err)
 
 	chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
@@ -390,7 +393,7 @@ func TestCreateChapterInvalidEntryUserId(t *testing.T) {
 	createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
 	assert.NotNil(t, sErr)
 	assert.Equal(t, service.InvalidArgument, sErr.Code())
-	assert.Equal(t, "invalid argument: failed to create chapter: next chapter id does not exist", sErr.Error())
+	assert.Equal(t, "invalid argument: failed to create chapter: id of next chapter does not exist", sErr.Error())
 	assert.Nil(t, createdChapter)
 }
 
