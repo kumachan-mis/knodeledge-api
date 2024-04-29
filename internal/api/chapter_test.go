@@ -42,13 +42,13 @@ func TestChapterList(t *testing.T) {
 			map[string]any{
 				"id":       "CHAPTER_ONE",
 				"name":     "Chapter One",
-				"number":   float64(1), // json.Unmarshal() converts numbers to float64
+				"nextId":   "CHAPTER_TWO",
 				"sections": []any{},
 			},
 			map[string]any{
 				"id":       "CHAPTER_TWO",
 				"name":     "Chapter Two",
-				"number":   float64(2), // json.Unmarshal() converts numbers to float64
+				"nextId":   "",
 				"sections": []any{},
 			},
 		},

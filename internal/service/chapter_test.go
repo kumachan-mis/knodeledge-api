@@ -27,28 +27,28 @@ func TestListChaptersValidEntry(t *testing.T) {
 		Return(map[string]record.ChapterEntry{
 			"1000000000000003": {
 				Name:      "Chapter 3",
-				Number:    3,
+				NextId:    "1000000000000004",
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-3 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-3 * time.Hour),
 			},
 			"1000000000000001": {
 				Name:      "Chapter 1",
-				Number:    1,
+				NextId:    "1000000000000002",
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-2 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-2 * time.Hour),
 			},
 			"1000000000000004": {
 				Name:      maxLengthChapterName,
-				Number:    4,
+				NextId:    "",
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-4 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-4 * time.Hour),
 			},
 			"1000000000000002": {
 				Name:      "Chapter 2",
-				Number:    2,
+				NextId:    "1000000000000003",
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-1 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-1 * time.Hour),
@@ -71,28 +71,28 @@ func TestListChaptersValidEntry(t *testing.T) {
 	chapter := chapters[0]
 	assert.Equal(t, "1000000000000001", chapter.Id().Value())
 	assert.Equal(t, "Chapter 1", chapter.Name().Value())
-	assert.Equal(t, 1, chapter.Number().Value())
+	assert.Equal(t, "1000000000000002", chapter.NextId().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), chapter.UpdatedAt().Value())
 
 	chapter = chapters[1]
 	assert.Equal(t, "1000000000000002", chapter.Id().Value())
 	assert.Equal(t, "Chapter 2", chapter.Name().Value())
-	assert.Equal(t, 2, chapter.Number().Value())
+	assert.Equal(t, "1000000000000003", chapter.NextId().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), chapter.UpdatedAt().Value())
 
 	chapter = chapters[2]
 	assert.Equal(t, "1000000000000003", chapter.Id().Value())
 	assert.Equal(t, "Chapter 3", chapter.Name().Value())
-	assert.Equal(t, 3, chapter.Number().Value())
+	assert.Equal(t, "1000000000000004", chapter.NextId().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), chapter.UpdatedAt().Value())
 
 	chapter = chapters[3]
 	assert.Equal(t, "1000000000000004", chapter.Id().Value())
 	assert.Equal(t, maxLengthChapterName, chapter.Name().Value())
-	assert.Equal(t, 4, chapter.Number().Value())
+	assert.Equal(t, "", chapter.NextId().Value())
 	assert.Equal(t, testutil.Date().Add(-4*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-4*time.Hour), chapter.UpdatedAt().Value())
 }
@@ -137,7 +137,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			chapterId: "",
 			chapter: record.ChapterEntry{
 				Name:      "Chapter 1",
-				Number:    1,
+				NextId:    "",
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -149,7 +149,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			chapterId: "1000000000000001",
 			chapter: record.ChapterEntry{
 				Name:      "",
-				Number:    1,
+				NextId:    "",
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -161,7 +161,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			chapterId: "1000000000000001",
 			chapter: record.ChapterEntry{
 				Name:      tooLongChapterName,
-				Number:    1,
+				NextId:    "",
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -170,18 +170,6 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 				"chapter name cannot be longer than 100 characters, but got '%s'",
 				tooLongChapterName,
 			),
-		},
-		{
-			name:      "should return error when chapter number is zero",
-			chapterId: "1000000000000001",
-			chapter: record.ChapterEntry{
-				Name:      "Chapter 1",
-				Number:    0,
-				UserId:    testutil.ReadOnlyUserId(),
-				CreatedAt: testutil.Date(),
-				UpdatedAt: testutil.Date(),
-			},
-			expectedError: "failed to convert entry to entity (number): chapter number must be greater than 0, but got 0",
 		},
 	}
 

@@ -69,7 +69,7 @@ func (r chapterRepository) FetchProjectChapters(userId string, projectId string)
 func (r chapterRepository) valuesToEntry(values document.ChapterValues, userId string) *record.ChapterEntry {
 	return &record.ChapterEntry{
 		Name:      values.Name,
-		Number:    values.Number,
+		NextId:    values.NextId,
 		UserId:    userId,
 		CreatedAt: values.CreatedAt,
 		UpdatedAt: values.UpdatedAt,

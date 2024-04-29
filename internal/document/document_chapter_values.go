@@ -4,7 +4,7 @@ import "time"
 
 type ChapterValues struct {
 	Name      string    `firestore:"name"`
-	Number    int       `firestore:"number"`
+	NextId    string    `firestore:"nextId"`
 	CreatedAt time.Time `firestore:"createdAt"`
 	UpdatedAt time.Time `firestore:"updatedAt"`
 }

@@ -15,6 +15,6 @@ type ChapterWithoutAutofield struct {
 	// Chapter name
 	Name string `json:"name"`
 
-	// Chapter number
-	Number int32 `json:"number"`
+	// next chapter ID
+	NextId string `json:"nextId"`
 }

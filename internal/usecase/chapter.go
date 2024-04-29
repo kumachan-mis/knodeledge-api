@@ -59,7 +59,7 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 		chapters[i] = model.Chapter{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
-			Number:   int32(entity.Number().Value()),
+			NextId:   entity.NextId().Value(),
 			Sections: []model.Section{},
 		}
 		i++

@@ -18,8 +18,8 @@ type Chapter struct {
 	// Chapter name
 	Name string `json:"name"`
 
-	// Chapter number
-	Number int32 `json:"number"`
-
 	Sections []Section `json:"sections"`
+
+	// next chapter ID
+	NextId string `json:"nextId"`
 }

@@ -23,13 +23,13 @@ func TestFetchProjectChaptersValidDocument(t *testing.T) {
 
 	chapter := chapters["CHAPTER_ONE"]
 	assert.Equal(t, "Chapter One", chapter.Name)
-	assert.Equal(t, 1, chapter.Number)
+	assert.Equal(t, "CHAPTER_TWO", chapter.NextId)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 
 	chapter = chapters["CHAPTER_TWO"]
 	assert.Equal(t, "Chapter Two", chapter.Name)
-	assert.Equal(t, 2, chapter.Number)
+	assert.Equal(t, "", chapter.NextId)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 }
@@ -84,11 +84,11 @@ func TestFetchProjectChaptersInvalidDocument(t *testing.T) {
 				"firestore: cannot set type string to bool",
 		},
 		{
-			name:      "should return error when chapter number is invalid",
+			name:      "should return error when next id is invalid",
 			userId:    testutil.ErrorUserId(3),
-			projectId: "PROJECT_WITH_INVALID_CHAPTER_NUMBER",
-			expectedError: "failed to convert snapshot to values: document.ChapterValues.number: " +
-				"firestore: cannot set type int to string",
+			projectId: "PROJECT_WITH_INVALID_CHAPTER_NEXT_ID",
+			expectedError: "failed to convert snapshot to values: document.ChapterValues.nextId: " +
+				"firestore: cannot set type string to int",
 		},
 	}
 

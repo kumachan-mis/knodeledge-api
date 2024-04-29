@@ -4,7 +4,7 @@ import "time"
 
 type ChapterEntry struct {
 	Name      string
-	Number    int
+	NextId    string
 	UserId    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
