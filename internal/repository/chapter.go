@@ -13,6 +13,7 @@ const ChapterCollection = "chapters"
 
 type ChapterRepository interface {
 	FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error)
+	InsertChapter(projectId string, entry record.ChapterWithoutAutofieldEntry) (string, *record.ChapterEntry, *Error)
 }
 
 type chapterRepository struct {
@@ -24,9 +25,9 @@ func NewChapterRepository(client firestore.Client) ChapterRepository {
 }
 
 func (r chapterRepository) FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error) {
-	ref, err := r.projectDocumentRef(userId, projectId)
-	if err != nil {
-		return nil, err
+	ref, rErr := r.projectDocumentRef(userId, projectId)
+	if rErr != nil {
+		return nil, rErr
 	}
 
 	iter := ref.
@@ -51,6 +52,61 @@ func (r chapterRepository) FetchProjectChapters(userId string, projectId string)
 	}
 
 	return entries, nil
+}
+
+func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterWithoutAutofieldEntry) (string, *record.ChapterEntry, *Error) {
+	ref, rErr := r.projectDocumentRef(entry.UserId, projectId)
+	if rErr != nil {
+		return "", nil, rErr
+	}
+
+	if entry.NextId != "" {
+		_, err := ref.Collection(ChapterCollection).
+			Doc(entry.NextId).
+			Get(db.FirestoreContext())
+		if err != nil {
+			return "", nil, Errorf(InValidArgument, "next chapter id does not exist")
+		}
+	}
+
+	prevSnapshot, _ := ref.Collection(ChapterCollection).
+		Where("nextId", "==", entry.NextId).
+		Limit(1).
+		Documents(db.FirestoreContext()).
+		Next()
+
+	ref, _, err := ref.Collection(ChapterCollection).
+		Add(db.FirestoreContext(), map[string]any{
+			"name":      entry.Name,
+			"nextId":    entry.NextId,
+			"createdAt": firestore.ServerTimestamp,
+			"updatedAt": firestore.ServerTimestamp,
+		})
+	if err != nil {
+		return "", nil, Errorf(WriteFailurePanic, "failed to insert chapter: %w", err)
+	}
+
+	if prevSnapshot != nil {
+		_, err = prevSnapshot.Ref.Update(db.FirestoreContext(), []firestore.Update{
+			{Path: "nextId", Value: ref.ID},
+		})
+		if err != nil {
+			return "", nil, Errorf(WriteFailurePanic, "failed to update previous chapter: %w", err)
+		}
+	}
+
+	snapshot, err := ref.Get(db.FirestoreContext())
+	if err != nil {
+		return "", nil, Errorf(WriteFailurePanic, "failed to get inserted chapter: %w", err)
+	}
+
+	var values document.ChapterValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	return ref.ID, r.valuesToEntry(values, entry.UserId), nil
 }
 
 func (r chapterRepository) projectDocumentRef(userId string, projectId string) (*firestore.DocumentRef, *Error) {
