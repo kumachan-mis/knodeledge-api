@@ -53,7 +53,7 @@ func TestFetchProjectChaptersNoProject(t *testing.T) {
 
 	assert.NotNil(t, rErr)
 	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: parent document not found", rErr.Error())
+	assert.Equal(t, "not found: project document not found", rErr.Error())
 	assert.Nil(t, chapters)
 }
 
@@ -65,7 +65,7 @@ func TestFetchProjectChaptersUnauthorizedProject(t *testing.T) {
 
 	assert.NotNil(t, rErr)
 	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: parent document not found", rErr.Error())
+	assert.Equal(t, "not found: project document not found", rErr.Error())
 	assert.Nil(t, chapters)
 }
 

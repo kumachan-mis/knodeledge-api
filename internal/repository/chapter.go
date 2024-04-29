@@ -24,25 +24,12 @@ func NewChapterRepository(client firestore.Client) ChapterRepository {
 }
 
 func (r chapterRepository) FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error) {
-	docref := r.client.Collection(ProjectCollection).
-		Doc(projectId)
-
-	projectSnapshot, err := docref.Get(db.FirestoreContext())
+	ref, err := r.projectDocumentRef(userId, projectId)
 	if err != nil {
-		return nil, Errorf(NotFoundError, "parent document not found")
+		return nil, err
 	}
 
-	var projectValues document.ProjectValues
-	err = projectSnapshot.DataTo(&projectValues)
-	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
-	}
-
-	if projectValues.UserId != userId {
-		return nil, Errorf(NotFoundError, "parent document not found")
-	}
-
-	iter := docref.
+	iter := ref.
 		Collection(ChapterCollection).
 		Documents(db.FirestoreContext())
 
@@ -60,10 +47,32 @@ func (r chapterRepository) FetchProjectChapters(userId string, projectId string)
 			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 		}
 
-		entries[snapshot.Ref.ID] = *r.valuesToEntry(values, projectValues.UserId)
+		entries[snapshot.Ref.ID] = *r.valuesToEntry(values, userId)
 	}
 
 	return entries, nil
+}
+
+func (r chapterRepository) projectDocumentRef(userId string, projectId string) (*firestore.DocumentRef, *Error) {
+	ref := r.client.Collection(ProjectCollection).
+		Doc(projectId)
+
+	snapshot, err := ref.Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(NotFoundError, "project document not found")
+	}
+
+	var projectValues document.ProjectValues
+	err = snapshot.DataTo(&projectValues)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	if projectValues.UserId != userId {
+		return nil, Errorf(NotFoundError, "project document not found")
+	}
+
+	return ref, nil
 }
 
 func (r chapterRepository) valuesToEntry(values document.ChapterValues, userId string) *record.ChapterEntry {
