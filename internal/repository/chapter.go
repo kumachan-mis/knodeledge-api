@@ -65,7 +65,7 @@ func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterW
 			Doc(entry.NextId).
 			Get(db.FirestoreContext())
 		if err != nil {
-			return "", nil, Errorf(InValidArgument, "next chapter id does not exist")
+			return "", nil, Errorf(InvalidArgument, "next chapter id does not exist")
 		}
 	}
 

@@ -250,7 +250,7 @@ func TestInsertProjectChaptersInvalidEntry(t *testing.T) {
 			assert.NotNil(t, rErr)
 
 			assert.Empty(t, id)
-			assert.Equal(t, repository.InValidArgument, rErr.Code())
+			assert.Equal(t, repository.InvalidArgument, rErr.Code())
 			assert.Equal(t, tc.expectedError, rErr.Error())
 			assert.Nil(t, createdChapter)
 		})

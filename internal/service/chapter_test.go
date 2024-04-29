@@ -222,3 +222,204 @@ func TestListChaptersRepositoryError(t *testing.T) {
 	assert.Equal(t, "repository failure: failed to fetch project chapters: repository error", sErr.Error())
 	assert.Nil(t, chapters)
 }
+
+func TestCreateChapterValidEntry(t *testing.T) {
+	maxLengthChapterName := testutil.RandomString(100)
+
+	tt := []struct {
+		name    string
+		chapter record.ChapterWithoutAutofieldEntry
+	}{
+		{
+			name: "should return chapter with valid entry",
+			chapter: record.ChapterWithoutAutofieldEntry{
+				Name:   "Chapter One",
+				NextId: "",
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+		},
+		{
+			name: "should return chapter with max-length valid entry",
+			chapter: record.ChapterWithoutAutofieldEntry{
+				Name:   maxLengthChapterName,
+				NextId: "",
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockChapterRepository(ctrl)
+			r.EXPECT().
+				InsertChapter("0000000000000001", tc.chapter).
+				Return("1000000000000001", &record.ChapterEntry{
+					Name:      tc.chapter.Name,
+					NextId:    tc.chapter.NextId,
+					UserId:    tc.chapter.UserId,
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				}, nil)
+
+			s := service.NewChapterService(r)
+
+			userId, err := domain.NewUserIdObject(tc.chapter.UserId)
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+
+			name, err := domain.NewChapterNameObject(tc.chapter.Name)
+			assert.Nil(t, err)
+			nextId, err := domain.NewChapterNextIdObject(tc.chapter.NextId)
+			assert.Nil(t, err)
+
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
+
+			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
+			assert.Nil(t, sErr)
+
+			assert.Equal(t, "1000000000000001", createdChapter.Id().Value())
+			assert.Equal(t, tc.chapter.Name, createdChapter.Name().Value())
+			assert.Equal(t, tc.chapter.NextId, createdChapter.NextId().Value())
+			assert.Equal(t, testutil.Date(), createdChapter.CreatedAt().Value())
+			assert.Equal(t, testutil.Date(), createdChapter.UpdatedAt().Value())
+		})
+	}
+}
+
+func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
+	tooLongChapterName := testutil.RandomString(101)
+
+	tt := []struct {
+		name           string
+		createdChapter record.ChapterEntry
+		expectedError  string
+	}{
+		{
+			name: "should return error when chapter name is empty",
+			createdChapter: record.ChapterEntry{
+				Name:      "",
+				NextId:    "",
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (name): chapter name is required, but got ''",
+		},
+		{
+			name: "should return error when chapter name is too long",
+			createdChapter: record.ChapterEntry{
+				Name:      tooLongChapterName,
+				NextId:    "",
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (name): " + fmt.Sprintf(
+				"chapter name cannot be longer than 100 characters, but got '%s'",
+				tooLongChapterName,
+			),
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockChapterRepository(ctrl)
+			r.EXPECT().
+				InsertChapter("0000000000000001", record.ChapterWithoutAutofieldEntry{
+					Name:   "Chapter One",
+					NextId: "",
+					UserId: testutil.ModifyOnlyUserId(),
+				}).
+				Return("1000000000000001", &tc.createdChapter, nil)
+
+			s := service.NewChapterService(r)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+
+			name, err := domain.NewChapterNameObject("Chapter One")
+			assert.Nil(t, err)
+			nextId, err := domain.NewChapterNextIdObject("")
+			assert.Nil(t, err)
+
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
+
+			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
+
+			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Nil(t, createdChapter)
+		})
+	}
+}
+
+func TestCreateChapterInvalidEntryUserId(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockChapterRepository(ctrl)
+	r.EXPECT().
+		InsertChapter("0000000000000001", gomock.Any()).
+		Return("", nil, repository.Errorf(repository.InvalidArgument, "next chapter id does not exist"))
+
+	s := service.NewChapterService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+	assert.Nil(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.Nil(t, err)
+
+	name, err := domain.NewChapterNameObject("Chapter One")
+	assert.Nil(t, err)
+	nextId, err := domain.NewChapterNextIdObject("9999999999999999")
+	assert.Nil(t, err)
+
+	chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
+
+	createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.InvalidArgument, sErr.Code())
+	assert.Equal(t, "invalid argument: failed to create chapter: next chapter id does not exist", sErr.Error())
+	assert.Nil(t, createdChapter)
+}
+
+func TestCreateChapterRepositoryError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockChapterRepository(ctrl)
+	r.EXPECT().
+		InsertChapter("0000000000000001", gomock.Any()).
+		Return("", nil, repository.Errorf(repository.WriteFailurePanic, "repository error"))
+
+	s := service.NewChapterService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+	assert.Nil(t, err)
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.Nil(t, err)
+
+	name, err := domain.NewChapterNameObject("Chapter One")
+	assert.Nil(t, err)
+	nextId, err := domain.NewChapterNextIdObject("")
+	assert.Nil(t, err)
+
+	chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
+
+	createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
+	assert.NotNil(t, sErr)
+	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
+	assert.Equal(t, "repository failure: failed to create chapter: repository error", sErr.Error())
+	assert.Nil(t, createdChapter)
+}
