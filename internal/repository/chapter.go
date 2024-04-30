@@ -25,12 +25,18 @@ func NewChapterRepository(client firestore.Client) ChapterRepository {
 }
 
 func (r chapterRepository) FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error) {
-	ref, rErr := r.projectDocumentRef(userId, projectId)
+	projectValues, rErr := r.projectValues(userId, projectId)
 	if rErr != nil {
 		return nil, rErr
 	}
 
-	iter := ref.
+	chapterNumbers := make(map[string]int)
+	for i, chapterId := range projectValues.ChapterIds {
+		chapterNumbers[chapterId] = i + 1
+	}
+
+	iter := r.client.Collection(ProjectCollection).
+		Doc(projectId).
 		Collection(ChapterCollection).
 		Documents(db.FirestoreContext())
 
@@ -48,37 +54,28 @@ func (r chapterRepository) FetchProjectChapters(userId string, projectId string)
 			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 		}
 
-		entries[snapshot.Ref.ID] = *r.valuesToEntry(values, userId)
+		number := chapterNumbers[snapshot.Ref.ID]
+		entries[snapshot.Ref.ID] = *r.valuesToEntry(values, number, userId)
 	}
 
 	return entries, nil
 }
 
 func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterWithoutAutofieldEntry) (string, *record.ChapterEntry, *Error) {
-	ref, rErr := r.projectDocumentRef(entry.UserId, projectId)
+	projectValues, rErr := r.projectValues(entry.UserId, projectId)
 	if rErr != nil {
 		return "", nil, rErr
 	}
 
-	if entry.NextId != "" {
-		_, err := ref.Collection(ChapterCollection).
-			Doc(entry.NextId).
-			Get(db.FirestoreContext())
-		if err != nil {
-			return "", nil, Errorf(InvalidArgument, "id of next chapter does not exist")
-		}
+	if entry.Number > len(projectValues.ChapterIds)+1 {
+		return "", nil, Errorf(InvalidArgument, "chapter number is too large")
 	}
 
-	prevSnapshot, _ := ref.Collection(ChapterCollection).
-		Where("nextId", "==", entry.NextId).
-		Limit(1).
-		Documents(db.FirestoreContext()).
-		Next()
-
-	ref, _, err := ref.Collection(ChapterCollection).
+	ref, _, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
 		Add(db.FirestoreContext(), map[string]any{
 			"name":      entry.Name,
-			"nextId":    entry.NextId,
 			"createdAt": firestore.ServerTimestamp,
 			"updatedAt": firestore.ServerTimestamp,
 		})
@@ -86,13 +83,18 @@ func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterW
 		return "", nil, Errorf(WriteFailurePanic, "failed to insert chapter: %w", err)
 	}
 
-	if prevSnapshot != nil {
-		_, err = prevSnapshot.Ref.Update(db.FirestoreContext(), []firestore.Update{
-			{Path: "nextId", Value: ref.ID},
+	updatedChapterIds := make([]string, len(projectValues.ChapterIds)+1)
+	copy(updatedChapterIds[:entry.Number-1], projectValues.ChapterIds[:entry.Number-1])
+	updatedChapterIds[entry.Number-1] = ref.ID
+	copy(updatedChapterIds[entry.Number:], projectValues.ChapterIds[entry.Number-1:])
+
+	_, err = r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Update(db.FirestoreContext(), []firestore.Update{
+			{Path: "chapterIds", Value: updatedChapterIds},
 		})
-		if err != nil {
-			return "", nil, Errorf(WriteFailurePanic, "failed to update previous chapter: %w", err)
-		}
+	if err != nil {
+		return "", nil, Errorf(WriteFailurePanic, "failed to update project: %w", err)
 	}
 
 	snapshot, err := ref.Get(db.FirestoreContext())
@@ -106,10 +108,10 @@ func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterW
 		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return ref.ID, r.valuesToEntry(values, entry.UserId), nil
+	return ref.ID, r.valuesToEntry(values, entry.Number, entry.UserId), nil
 }
 
-func (r chapterRepository) projectDocumentRef(userId string, projectId string) (*firestore.DocumentRef, *Error) {
+func (r chapterRepository) projectValues(userId string, projectId string) (*document.ProjectWithChapterIdsValues, *Error) {
 	ref := r.client.Collection(ProjectCollection).
 		Doc(projectId)
 
@@ -118,7 +120,7 @@ func (r chapterRepository) projectDocumentRef(userId string, projectId string) (
 		return nil, Errorf(InvalidArgument, "project document does not exist")
 	}
 
-	var projectValues document.ProjectValues
+	var projectValues document.ProjectWithChapterIdsValues
 	err = snapshot.DataTo(&projectValues)
 	if err != nil {
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
@@ -128,13 +130,16 @@ func (r chapterRepository) projectDocumentRef(userId string, projectId string) (
 		return nil, Errorf(InvalidArgument, "project document does not exist")
 	}
 
-	return ref, nil
+	if projectValues.ChapterIds == nil {
+		projectValues.ChapterIds = []string{}
+	}
+	return &projectValues, nil
 }
 
-func (r chapterRepository) valuesToEntry(values document.ChapterValues, userId string) *record.ChapterEntry {
+func (r chapterRepository) valuesToEntry(values document.ChapterValues, number int, userId string) *record.ChapterEntry {
 	return &record.ChapterEntry{
 		Name:      values.Name,
-		NextId:    values.NextId,
+		Number:    number,
 		UserId:    userId,
 		CreatedAt: values.CreatedAt,
 		UpdatedAt: values.UpdatedAt,

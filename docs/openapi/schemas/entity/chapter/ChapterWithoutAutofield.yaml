@@ -6,10 +6,11 @@ properties:
     maxLength: 100
     description: Chapter name
     example: Introduction
-  nextId:
-    type: string
-    description: next chapter ID
-    example: 123e4567-e89b-12d3-a456-426614174001
+  number:
+    type: integer
+    description: Chapter number
+    minimum: 1
+    example: 1
 required:
   - name
-  - nextId
+  - number

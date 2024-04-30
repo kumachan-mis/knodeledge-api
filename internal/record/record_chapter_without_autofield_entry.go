@@ -2,6 +2,6 @@ package record
 
 type ChapterWithoutAutofieldEntry struct {
 	Name   string
-	NextId string
+	Number int
 	UserId string
 }
