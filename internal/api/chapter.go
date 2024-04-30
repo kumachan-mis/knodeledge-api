@@ -95,5 +95,5 @@ func (api chapterApi) HandleCreate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusCreated, res)
 }

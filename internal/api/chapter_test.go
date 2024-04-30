@@ -307,7 +307,7 @@ func TestChapterCreate(t *testing.T) {
 
 	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, http.StatusCreated, recorder.Code)
 
 	var responseBody map[string]any
 	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
