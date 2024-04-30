@@ -53,9 +53,8 @@ func (s chapterService) ListChapters(
 		chapters = append(chapters, *chapter)
 	}
 
-	order := s.entriesOrder(entries)
 	sort.Slice(chapters, func(i, j int) bool {
-		return order[chapters[i].Id().Value()] < order[chapters[j].Id().Value()]
+		return chapters[i].Number().Value() < chapters[j].Number().Value()
 	})
 
 	return chapters, nil
@@ -68,7 +67,7 @@ func (s chapterService) CreateChapter(
 ) (*domain.ChapterEntity, *Error) {
 	entryyWithoutAutofield := record.ChapterWithoutAutofieldEntry{
 		Name:   chapter.Name().Value(),
-		NextId: chapter.NextId().Value(),
+		Number: chapter.Number().Value(),
 		UserId: userId.Value(),
 	}
 
@@ -92,9 +91,9 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (name): %w", err)
 	}
-	nextId, err := domain.NewChapterNextIdObject(entry.NextId)
+	number, err := domain.NewChapterNumberObject(entry.Number)
 	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (nextId): %w", err)
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (number): %w", err)
 	}
 	createdAt, err := domain.NewCreatedAtObject(entry.CreatedAt)
 	if err != nil {
@@ -105,22 +104,5 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
 	}
 
-	return domain.NewChapterEntity(*id, *name, *nextId, *createdAt, *updatedAt), nil
-}
-
-func (s chapterService) entriesOrder(entries map[string]record.ChapterEntry) map[string]int {
-	prevs := make(map[string]string)
-	for key, entry := range entries {
-		prevs[entry.NextId] = key
-	}
-
-	order := make(map[string]int)
-
-	id := ""
-	for i := len(entries); i > 0; i-- {
-		order[id] = i
-		id = prevs[id]
-	}
-
-	return order
+	return domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt), nil
 }

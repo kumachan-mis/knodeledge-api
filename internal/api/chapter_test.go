@@ -42,13 +42,13 @@ func TestChapterList(t *testing.T) {
 			map[string]any{
 				"id":       "CHAPTER_ONE",
 				"name":     "Chapter One",
-				"nextId":   "CHAPTER_TWO",
+				"number":   float64(1), // json.Unmarshal converts number to float64
 				"sections": []any{},
 			},
 			map[string]any{
 				"id":       "CHAPTER_TWO",
 				"name":     "Chapter Two",
-				"nextId":   "",
+				"number":   float64(2), // json.Unmarshal converts number to float64
 				"sections": []any{},
 			},
 		},
@@ -300,7 +300,8 @@ func TestChapterCreate(t *testing.T) {
 			"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
 		},
 		"chapter": map[string]any{
-			"name": "Chapter One",
+			"name":   "Chapter One",
+			"number": 1,
 		},
 	})
 	req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(string(requestBody)))
@@ -320,7 +321,7 @@ func TestChapterCreate(t *testing.T) {
 		"chapter": map[string]any{
 			"id":       chapterId,
 			"name":     "Chapter One",
-			"nextId":   "",
+			"number":   float64(1), // json.Unmarshal converts number to float64
 			"sections": []any{},
 		},
 	}, responseBody)
@@ -341,7 +342,8 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 					"id": "UNKNOWN_PROJECT",
 				},
 				"chapter": map[string]any{
-					"name": "Chapter One",
+					"name":   "Chapter One",
+					"number": 1,
 				},
 			},
 		},
@@ -355,7 +357,8 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
 				},
 				"chapter": map[string]any{
-					"name": "Chapter One",
+					"name":   "Chapter One",
+					"number": 1,
 				},
 			},
 		},
@@ -386,7 +389,7 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 	}
 }
 
-func TestChapterCreateNextChapterNotFound(t *testing.T) {
+func TestChapterCreateTooLargeChapterNumber(t *testing.T) {
 	router := setupChapterRouter()
 
 	recorder := httptest.NewRecorder()
@@ -398,8 +401,8 @@ func TestChapterCreateNextChapterNotFound(t *testing.T) {
 			"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
 		},
 		"chapter": map[string]any{
-			"name":   "Chapter One",
-			"nextId": "UNKNOWN_CHAPTER",
+			"name":   "Chapter Ninety-Nine",
+			"number": 99,
 		},
 	})
 	req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(string(requestBody)))
@@ -412,7 +415,7 @@ func TestChapterCreateNextChapterNotFound(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
 	assert.Equal(t, map[string]any{
 		"message": "invalid request value: " +
-			"failed to create chapter: id of next chapter does not exist",
+			"failed to create chapter: chapter number is too large",
 		"user":    map[string]any{},
 		"project": map[string]any{},
 		"chapter": map[string]any{},
@@ -436,7 +439,8 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": "project id is required, but got ''",
 				},
 				"chapter": map[string]any{
-					"name": "chapter name is required, but got ''",
+					"name":   "chapter name is required, but got ''",
+					"number": "chapter number must be greater than 0, but got 0",
 				},
 			},
 		},
@@ -450,7 +454,8 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
 				},
 				"chapter": map[string]any{
-					"name": "Chapter One",
+					"name":   "Chapter One",
+					"number": 1,
 				},
 			},
 			expectedResponse: map[string]any{
@@ -471,7 +476,8 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": "",
 				},
 				"chapter": map[string]any{
-					"name": "Chapter One",
+					"name":   "Chapter One",
+					"number": 1,
 				},
 			},
 			expectedResponse: map[string]any{
@@ -492,7 +498,8 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
 				},
 				"chapter": map[string]any{
-					"name": "",
+					"name":   "",
+					"number": 1,
 				},
 			},
 			expectedResponse: map[string]any{
@@ -500,6 +507,28 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 				"project": map[string]any{},
 				"chapter": map[string]any{
 					"name": "chapter name is required, but got ''",
+				},
+			},
+		},
+		{
+			name: "Zero chapter number",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"name":   "Chapter One",
+					"number": 0,
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{
+					"number": "chapter number must be greater than 0, but got 0",
 				},
 			},
 		},
