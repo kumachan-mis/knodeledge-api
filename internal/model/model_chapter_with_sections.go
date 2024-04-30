@@ -9,14 +9,16 @@
 
 package model
 
-// Chapter - Chapter object
-type Chapter struct {
+// ChapterWithSections - ChapterWithSections object
+type ChapterWithSections struct {
 
 	// Auto-generated chapter ID
 	Id string `json:"id"`
 
 	// Chapter name
 	Name string `json:"name"`
+
+	Sections []Section `json:"sections"`
 
 	// next chapter ID
 	NextId string `json:"nextId"`

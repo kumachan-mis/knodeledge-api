@@ -1,0 +1,13 @@
+type: object
+description: Request Body for Chapter Update API
+properties:
+  user:
+    $ref: ../../../entity/user/UserOnlyId.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyId.yaml
+  chapter:
+    $ref: ../../../entity/chapter/Chapter.yaml
+required:
+  - user
+  - project
+  - chapter

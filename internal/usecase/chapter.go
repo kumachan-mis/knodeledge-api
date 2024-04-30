@@ -61,10 +61,10 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 		)
 	}
 
-	chapters := make([]model.Chapter, len(entities))
+	chapters := make([]model.ChapterWithSections, len(entities))
 	i := 0
 	for _, entity := range entities {
-		chapters[i] = model.Chapter{
+		chapters[i] = model.ChapterWithSections{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			NextId:   entity.NextId().Value(),
@@ -135,7 +135,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	}
 
 	return &model.ChapterCreateResponse{
-		Chapter: model.Chapter{
+		Chapter: model.ChapterWithSections{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			NextId:   entity.NextId().Value(),

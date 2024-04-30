@@ -1,5 +1,5 @@
 type: object
-description: Chapter object
+description: ChapterWithSections object
 properties:
   id:
     type: string
@@ -10,6 +10,10 @@ properties:
     maxLength: 100
     description: Chapter name
     example: Introduction
+  sections:
+    type: array
+    items:
+      $ref: ../section/Section.yaml
   nextId:
     type: string
     description: next chapter ID
@@ -17,4 +21,5 @@ properties:
 required:
   - id
   - name
+  - sections
   - nextId

@@ -1,0 +1,15 @@
+type: object
+description: Error Message for Chapter object
+properties:
+  id:
+    type: string
+    description: Error message for chapter id
+    example: chapter id is required, but got ''
+  name:
+    type: string
+    description: Error message for chapter name
+    example: chapter name is required, but got ''
+  nextId:
+    type: string
+    description: Error message for chapter next id
+    example: chapter does not exist with id ''

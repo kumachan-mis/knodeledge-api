@@ -10,3 +10,5 @@
   $ref: ./chapters/list.yaml
 /api/chapters/create:
   $ref: ./chapters/create.yaml
+/api/chapters/update:
+  $ref: ./chapters/update.yaml
