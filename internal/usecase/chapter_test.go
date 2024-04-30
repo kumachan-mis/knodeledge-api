@@ -25,27 +25,27 @@ func TestListChaptersValidEntity(t *testing.T) {
 	assert.Nil(t, err)
 	name, err := domain.NewChapterNameObject("Chapter 1")
 	assert.Nil(t, err)
-	nextId, err := domain.NewChapterNextIdObject("1000000000000002")
+	number, err := domain.NewChapterNumberObject(1)
 	assert.Nil(t, err)
 	createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 	updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	chapter1 := domain.NewChapterEntity(*id, *name, *nextId, *createdAt, *updatedAt)
+	chapter1 := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
 
 	id, err = domain.NewChapterIdObject("1000000000000002")
 	assert.Nil(t, err)
 	name, err = domain.NewChapterNameObject("Chapter 2")
 	assert.Nil(t, err)
-	nextId, err = domain.NewChapterNextIdObject("")
+	number, err = domain.NewChapterNumberObject(2)
 	assert.Nil(t, err)
 	createdAt, err = domain.NewCreatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 	updatedAt, err = domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	chapter2 := domain.NewChapterEntity(*id, *name, *nextId, *createdAt, *updatedAt)
+	chapter2 := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
 
 	s.EXPECT().
 		ListChapters(gomock.Any(), gomock.Any()).
@@ -69,13 +69,13 @@ func TestListChaptersValidEntity(t *testing.T) {
 	chapter := res.Chapters[0]
 	assert.Equal(t, "1000000000000001", chapter.Id)
 	assert.Equal(t, "Chapter 1", chapter.Name)
-	assert.Equal(t, "1000000000000002", chapter.NextId)
+	assert.Equal(t, int32(1), chapter.Number)
 	assert.Len(t, chapter.Sections, 0)
 
 	chapter = res.Chapters[1]
 	assert.Equal(t, "1000000000000002", chapter.Id)
 	assert.Equal(t, "Chapter 2", chapter.Name)
-	assert.Equal(t, "", chapter.NextId)
+	assert.Equal(t, int32(2), chapter.Number)
 	assert.Len(t, chapter.Sections, 0)
 }
 
@@ -189,16 +189,8 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
-				Name: "Chapter 1",
-			},
-		},
-		{
-			name:      "valid chapter with next id",
-			userId:    testutil.ReadOnlyUserId(),
-			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
 				Name:   "Chapter 1",
-				NextId: "1000000000000002",
+				Number: int32(1),
 			},
 		},
 		{
@@ -206,7 +198,8 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
-				Name: maxLengthChapterName,
+				Name:   maxLengthChapterName,
+				Number: int32(1),
 			},
 		},
 	}
@@ -221,14 +214,14 @@ func TestCreateChapterValidEntity(t *testing.T) {
 		assert.Nil(t, err)
 		name, err := domain.NewChapterNameObject(tc.chapter.Name)
 		assert.Nil(t, err)
-		nextId, err := domain.NewChapterNextIdObject(tc.chapter.NextId)
+		number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
 		assert.Nil(t, err)
 		createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 		assert.Nil(t, err)
 		updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 		assert.Nil(t, err)
 
-		chapter := domain.NewChapterEntity(*id, *name, *nextId, *createdAt, *updatedAt)
+		chapter := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
 
 		s.EXPECT().
 			CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -236,7 +229,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 				assert.Equal(t, tc.userId, userId.Value())
 				assert.Equal(t, tc.projectId, projectId.Value())
 				assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
-				assert.Equal(t, tc.chapter.NextId, chapter.NextId().Value())
+				assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
 			}).
 			Return(chapter, nil)
 
@@ -252,7 +245,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 
 		assert.Equal(t, "1000000000000001", res.Chapter.Id)
 		assert.Equal(t, tc.chapter.Name, res.Chapter.Name)
-		assert.Equal(t, tc.chapter.NextId, res.Chapter.NextId)
+		assert.Equal(t, tc.chapter.Number, res.Chapter.Number)
 		assert.Len(t, res.Chapter.Sections, 0)
 	}
 }
@@ -272,7 +265,8 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			userId:    "",
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
-				Name: "Chapter 1",
+				Name:   "Chapter 1",
+				Number: int32(1),
 			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
@@ -284,7 +278,8 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			chapter: model.ChapterWithoutAutofield{
-				Name: "Chapter 1",
+				Name:   "Chapter 1",
+				Number: int32(1),
 			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
@@ -296,7 +291,8 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
-				Name: "",
+				Name:   "",
+				Number: int32(1),
 			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
@@ -309,14 +305,30 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
-				Name: tooLongChapterName,
+				Name:   tooLongChapterName,
+				Number: int32(1),
 			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterWithoutAutofieldError{
-					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%s'", tooLongChapterName),
+					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%s'",
+						tooLongChapterName),
 				},
+			},
+		},
+		{
+			name:      "zero chapter number",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapter: model.ChapterWithoutAutofield{
+				Name:   "Chapter 1",
+				Number: int32(0),
+			},
+			expected: model.ChapterCreateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterWithoutAutofieldError{Number: "chapter number must be greater than 0, but got 0"},
 			},
 		},
 	}
@@ -362,8 +374,8 @@ func TestCreateChapterServiceError(t *testing.T) {
 		{
 			name:          "should return error when repository returns invalid argument error",
 			errorCode:     service.InvalidArgument,
-			errorMessage:  "id of next chapter does not exist",
-			expectedError: "invalid argument: id of next chapter does not exist",
+			errorMessage:  "chapter number is too large",
+			expectedError: "invalid argument: chapter number is too large",
 			expectedCode:  usecase.InvalidArgumentError,
 		},
 	}
@@ -381,9 +393,16 @@ func TestCreateChapterServiceError(t *testing.T) {
 		uc := usecase.NewChapterUseCase(s)
 
 		res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
-			User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-			Project: model.ProjectOnlyId{Id: "0000000000000001"},
-			Chapter: model.ChapterWithoutAutofield{Name: "Chapter 1"},
+			User: model.UserOnlyId{
+				Id: testutil.ReadOnlyUserId(),
+			},
+			Project: model.ProjectOnlyId{
+				Id: "0000000000000001",
+			},
+			Chapter: model.ChapterWithoutAutofield{
+				Name:   "Chapter 1",
+				Number: int32(1),
+			},
 		})
 
 		assert.Equal(t, tc.expectedError, ucErr.Error())

@@ -9,7 +9,7 @@ properties:
     type: string
     description: Error message for chapter name
     example: chapter name is required, but got ''
-  nextId:
+  number:
     type: string
-    description: Error message for chapter next id
-    example: chapter does not exist with id ''
+    description: Error message for chapter number
+    example: chapter number must be greater than 0, but got 0

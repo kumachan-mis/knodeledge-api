@@ -10,16 +10,17 @@ properties:
     maxLength: 100
     description: Chapter name
     example: Introduction
+  number:
+    type: integer
+    description: Chapter number
+    minimum: 1
+    example: 1
   sections:
     type: array
     items:
       $ref: ../section/Section.yaml
-  nextId:
-    type: string
-    description: next chapter ID
-    example: 123e4567-e89b-12d3-a456-426614174001
 required:
   - id
   - name
+  - number
   - sections
-  - nextId

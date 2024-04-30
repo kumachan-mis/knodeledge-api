@@ -67,7 +67,7 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 		chapters[i] = model.ChapterWithSections{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
-			NextId:   entity.NextId().Value(),
+			Number:   int32(entity.Number().Value()),
 			Sections: []model.Section{},
 		}
 		i++
@@ -81,7 +81,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	uid, uidErr := domain.NewUserIdObject(req.User.Id)
 	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
 	cname, cnameErr := domain.NewChapterNameObject(req.Chapter.Name)
-	cnextId, cnextIdErr := domain.NewChapterNextIdObject(req.Chapter.NextId)
+	cnumber, cnumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
 
 	uidMsg := ""
 	if uidErr != nil {
@@ -95,12 +95,12 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	if cnameErr != nil {
 		cnameMsg = cnameErr.Error()
 	}
-	cnextIdMsg := ""
-	if cnextIdErr != nil {
-		cnextIdMsg = cnextIdErr.Error()
+	cnumberMsg := ""
+	if cnumberErr != nil {
+		cnumberMsg = cnumberErr.Error()
 	}
 
-	if uidErr != nil || pidErr != nil || cnameErr != nil || cnextIdErr != nil {
+	if uidErr != nil || pidErr != nil || cnameErr != nil || cnumberErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ChapterCreateErrorResponse{
@@ -112,13 +112,13 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 				},
 				Chapter: model.ChapterWithoutAutofieldError{
 					Name:   cnameMsg,
-					NextId: cnextIdMsg,
+					Number: cnumberMsg,
 				},
 			},
 		)
 	}
 
-	chapter := domain.NewChapterWithoutAutofieldEntity(*cname, *cnextId)
+	chapter := domain.NewChapterWithoutAutofieldEntity(*cname, *cnumber)
 
 	entity, sErr := uc.service.CreateChapter(*uid, *pid, *chapter)
 	if sErr != nil && sErr.Code() == service.InvalidArgument {
@@ -138,7 +138,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 		Chapter: model.ChapterWithSections{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
-			NextId:   entity.NextId().Value(),
+			Number:   int32(entity.Number().Value()),
 			Sections: []model.Section{},
 		},
 	}, nil
