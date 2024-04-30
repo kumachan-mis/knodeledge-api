@@ -75,7 +75,7 @@ func TestListProjectsValidEntity(t *testing.T) {
 	assert.Equal(t, "", project.Description)
 }
 
-func TestListProjectsInvalidArgument(t *testing.T) {
+func TestListProjectsDomainValidationError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -106,8 +106,8 @@ func TestListProjectsInvalidArgument(t *testing.T) {
 			assert.Error(t, ucErr)
 
 			expectedJson, _ := json.Marshal(tc.expected)
-			assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
-			assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
 			assert.Equal(t, tc.expected, *ucErr.Response())
 
 			assert.Nil(t, res)
@@ -199,7 +199,7 @@ func TestFindProjectValidEntity(t *testing.T) {
 	}
 }
 
-func TestFindProjectInvalidArgument(t *testing.T) {
+func TestFindProjectDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name      string
 		userId    string
@@ -250,8 +250,8 @@ func TestFindProjectInvalidArgument(t *testing.T) {
 		assert.Error(t, ucErr)
 
 		expectedJson, _ := json.Marshal(tc.expected)
-		assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
-		assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
+		assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+		assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
 		assert.Equal(t, tc.expected, *ucErr.Response())
 
 		assert.Nil(t, res)
@@ -387,7 +387,7 @@ func TestCreateProjectValidEntity(t *testing.T) {
 	}
 }
 
-func TestCreateProjectInvalidArgument(t *testing.T) {
+func TestCreateProjectDomainValidationError(t *testing.T) {
 	tooLongProjectName := testutil.RandomString(101)
 	tooLongProjectDescription := testutil.RandomString(401)
 
@@ -485,8 +485,8 @@ func TestCreateProjectInvalidArgument(t *testing.T) {
 			assert.Error(t, ucErr)
 
 			expectedJson, _ := json.Marshal(tc.expected)
-			assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
-			assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
 			assert.Equal(t, tc.expected, *ucErr.Response())
 
 			assert.Nil(t, res)
@@ -599,7 +599,7 @@ func TestUpdateProjectValidEntity(t *testing.T) {
 	}
 }
 
-func TestUpdateProjectInvalidArgument(t *testing.T) {
+func TestUpdateProjectDomainValidationError(t *testing.T) {
 	tooLongProjectName := testutil.RandomString(101)
 	tooLongProjectDescription := testutil.RandomString(401)
 
@@ -717,8 +717,8 @@ func TestUpdateProjectInvalidArgument(t *testing.T) {
 			assert.Error(t, ucErr)
 
 			expectedJson, _ := json.Marshal(tc.expected)
-			assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
-			assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
 			assert.Equal(t, tc.expected, *ucErr.Response())
 
 			assert.Nil(t, res)

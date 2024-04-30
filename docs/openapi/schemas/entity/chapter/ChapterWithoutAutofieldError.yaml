@@ -1,0 +1,11 @@
+type: object
+description: Error Message for ChapterWithoutAutofield object
+properties:
+  name:
+    type: string
+    description: Error message for chapter name
+    example: chapter name is required, but got ''
+  nextId:
+    type: string
+    description: Error message for chapter next id
+    example: chapter does not exist with id ''

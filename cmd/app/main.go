@@ -73,6 +73,7 @@ func main() {
 		chapterApi := api.NewChapterApi(chapterUseCase)
 
 		router.POST("/api/chapters/list", chapterApi.HandleList)
+		router.POST("/api/chapters/create", chapterApi.HandleCreate)
 	}
 
 	err = router.Run(":8080")

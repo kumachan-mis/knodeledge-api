@@ -1,7 +1,7 @@
 package record
 
-type ChapterAutofieldEntry struct {
+type ChapterWithoutAutofieldEntry struct {
 	Name   string
-	Number int
+	NextId string
 	UserId string
 }

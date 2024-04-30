@@ -15,6 +15,11 @@ type ChapterService interface {
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
 	) ([]domain.ChapterEntity, *Error)
+	CreateChapter(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+		chapter domain.ChapterWithoutAutofieldEntity,
+	) (*domain.ChapterEntity, *Error)
 }
 
 type chapterService struct {
@@ -30,12 +35,12 @@ func (s chapterService) ListChapters(
 	projectId domain.ProjectIdObject,
 ) ([]domain.ChapterEntity, *Error) {
 	entries, rErr := s.repository.FetchProjectChapters(userId.Value(), projectId.Value())
-	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return []domain.ChapterEntity{}, nil
+	if rErr != nil && rErr.Code() == repository.InvalidArgument {
+		return nil, Errorf(InvalidArgument, "failed to list chapters: %w", rErr.Unwrap())
 	}
 
 	if rErr != nil {
-		return nil, Errorf(RepositoryFailurePanic, "failed to fetch project chapters: %w", rErr.Unwrap())
+		return nil, Errorf(RepositoryFailurePanic, "failed to fetch chapters: %w", rErr.Unwrap())
 	}
 
 	chapters := []domain.ChapterEntity{}
@@ -48,11 +53,34 @@ func (s chapterService) ListChapters(
 		chapters = append(chapters, *chapter)
 	}
 
+	order := s.entriesOrder(entries)
 	sort.Slice(chapters, func(i, j int) bool {
-		return chapters[i].Number().Value() < chapters[j].Number().Value()
+		return order[chapters[i].Id().Value()] < order[chapters[j].Id().Value()]
 	})
 
 	return chapters, nil
+}
+
+func (s chapterService) CreateChapter(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+	chapter domain.ChapterWithoutAutofieldEntity,
+) (*domain.ChapterEntity, *Error) {
+	entryyWithoutAutofield := record.ChapterWithoutAutofieldEntry{
+		Name:   chapter.Name().Value(),
+		NextId: chapter.NextId().Value(),
+		UserId: userId.Value(),
+	}
+
+	key, entry, rErr := s.repository.InsertChapter(projectId.Value(), entryyWithoutAutofield)
+	if rErr != nil && rErr.Code() == repository.InvalidArgument {
+		return nil, Errorf(InvalidArgument, "failed to create chapter: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to create chapter: %w", rErr.Unwrap())
+	}
+
+	return s.entryToEntity(key, *entry)
 }
 
 func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*domain.ChapterEntity, *Error) {
@@ -64,9 +92,9 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (name): %w", err)
 	}
-	number, err := domain.NewChapterNumberObject(entry.Number)
+	nextId, err := domain.NewChapterNextIdObject(entry.NextId)
 	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (number): %w", err)
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (nextId): %w", err)
 	}
 	createdAt, err := domain.NewCreatedAtObject(entry.CreatedAt)
 	if err != nil {
@@ -77,5 +105,22 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
 	}
 
-	return domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt), nil
+	return domain.NewChapterEntity(*id, *name, *nextId, *createdAt, *updatedAt), nil
+}
+
+func (s chapterService) entriesOrder(entries map[string]record.ChapterEntry) map[string]int {
+	prevs := make(map[string]string)
+	for key, entry := range entries {
+		prevs[entry.NextId] = key
+	}
+
+	order := make(map[string]int)
+
+	id := ""
+	for i := len(entries); i > 0; i-- {
+		order[id] = i
+		id = prevs[id]
+	}
+
+	return order
 }

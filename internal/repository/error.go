@@ -7,6 +7,7 @@ import (
 type ErrorCode string
 
 const (
+	InvalidArgument   ErrorCode = "invalid argument"
 	NotFoundError     ErrorCode = "not found"
 	ReadFailurePanic  ErrorCode = "read failure"
 	WriteFailurePanic ErrorCode = "write failure"

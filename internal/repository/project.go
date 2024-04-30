@@ -82,12 +82,12 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 			"updatedAt":   firestore.ServerTimestamp,
 		})
 	if err != nil {
-		return "", nil, Errorf(WriteFailurePanic, "failed to insert project")
+		return "", nil, Errorf(WriteFailurePanic, "failed to insert project: %w", err)
 	}
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project")
+		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project: %w", err)
 	}
 
 	var values document.ProjectValues
@@ -100,10 +100,10 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 }
 
 func (r projectRepository) UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error) {
-	docref := r.client.Collection(ProjectCollection).
+	ref := r.client.Collection(ProjectCollection).
 		Doc(projectId)
 
-	snapshotToBeUpdated, err := docref.Get(db.FirestoreContext())
+	snapshotToBeUpdated, err := ref.Get(db.FirestoreContext())
 	if err != nil {
 		return nil, Errorf(NotFoundError, "failed to update project")
 	}
@@ -118,18 +118,18 @@ func (r projectRepository) UpdateProject(projectId string, entry record.ProjectW
 		return nil, Errorf(NotFoundError, "failed to update project")
 	}
 
-	_, err = docref.Update(db.FirestoreContext(), []firestore.Update{
+	_, err = ref.Update(db.FirestoreContext(), []firestore.Update{
 		{Path: "name", Value: entry.Name},
 		{Path: "description", Value: entry.Description},
 		{Path: "updatedAt", Value: firestore.ServerTimestamp},
 	})
 	if err != nil {
-		return nil, Errorf(WriteFailurePanic, "failed to update project")
+		return nil, Errorf(WriteFailurePanic, "failed to update project: %w", err)
 	}
 
-	snapshot, err := docref.Get(db.FirestoreContext())
+	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to get updated project")
+		return nil, Errorf(ReadFailurePanic, "failed to get updated project: %w", err)
 	}
 
 	var values document.ProjectValues

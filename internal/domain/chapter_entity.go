@@ -3,7 +3,7 @@ package domain
 type ChapterEntity struct {
 	id        ChapterIdObject
 	name      ChapterNameObject
-	number    ChapterNumberObject
+	nextId    ChapterNextIdObject
 	createdAt CreatedAtObject
 	updatedAt UpdatedAtObject
 }
@@ -11,7 +11,7 @@ type ChapterEntity struct {
 func NewChapterEntity(
 	id ChapterIdObject,
 	name ChapterNameObject,
-	number ChapterNumberObject,
+	nextId ChapterNextIdObject,
 	createdAt CreatedAtObject,
 	updatedAt UpdatedAtObject,
 
@@ -19,7 +19,7 @@ func NewChapterEntity(
 	return &ChapterEntity{
 		id:        id,
 		name:      name,
-		number:    number,
+		nextId:    nextId,
 		createdAt: createdAt,
 		updatedAt: updatedAt,
 	}
@@ -33,8 +33,8 @@ func (e *ChapterEntity) Name() *ChapterNameObject {
 	return &e.name
 }
 
-func (e *ChapterEntity) Number() *ChapterNumberObject {
-	return &e.number
+func (e *ChapterEntity) NextId() *ChapterNextIdObject {
+	return &e.nextId
 }
 
 func (e *ChapterEntity) CreatedAt() *CreatedAtObject {

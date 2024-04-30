@@ -1,0 +1,29 @@
+post:
+  tags:
+    - Chapters
+  operationId: chapters-create
+  summary: Create new Chapter
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/interface/chapters/create/ChapterCreateRequest.yaml
+  responses:
+    "201":
+      description: Created - Returns newly created chapter
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/chapters/create/ChapterCreateResponse.yaml
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/chapters/create/ChapterCreateErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

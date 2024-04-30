@@ -1,25 +1,15 @@
 type: object
-description: Chapter object
+description: Chapter object without auto-generated fields
 properties:
-  id:
-    type: string
-    description: Auto-generated chapter ID
-    example: 123e4567-e89b-12d3-a456-426614174000
   name:
     type: string
     maxLength: 100
     description: Chapter name
     example: Introduction
-  sections:
-    type: array
-    items:
-      $ref: ../section/Section.yaml
   nextId:
     type: string
     description: next chapter ID
     example: 123e4567-e89b-12d3-a456-426614174001
 required:
-  - id
   - name
-  - sections
   - nextId

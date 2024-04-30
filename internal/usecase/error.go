@@ -9,9 +9,10 @@ type ErrorCode string
 type ErrorMessage string
 
 const (
-	NotFoundError        ErrorCode = "not found"
-	InvalidArgumentError ErrorCode = "invalid argument"
-	InternalErrorPanic   ErrorCode = "internal error"
+	DomainValidationError ErrorCode = "domain validation error"
+	InvalidArgumentError  ErrorCode = "invalid argument"
+	NotFoundError         ErrorCode = "not found"
+	InternalErrorPanic    ErrorCode = "internal error"
 )
 
 func NewMessageBasedError[ErrorResponse any](code ErrorCode, message string) *Error[ErrorResponse] {
@@ -30,6 +31,10 @@ type Error[ErrorResponse any] struct {
 
 func (e Error[ErrorResponse]) Code() ErrorCode {
 	return e.code
+}
+
+func (e Error[ErrorResponse]) Message() ErrorMessage {
+	return e.message
 }
 
 func (e Error[ErrorResponse]) Response() *ErrorResponse {
