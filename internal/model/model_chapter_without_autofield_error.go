@@ -15,6 +15,6 @@ type ChapterWithoutAutofieldError struct {
 	// Error message for chapter name
 	Name string `json:"name,omitempty"`
 
-	// Error message for chapter number
-	Number string `json:"number,omitempty"`
+	// Error message for chapter next id
+	NextId string `json:"nextId,omitempty"`
 }
