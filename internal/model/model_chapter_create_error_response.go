@@ -11,6 +11,10 @@ package model
 
 // ChapterCreateErrorResponse - Error Response Body for Chapter Create API
 type ChapterCreateErrorResponse struct {
+
+	// Error message when request body format is invalid
+	Message string `json:"message,omitempty"`
+
 	User UserOnlyIdError `json:"user"`
 
 	Project ProjectOnlyIdError `json:"project"`

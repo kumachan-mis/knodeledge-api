@@ -80,8 +80,8 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	*model.ChapterCreateResponse, *Error[model.ChapterCreateErrorResponse]) {
 	uid, uidErr := domain.NewUserIdObject(req.User.Id)
 	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
-	name, nameErr := domain.NewChapterNameObject(req.Chapter.Name)
-	nextId, nextIdErr := domain.NewChapterNextIdObject(req.Chapter.NextId)
+	cname, cnameErr := domain.NewChapterNameObject(req.Chapter.Name)
+	cnextId, cnextIdErr := domain.NewChapterNextIdObject(req.Chapter.NextId)
 
 	uidMsg := ""
 	if uidErr != nil {
@@ -91,16 +91,16 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	if pidErr != nil {
 		pidMsg = pidErr.Error()
 	}
-	nameMsg := ""
-	if nameErr != nil {
-		nameMsg = nameErr.Error()
+	cnameMsg := ""
+	if cnameErr != nil {
+		cnameMsg = cnameErr.Error()
 	}
-	nextIdMsg := ""
-	if nextIdErr != nil {
-		nextIdMsg = nextIdErr.Error()
+	cnextIdMsg := ""
+	if cnextIdErr != nil {
+		cnextIdMsg = cnextIdErr.Error()
 	}
 
-	if uidErr != nil || pidErr != nil || nameErr != nil || nextIdErr != nil {
+	if uidErr != nil || pidErr != nil || cnameErr != nil || cnextIdErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ChapterCreateErrorResponse{
@@ -111,14 +111,14 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 					Id: pidMsg,
 				},
 				Chapter: model.ChapterWithoutAutofieldError{
-					Name:   nameMsg,
-					NextId: nextIdMsg,
+					Name:   cnameMsg,
+					NextId: cnextIdMsg,
 				},
 			},
 		)
 	}
 
-	chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
+	chapter := domain.NewChapterWithoutAutofieldEntity(*cname, *cnextId)
 
 	entity, sErr := uc.service.CreateChapter(*uid, *pid, *chapter)
 	if sErr != nil && sErr.Code() == service.InvalidArgument {
