@@ -82,12 +82,12 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 			"updatedAt":   firestore.ServerTimestamp,
 		})
 	if err != nil {
-		return "", nil, Errorf(WriteFailurePanic, "failed to insert project")
+		return "", nil, Errorf(WriteFailurePanic, "failed to insert project: %w", err)
 	}
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project")
+		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project: %w", err)
 	}
 
 	var values document.ProjectValues
@@ -124,12 +124,12 @@ func (r projectRepository) UpdateProject(projectId string, entry record.ProjectW
 		{Path: "updatedAt", Value: firestore.ServerTimestamp},
 	})
 	if err != nil {
-		return nil, Errorf(WriteFailurePanic, "failed to update project")
+		return nil, Errorf(WriteFailurePanic, "failed to update project: %w", err)
 	}
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to get updated project")
+		return nil, Errorf(ReadFailurePanic, "failed to get updated project: %w", err)
 	}
 
 	var values document.ProjectValues

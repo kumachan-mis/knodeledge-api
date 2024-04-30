@@ -79,7 +79,7 @@ func TestListChaptersValidEntity(t *testing.T) {
 	assert.Len(t, chapter.Sections, 0)
 }
 
-func TestListChaptersInvalidArgument(t *testing.T) {
+func TestListChaptersDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name      string
 		userId    string
@@ -120,8 +120,8 @@ func TestListChaptersInvalidArgument(t *testing.T) {
 		})
 
 		expectedJson, _ := json.Marshal(tc.expected)
-		assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
-		assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
+		assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+		assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
 		assert.Equal(t, tc.expected, *ucErr.Response())
 
 		assert.Nil(t, res)
@@ -129,25 +129,50 @@ func TestListChaptersInvalidArgument(t *testing.T) {
 }
 
 func TestListChaptersServiceError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	tt := []struct {
+		name          string
+		errorCode     service.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  usecase.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns invalid argument error",
+			errorCode:     service.InvalidArgument,
+			errorMessage:  "project document does not exist",
+			expectedError: "invalid argument: project document does not exist",
+			expectedCode:  usecase.InvalidArgumentError,
+		},
+		{
+			name:          "should return error when repository returns failure panic",
+			errorCode:     service.RepositoryFailurePanic,
+			errorMessage:  "service error",
+			expectedError: "internal error: service error",
+			expectedCode:  usecase.InternalErrorPanic,
+		},
+	}
 
-	s := mock_service.NewMockChapterService(ctrl)
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-	s.EXPECT().
-		ListChapters(gomock.Any(), gomock.Any()).
-		Return(nil, service.Errorf(service.RepositoryFailurePanic, "service error"))
+		s := mock_service.NewMockChapterService(ctrl)
 
-	uc := usecase.NewChapterUseCase(s)
+		s.EXPECT().
+			ListChapters(gomock.Any(), gomock.Any()).
+			Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
 
-	res, ucErr := uc.ListChapters(model.ChapterListRequest{
-		User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-		Project: model.ProjectOnlyId{Id: "0000000000000001"},
-	})
+		uc := usecase.NewChapterUseCase(s)
 
-	assert.Equal(t, "internal error: service error", ucErr.Error())
-	assert.Equal(t, usecase.InternalErrorPanic, ucErr.Code())
-	assert.Nil(t, res)
+		res, ucErr := uc.ListChapters(model.ChapterListRequest{
+			User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+			Project: model.ProjectOnlyId{Id: "0000000000000001"},
+		})
+
+		assert.Equal(t, tc.expectedError, ucErr.Error())
+		assert.Equal(t, tc.expectedCode, ucErr.Code())
+		assert.Nil(t, res)
+	}
 }
 
 func TestCreateChapterValidEntity(t *testing.T) {
@@ -232,7 +257,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 	}
 }
 
-func TestCreateChapterInvalidArgument(t *testing.T) {
+func TestCreateChapterDomainValidationError(t *testing.T) {
 	tooLongChapterName := testutil.RandomString(101)
 
 	tt := []struct {
@@ -311,8 +336,8 @@ func TestCreateChapterInvalidArgument(t *testing.T) {
 		})
 
 		expectedJson, _ := json.Marshal(tc.expected)
-		assert.Equal(t, fmt.Sprintf("invalid argument: %s", expectedJson), ucErr.Error())
-		assert.Equal(t, usecase.InvalidArgumentError, ucErr.Code())
+		assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+		assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
 		assert.Equal(t, tc.expected, *ucErr.Response())
 
 		assert.Nil(t, res)
@@ -328,14 +353,14 @@ func TestCreateChapterServiceError(t *testing.T) {
 		expectedCode  usecase.ErrorCode
 	}{
 		{
-			name:          "repository failure panic",
+			name:          "should return error when repository returns failure panic",
 			errorCode:     service.RepositoryFailurePanic,
 			errorMessage:  "service error",
 			expectedError: "internal error: service error",
 			expectedCode:  usecase.InternalErrorPanic,
 		},
 		{
-			name:          "invalid argument",
+			name:          "should return error when repository returns invalid argument error",
 			errorCode:     service.InvalidArgument,
 			errorMessage:  "id of next chapter does not exist",
 			expectedError: "invalid argument: id of next chapter does not exist",

@@ -53,8 +53,8 @@ func TestFetchProjectChaptersNoProject(t *testing.T) {
 	chapters, rErr := r.FetchProjectChapters(testutil.ReadOnlyUserId(), "UNKNOWN_PROJECT")
 
 	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: project document not found", rErr.Error())
+	assert.Equal(t, repository.InvalidArgument, rErr.Code())
+	assert.Equal(t, "invalid argument: project document does not exist", rErr.Error())
 	assert.Nil(t, chapters)
 }
 
@@ -65,8 +65,8 @@ func TestFetchProjectChaptersUnauthorizedProject(t *testing.T) {
 	chapters, rErr := r.FetchProjectChapters(testutil.ModifyOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION")
 
 	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: project document not found", rErr.Error())
+	assert.Equal(t, repository.InvalidArgument, rErr.Code())
+	assert.Equal(t, "invalid argument: project document does not exist", rErr.Error())
 	assert.Nil(t, chapters)
 }
 
@@ -221,7 +221,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	}, chapters)
 }
 
-func TestInsertProjectChaptersInvalidArgument(t *testing.T) {
+func TestInsertProjectChaptersUnknownNextId(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
@@ -260,8 +260,8 @@ func TestInsertProjectChaptersNoProject(t *testing.T) {
 	assert.NotNil(t, rErr)
 
 	assert.Empty(t, id)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: project document not found", rErr.Error())
+	assert.Equal(t, repository.InvalidArgument, rErr.Code())
+	assert.Equal(t, "invalid argument: project document does not exist", rErr.Error())
 	assert.Nil(t, createdChapter)
 }
 
@@ -282,7 +282,7 @@ func TestInsertProjectChaptersUnauthorizedProject(t *testing.T) {
 	assert.NotNil(t, rErr)
 
 	assert.Empty(t, id)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: project document not found", rErr.Error())
+	assert.Equal(t, repository.InvalidArgument, rErr.Code())
+	assert.Equal(t, "invalid argument: project document does not exist", rErr.Error())
 	assert.Nil(t, createdChapter)
 }

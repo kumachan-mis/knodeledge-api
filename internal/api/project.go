@@ -34,7 +34,7 @@ func (api projectApi) HandleList(c *gin.Context) {
 
 	res, ucErr := api.usecase.ListProjects(request)
 
-	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
 		c.JSON(http.StatusBadRequest, model.ProjectListErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
@@ -64,7 +64,7 @@ func (api projectApi) HandleFind(c *gin.Context) {
 
 	res, ucErr := api.usecase.FindProject(request)
 
-	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
 		c.JSON(http.StatusBadRequest, model.ProjectFindErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
@@ -102,7 +102,7 @@ func (api projectApi) HandleCreate(c *gin.Context) {
 
 	res, ucErr := api.usecase.CreateProject(request)
 
-	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
 		c.JSON(http.StatusBadRequest, model.ProjectCreateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
@@ -133,7 +133,7 @@ func (api projectApi) HandleUpdate(c *gin.Context) {
 
 	res, ucErr := api.usecase.UpdateProject(request)
 
-	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
 		c.JSON(http.StatusBadRequest, model.ProjectUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),

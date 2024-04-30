@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 	"github.com/sirupsen/logrus"
 )
@@ -11,8 +13,10 @@ func JsonBindErrorToMessage(err error) string {
 
 func UseCaseErrorToMessage[ErrorResponse any](err *usecase.Error[ErrorResponse]) string {
 	switch err.Code() {
-	case usecase.InvalidArgumentError:
+	case usecase.DomainValidationError:
 		return "invalid request value"
+	case usecase.InvalidArgumentError:
+		return fmt.Sprintf("invalid request value: %s", err.Message())
 	case usecase.NotFoundError:
 		return "not found"
 	default:

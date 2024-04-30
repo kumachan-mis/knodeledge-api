@@ -32,7 +32,7 @@ func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 	uid, uidErr := domain.NewUserIdObject(req.User.Id)
 	if uidErr != nil {
 		return nil, NewModelBasedError(
-			InvalidArgumentError,
+			DomainValidationError,
 			model.ProjectListErrorResponse{User: model.UserOnlyIdError{Id: uidErr.Error()}},
 		)
 	}
@@ -74,7 +74,7 @@ func (uc projectUseCase) FindProject(req model.ProjectFindRequest) (
 
 	if uidErr != nil || pidErr != nil {
 		return nil, NewModelBasedError(
-			InvalidArgumentError,
+			DomainValidationError,
 			model.ProjectFindErrorResponse{
 				User:    model.UserOnlyIdError{Id: uidMsg},
 				Project: model.ProjectOnlyIdError{Id: pidMsg},
@@ -126,7 +126,7 @@ func (uc projectUseCase) CreateProject(req model.ProjectCreateRequest) (
 
 	if uidErr != nil || pnameErr != nil || pdescErr != nil {
 		return nil, NewModelBasedError(
-			InvalidArgumentError,
+			DomainValidationError,
 			model.ProjectCreateErrorResponse{
 				User: model.UserOnlyIdError{
 					Id: uidMsg,
@@ -184,7 +184,7 @@ func (uc projectUseCase) UpdateProject(req model.ProjectUpdateRequest) (
 
 	if uidErr != nil || pidErr != nil || pnameErr != nil || pdescErr != nil {
 		return nil, NewModelBasedError(
-			InvalidArgumentError,
+			DomainValidationError,
 			model.ProjectUpdateErrorResponse{
 				User: model.UserOnlyIdError{
 					Id: uidMsg,

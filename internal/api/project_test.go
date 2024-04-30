@@ -50,7 +50,7 @@ func TestProjectList(t *testing.T) {
 	}, responseBody)
 }
 
-func TestProjectListInvalidArgument(t *testing.T) {
+func TestProjectListDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name             string
 		request          map[string]any
@@ -263,7 +263,7 @@ func TestProjectFindNotFound(t *testing.T) {
 	}
 }
 
-func TestProjectFindInvalidArgument(t *testing.T) {
+func TestProjectFindDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name             string
 		request          map[string]any
@@ -471,7 +471,7 @@ func TestProjectCreate(t *testing.T) {
 	}
 }
 
-func TestProjectCreateInvalidArgument(t *testing.T) {
+func TestProjectCreateDomainValidationError(t *testing.T) {
 	tooLongProjectName := testutil.RandomString(101)
 	tooLongProjectDescription := testutil.RandomString(401)
 
@@ -719,7 +719,7 @@ func TestProjectUpdateNotFound(t *testing.T) {
 	}
 }
 
-func TestProjectUpdateInvalidArgument(t *testing.T) {
+func TestProjectUpdateDomainValidationError(t *testing.T) {
 	tooLongProjectName := testutil.RandomString(101)
 	tooLongProjectDescription := testutil.RandomString(401)
 

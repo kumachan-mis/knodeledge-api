@@ -31,12 +31,19 @@ func (api chapterApi) HandleList(c *gin.Context) {
 
 	res, ucErr := api.usecase.ListChapters(request)
 
-	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
 		c.JSON(http.StatusBadRequest, model.ChapterListErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
+		})
+		return
+	}
+
+	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+		c.JSON(http.StatusBadRequest, model.ChapterListErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}

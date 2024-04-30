@@ -39,7 +39,7 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 
 	if uidErr != nil || pidErr != nil {
 		return nil, NewModelBasedError(
-			InvalidArgumentError,
+			DomainValidationError,
 			model.ChapterListErrorResponse{
 				User:    model.UserOnlyIdError{Id: uidMsg},
 				Project: model.ProjectOnlyIdError{Id: pidMsg},
@@ -48,6 +48,12 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 	}
 
 	entities, sErr := uc.service.ListChapters(*uid, *pid)
+	if sErr != nil && sErr.Code() == service.InvalidArgument {
+		return nil, NewMessageBasedError[model.ChapterListErrorResponse](
+			InvalidArgumentError,
+			sErr.Unwrap().Error(),
+		)
+	}
 	if sErr != nil {
 		return nil, NewMessageBasedError[model.ChapterListErrorResponse](
 			InternalErrorPanic,
@@ -96,7 +102,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 
 	if uidErr != nil || pidErr != nil || nameErr != nil || nextIdErr != nil {
 		return nil, NewModelBasedError(
-			InvalidArgumentError,
+			DomainValidationError,
 			model.ChapterCreateErrorResponse{
 				User: model.UserOnlyIdError{
 					Id: uidMsg,

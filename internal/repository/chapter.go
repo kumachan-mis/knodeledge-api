@@ -115,7 +115,7 @@ func (r chapterRepository) projectDocumentRef(userId string, projectId string) (
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return nil, Errorf(NotFoundError, "project document not found")
+		return nil, Errorf(InvalidArgument, "project document does not exist")
 	}
 
 	var projectValues document.ProjectValues
@@ -125,7 +125,7 @@ func (r chapterRepository) projectDocumentRef(userId string, projectId string) (
 	}
 
 	if projectValues.UserId != userId {
-		return nil, Errorf(NotFoundError, "project document not found")
+		return nil, Errorf(InvalidArgument, "project document does not exist")
 	}
 
 	return ref, nil

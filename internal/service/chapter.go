@@ -35,12 +35,12 @@ func (s chapterService) ListChapters(
 	projectId domain.ProjectIdObject,
 ) ([]domain.ChapterEntity, *Error) {
 	entries, rErr := s.repository.FetchProjectChapters(userId.Value(), projectId.Value())
-	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return []domain.ChapterEntity{}, nil
+	if rErr != nil && rErr.Code() == repository.InvalidArgument {
+		return nil, Errorf(InvalidArgument, "failed to list chapters: %w", rErr.Unwrap())
 	}
 
 	if rErr != nil {
-		return nil, Errorf(RepositoryFailurePanic, "failed to fetch project chapters: %w", rErr.Unwrap())
+		return nil, Errorf(RepositoryFailurePanic, "failed to fetch chapters: %w", rErr.Unwrap())
 	}
 
 	chapters := []domain.ChapterEntity{}

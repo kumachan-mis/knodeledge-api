@@ -200,27 +200,54 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 }
 
 func TestListChaptersRepositoryError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns invalid argument error",
+			errorCode:     repository.InvalidArgument,
+			errorMessage:  "project document does not exist",
+			expectedError: "failed to list chapters: project document does not exist",
+			expectedCode:  service.InvalidArgument,
+		},
+		{
+			name:          "should return error when repository returns read failure error",
+			errorCode:     repository.ReadFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to fetch chapters: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
 
-	r := mock_repository.NewMockChapterRepository(ctrl)
-	r.EXPECT().
-		FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
-		Return(nil, repository.Errorf(repository.ReadFailurePanic, "repository error"))
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	s := service.NewChapterService(r)
+			r := mock_repository.NewMockChapterRepository(ctrl)
+			r.EXPECT().
+				FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
+				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
-	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
-	assert.Nil(t, err)
+			s := service.NewChapterService(r)
 
-	projectId, err := domain.NewProjectIdObject("0000000000000001")
-	assert.Nil(t, err)
+			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+			assert.Nil(t, err)
 
-	chapters, sErr := s.ListChapters(*userId, *projectId)
-	assert.NotNil(t, sErr)
-	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
-	assert.Equal(t, "repository failure: failed to fetch project chapters: repository error", sErr.Error())
-	assert.Nil(t, chapters)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+
+			chapters, sErr := s.ListChapters(*userId, *projectId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("%s: %s", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Nil(t, chapters)
+		})
+	}
 }
 
 func TestCreateChapterValidEntry(t *testing.T) {
@@ -363,66 +390,63 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 	}
 }
 
-func TestCreateChapterInvalidArgumentError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	r := mock_repository.NewMockChapterRepository(ctrl)
-	r.EXPECT().
-		InsertChapter("0000000000000001", record.ChapterWithoutAutofieldEntry{
-			Name:   "Chapter One",
-			NextId: "UNKNOWN_CHAPTER",
-			UserId: testutil.ModifyOnlyUserId(),
-		}).
-		Return("", nil, repository.Errorf(repository.InvalidArgument, "id of next chapter does not exist"))
-
-	s := service.NewChapterService(r)
-
-	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
-	assert.Nil(t, err)
-	projectId, err := domain.NewProjectIdObject("0000000000000001")
-	assert.Nil(t, err)
-
-	name, err := domain.NewChapterNameObject("Chapter One")
-	assert.Nil(t, err)
-	nextId, err := domain.NewChapterNextIdObject("UNKNOWN_CHAPTER")
-	assert.Nil(t, err)
-
-	chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
-
-	createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
-	assert.NotNil(t, sErr)
-	assert.Equal(t, service.InvalidArgument, sErr.Code())
-	assert.Equal(t, "invalid argument: failed to create chapter: id of next chapter does not exist", sErr.Error())
-	assert.Nil(t, createdChapter)
-}
-
 func TestCreateChapterRepositoryError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns invalid argument error",
+			errorCode:     repository.InvalidArgument,
+			errorMessage:  "id of next chapter does not exist",
+			expectedError: "failed to create chapter: id of next chapter does not exist",
+			expectedCode:  service.InvalidArgument,
+		},
+		{
+			name:          "should return error when repository returns write failure error",
+			errorCode:     repository.WriteFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to create chapter: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
 
-	r := mock_repository.NewMockChapterRepository(ctrl)
-	r.EXPECT().
-		InsertChapter("0000000000000001", gomock.Any()).
-		Return("", nil, repository.Errorf(repository.WriteFailurePanic, "repository error"))
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	s := service.NewChapterService(r)
+			r := mock_repository.NewMockChapterRepository(ctrl)
+			r.EXPECT().
+				InsertChapter("0000000000000001", record.ChapterWithoutAutofieldEntry{
+					Name:   "Chapter One",
+					NextId: "NEXT_CHAPTER_ID",
+					UserId: testutil.ModifyOnlyUserId(),
+				}).
+				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
-	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
-	assert.Nil(t, err)
-	projectId, err := domain.NewProjectIdObject("0000000000000001")
-	assert.Nil(t, err)
+			s := service.NewChapterService(r)
 
-	name, err := domain.NewChapterNameObject("Chapter One")
-	assert.Nil(t, err)
-	nextId, err := domain.NewChapterNextIdObject("")
-	assert.Nil(t, err)
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
 
-	chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
+			name, err := domain.NewChapterNameObject("Chapter One")
+			assert.Nil(t, err)
+			nextId, err := domain.NewChapterNextIdObject("NEXT_CHAPTER_ID")
+			assert.Nil(t, err)
 
-	createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
-	assert.NotNil(t, sErr)
-	assert.Equal(t, service.RepositoryFailurePanic, sErr.Code())
-	assert.Equal(t, "repository failure: failed to create chapter: repository error", sErr.Error())
-	assert.Nil(t, createdChapter)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *nextId)
+
+			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("%s: %s", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Nil(t, createdChapter)
+		})
+	}
 }

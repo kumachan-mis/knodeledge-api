@@ -56,25 +56,56 @@ func TestChapterList(t *testing.T) {
 }
 
 func TestChapterListEmpty(t *testing.T) {
+	router := setupChapterRouter()
+
+	recorder := httptest.NewRecorder()
+	requestBody, _ := json.Marshal(map[string]any{
+		"user": map[string]any{
+			"id": testutil.ReadOnlyUserId(),
+		},
+		"project": map[string]any{
+			"id": "PROJECT_WITH_DESCRIPTION",
+		},
+	})
+	req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(string(requestBody)))
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
+
+	var responseBody map[string]any
+	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+	assert.Equal(t, responseBody, map[string]any{
+		"chapters": []any{},
+	})
+}
+
+func TestChapterListProjectNotFound(t *testing.T) {
 	tt := []struct {
-		name      string
-		userId    string
-		projectId string
+		name    string
+		request map[string]any
 	}{
 		{
-			name:      "Project without chapters",
-			userId:    testutil.ReadOnlyUserId(),
-			projectId: "PROJECT_WITH_DESCRIPTION",
+			name: "should return invalid argument when project id is not found",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ReadOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "UNKNOWN_PROJECT",
+				},
+			},
 		},
 		{
-			name:      "Project not authorized",
-			userId:    testutil.ModifyOnlyUserId(),
-			projectId: "PROJECT_WITH_DESCRIPTION",
-		},
-		{
-			name:      "Project not found",
-			userId:    testutil.ReadOnlyUserId(),
-			projectId: "UNKNOWN_PROJECT",
+			name: "should return invalid argument when user is not author of the project",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION",
+				},
+			},
 		},
 	}
 
@@ -83,30 +114,26 @@ func TestChapterListEmpty(t *testing.T) {
 			router := setupChapterRouter()
 
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(map[string]any{
-				"user": map[string]any{
-					"id": tc.userId,
-				},
-				"project": map[string]any{
-					"id": tc.projectId,
-				},
-			})
+			requestBody, _ := json.Marshal(tc.request)
 			req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(string(requestBody)))
 
 			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusOK, recorder.Code)
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-			assert.Equal(t, responseBody, map[string]any{
-				"chapters": []any{},
-			})
+			assert.Equal(t, map[string]any{
+				"message": "invalid request value: " +
+					"failed to list chapters: project document does not exist",
+				"user":    map[string]any{},
+				"project": map[string]any{},
+			}, responseBody)
 		})
 	}
 }
 
-func TestChapterListInvalidArgument(t *testing.T) {
+func TestChapterListDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name             string
 		request          map[string]any
