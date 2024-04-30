@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"fmt"
+	"reflect"
+
 	"cloud.google.com/go/firestore"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/document"
@@ -54,10 +57,19 @@ func (r chapterRepository) FetchProjectChapters(userId string, projectId string)
 			return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 		}
 
-		number := chapterNumbers[snapshot.Ref.ID]
+		number, ok := chapterNumbers[snapshot.Ref.ID]
+		if !ok {
+			err = fmt.Errorf("%s.chapterIds have deficient elements", reflect.TypeOf(*projectValues))
+			return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
+		}
+
 		entries[snapshot.Ref.ID] = *r.valuesToEntry(values, number, userId)
 	}
 
+	if len(entries) != len(projectValues.ChapterIds) {
+		err := fmt.Errorf("%s.chapterIds have excessive elements", reflect.TypeOf(*projectValues))
+		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
+	}
 	return entries, nil
 }
 
