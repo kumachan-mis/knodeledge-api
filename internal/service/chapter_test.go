@@ -424,8 +424,8 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 		{
 			name:          "should return error when repository returns invalid argument error",
 			errorCode:     repository.InvalidArgument,
-			errorMessage:  "id of next chapter does not exist",
-			expectedError: "failed to create chapter: id of next chapter does not exist",
+			errorMessage:  "chapter number is too large",
+			expectedError: "failed to create chapter: chapter number is too large",
 			expectedCode:  service.InvalidArgument,
 		},
 		{
