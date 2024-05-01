@@ -297,7 +297,7 @@ func TestChapterCreate(t *testing.T) {
 			"id": testutil.ModifyOnlyUserId(),
 		},
 		"project": map[string]any{
-			"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+			"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
 		},
 		"chapter": map[string]any{
 			"name":   "Chapter One",
@@ -354,7 +354,7 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 					"id": testutil.ReadOnlyUserId(),
 				},
 				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+					"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
 				},
 				"chapter": map[string]any{
 					"name":   "Chapter One",
@@ -398,7 +398,7 @@ func TestChapterCreateTooLargeChapterNumber(t *testing.T) {
 			"id": testutil.ModifyOnlyUserId(),
 		},
 		"project": map[string]any{
-			"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+			"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
 		},
 		"chapter": map[string]any{
 			"name":   "Chapter Ninety-Nine",
@@ -451,7 +451,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": "",
 				},
 				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+					"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
 				},
 				"chapter": map[string]any{
 					"name":   "Chapter One",
@@ -495,7 +495,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": testutil.ModifyOnlyUserId(),
 				},
 				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+					"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
 				},
 				"chapter": map[string]any{
 					"name":   "",
@@ -517,7 +517,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": testutil.ModifyOnlyUserId(),
 				},
 				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+					"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
 				},
 				"chapter": map[string]any{
 					"name":   "Chapter One",
@@ -565,7 +565,7 @@ func TestChapterCreateInvalidRequestFormat(t *testing.T) {
 	}{
 		{
 			name:    "should return error when user id is not string",
-			request: `{"user": {"id":123}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}}`,
+			request: `{"user": {"id":123}, "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}}`,
 		},
 		{
 			name:    "should return error when project id is not string",
@@ -573,23 +573,23 @@ func TestChapterCreateInvalidRequestFormat(t *testing.T) {
 		},
 		{
 			name:    "should return error when chapter name is not string",
-			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": 123}}`,
+			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": 123}}`,
 		},
 		{
 			name:    "should return error when user is not object",
-			request: `{"user": 123, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}}`,
+			request: `{"user": 123, "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}}`,
 		},
 		{
 			name:    "should return error when project is not object",
-			request: `{"user": {"id": "user-id"}, "project": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API", "chapter": {"name": "Chapter One"}}`,
+			request: `{"user": {"id": "user-id"}, "project": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API", "chapter": {"name": "Chapter One"}}`,
 		},
 		{
 			name:    "should return error when chapter is not object",
-			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": "Chapter One"}`,
+			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": "Chapter One"}`,
 		},
 		{
 			name:    "should return error when request body is invalid JSON",
-			request: `{"user": {"id": "user-id", "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}`,
+			request: `{"user": {"id": "user-id", "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}`,
 		},
 		{
 			name:    "should return error when request body is empty",

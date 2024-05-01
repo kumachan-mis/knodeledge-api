@@ -46,28 +46,39 @@ func TestFetchProjectChaptersNoDocument(t *testing.T) {
 	assert.Empty(t, chapters)
 }
 
-func TestFetchProjectChaptersNoProject(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewChapterRepository(*client)
+func TestFetchProjectChaptersInvalidArgument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project is not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			expectedError: "project document does not exist",
+		},
+		{
+			name:          "should return error whenwhen user is not author of the project",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			expectedError: "project document does not exist",
+		},
+	}
 
-	chapters, rErr := r.FetchProjectChapters(testutil.ReadOnlyUserId(), "UNKNOWN_PROJECT")
+	for _, tc := range tt {
 
-	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.InvalidArgument, rErr.Code())
-	assert.Equal(t, "invalid argument: project document does not exist", rErr.Error())
-	assert.Nil(t, chapters)
-}
+		client := db.FirestoreClient()
+		r := repository.NewChapterRepository(*client)
 
-func TestFetchProjectChaptersUnauthorizedProject(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewChapterRepository(*client)
+		chapters, rErr := r.FetchProjectChapters(tc.userId, tc.projectId)
 
-	chapters, rErr := r.FetchProjectChapters(testutil.ModifyOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION")
-
-	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.InvalidArgument, rErr.Code())
-	assert.Equal(t, "invalid argument: project document does not exist", rErr.Error())
-	assert.Nil(t, chapters)
+		assert.NotNil(t, rErr)
+		assert.Equal(t, repository.InvalidArgument, rErr.Code())
+		assert.Equal(t, fmt.Sprintf("invalid argument: %s", tc.expectedError), rErr.Error())
+		assert.Nil(t, chapters)
+	}
 }
 
 func TestFetchProjectChaptersInvalidDocument(t *testing.T) {
@@ -124,7 +135,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
-	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
+	projectId := "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
 
 	entry := record.ChapterWithoutAutofieldEntry{
 		Name:   "Chapter One",
@@ -233,68 +244,58 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	}, chapters)
 }
 
-func TestInsertProjectChaptersTooLargeChapterNumber(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewChapterRepository(*client)
-
-	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
-
-	entry := record.ChapterWithoutAutofieldEntry{
-		Name:   "Chapter Ninety-Nine",
-		Number: 99,
-		UserId: testutil.ModifyOnlyUserId(),
+func TestInsertProjectChaptersInvalidArgument(t *testing.T) {
+	tt := []struct {
+		name          string
+		projectId     string
+		entry         record.ChapterWithoutAutofieldEntry
+		expectedError string
+	}{
+		{
+			name:      "should return error when chapter number is too large",
+			projectId: "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			entry: record.ChapterWithoutAutofieldEntry{
+				Name:   "Chapter Ninety-Nine",
+				Number: 99,
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+			expectedError: "chapter number is too large",
+		},
+		{
+			name:      "should return error when project is not found",
+			projectId: "UNKNOWN_PROJECT",
+			entry: record.ChapterWithoutAutofieldEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+			expectedError: "project document does not exist",
+		},
+		{
+			name:      "should return error when user is not author of the project",
+			projectId: "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			entry: record.ChapterWithoutAutofieldEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				UserId: testutil.ReadOnlyUserId(),
+			},
+			expectedError: "project document does not exist",
+		},
 	}
 
-	id, createdChapter, rErr := r.InsertChapter(projectId, entry)
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewChapterRepository(*client)
 
-	assert.NotNil(t, rErr)
+			id, createdChapter, rErr := r.InsertChapter(tc.projectId, tc.entry)
 
-	assert.Empty(t, id)
-	assert.Equal(t, repository.InvalidArgument, rErr.Code())
-	assert.Equal(t, "invalid argument: chapter number is too large", rErr.Error())
-	assert.Nil(t, createdChapter)
-}
+			assert.NotNil(t, rErr)
 
-func TestInsertProjectChaptersNoProject(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewChapterRepository(*client)
-
-	projectId := "UNKNOWN_PROJECT"
-
-	entry := record.ChapterWithoutAutofieldEntry{
-		Name:   "Chapter One",
-		Number: 1,
-		UserId: testutil.ModifyOnlyUserId(),
+			assert.Empty(t, id)
+			assert.Equal(t, repository.InvalidArgument, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("invalid argument: %s", tc.expectedError), rErr.Error())
+			assert.Nil(t, createdChapter)
+		})
 	}
-
-	id, createdChapter, rErr := r.InsertChapter(projectId, entry)
-
-	assert.NotNil(t, rErr)
-
-	assert.Empty(t, id)
-	assert.Equal(t, repository.InvalidArgument, rErr.Code())
-	assert.Equal(t, "invalid argument: project document does not exist", rErr.Error())
-	assert.Nil(t, createdChapter)
-}
-
-func TestInsertProjectChaptersUnauthorizedProject(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewChapterRepository(*client)
-
-	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
-
-	entry := record.ChapterWithoutAutofieldEntry{
-		Name:   "Chapter One",
-		Number: 1,
-		UserId: testutil.ReadOnlyUserId(),
-	}
-
-	id, createdChapter, rErr := r.InsertChapter(projectId, entry)
-
-	assert.NotNil(t, rErr)
-
-	assert.Empty(t, id)
-	assert.Equal(t, repository.InvalidArgument, rErr.Code())
-	assert.Equal(t, "invalid argument: project document does not exist", rErr.Error())
-	assert.Nil(t, createdChapter)
 }
