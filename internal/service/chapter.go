@@ -41,10 +41,9 @@ func (s chapterService) ListChapters(
 	projectId domain.ProjectIdObject,
 ) ([]domain.ChapterEntity, *Error) {
 	entries, rErr := s.repository.FetchProjectChapters(userId.Value(), projectId.Value())
-	if rErr != nil && rErr.Code() == repository.InvalidArgument {
-		return nil, Errorf(InvalidArgument, "failed to list chapters: %w", rErr.Unwrap())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to list chapters: %w", rErr.Unwrap())
 	}
-
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to fetch chapters: %w", rErr.Unwrap())
 	}
@@ -81,6 +80,9 @@ func (s chapterService) CreateChapter(
 	if rErr != nil && rErr.Code() == repository.InvalidArgument {
 		return nil, Errorf(InvalidArgument, "failed to create chapter: %w", rErr.Unwrap())
 	}
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to create chapter: %w", rErr.Unwrap())
+	}
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to create chapter: %w", rErr.Unwrap())
 	}
@@ -105,7 +107,7 @@ func (s chapterService) UpdateChapter(
 		return nil, Errorf(InvalidArgument, "failed to update chapter: %w", rErr.Unwrap())
 	}
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return nil, Errorf(NotFoundError, "failed to update chapter")
+		return nil, Errorf(NotFoundError, "failed to update chapter: %w", rErr.Unwrap())
 	}
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to update chapter: %w", rErr.Unwrap())

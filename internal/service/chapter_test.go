@@ -220,11 +220,11 @@ func TestListChaptersRepositoryError(t *testing.T) {
 		expectedCode  service.ErrorCode
 	}{
 		{
-			name:          "should return error when repository returns invalid argument error",
-			errorCode:     repository.InvalidArgument,
-			errorMessage:  "project document does not exist",
-			expectedError: "failed to list chapters: project document does not exist",
-			expectedCode:  service.InvalidArgument,
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "project not found",
+			expectedError: "failed to list chapters: project not found",
+			expectedCode:  service.NotFoundError,
 		},
 		{
 			name:          "should return error when repository returns read failure error",
@@ -427,6 +427,13 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 			errorMessage:  "chapter number is too large",
 			expectedError: "failed to create chapter: chapter number is too large",
 			expectedCode:  service.InvalidArgument,
+		},
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "project not found",
+			expectedError: "failed to create chapter: project not found",
+			expectedCode:  service.NotFoundError,
 		},
 		{
 			name:          "should return error when repository returns write failure error",
@@ -640,8 +647,8 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     repository.NotFoundError,
-			errorMessage:  "chapter document does not exist",
-			expectedError: "failed to update chapter",
+			errorMessage:  "failed to update chapter",
+			expectedError: "failed to update chapter: failed to update chapter",
 			expectedCode:  service.NotFoundError,
 		},
 		{

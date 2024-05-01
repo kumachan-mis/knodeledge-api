@@ -107,7 +107,7 @@ func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterW
 			{Path: "chapterIds", Value: updatedChapterIds},
 		})
 	if err != nil {
-		return "", nil, Errorf(WriteFailurePanic, "failed to update project: %w", err)
+		return "", nil, Errorf(WriteFailurePanic, "failed to update chapter ids: %w", err)
 	}
 
 	snapshot, err := ref.Get(db.FirestoreContext())
@@ -168,7 +168,7 @@ func (r chapterRepository) UpdateChapter(projectId string, chapterId string, ent
 				{Path: "chapterIds", Value: updatedChapterIds},
 			})
 		if err != nil {
-			return nil, Errorf(WriteFailurePanic, "failed to update project: %w", err)
+			return nil, Errorf(WriteFailurePanic, "failed to update chapter ids: %w", err)
 		}
 	}
 
@@ -196,7 +196,7 @@ func (r chapterRepository) projectValues(userId string, projectId string) (*docu
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return nil, Errorf(InvalidArgument, "project document does not exist")
+		return nil, Errorf(NotFoundError, "project not found")
 	}
 
 	var projectValues document.ProjectWithChapterIdsValues
@@ -206,7 +206,7 @@ func (r chapterRepository) projectValues(userId string, projectId string) (*docu
 	}
 
 	if projectValues.UserId != userId {
-		return nil, Errorf(InvalidArgument, "project document does not exist")
+		return nil, Errorf(NotFoundError, "project not found")
 	}
 
 	if projectValues.ChapterIds == nil {

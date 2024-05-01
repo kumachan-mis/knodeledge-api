@@ -85,7 +85,7 @@ func TestListProjectsDomainValidationError(t *testing.T) {
 		expected model.ProjectListErrorResponse
 	}{
 		{
-			name:   "empty user id",
+			name:   "should return error when user id is empty",
 			userId: "",
 			expected: model.ProjectListErrorResponse{
 				User: model.UserOnlyIdError{Id: "user id is required, but got ''"},
@@ -159,43 +159,45 @@ func TestFindProjectValidEntity(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockProjectService(ctrl)
+			s := mock_service.NewMockProjectService(ctrl)
 
-		id, err := domain.NewProjectIdObject(tc.projectId)
-		assert.NoError(t, err)
-		name, err := domain.NewProjectNameObject(tc.projectName)
-		assert.NoError(t, err)
-		description, err := domain.NewProjectDescriptionObject(tc.projectDescription)
-		assert.NoError(t, err)
-		createdAt, err := domain.NewCreatedAtObject(testutil.Date())
-		assert.NoError(t, err)
-		updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
-		assert.NoError(t, err)
+			id, err := domain.NewProjectIdObject(tc.projectId)
+			assert.NoError(t, err)
+			name, err := domain.NewProjectNameObject(tc.projectName)
+			assert.NoError(t, err)
+			description, err := domain.NewProjectDescriptionObject(tc.projectDescription)
+			assert.NoError(t, err)
+			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
+			assert.NoError(t, err)
+			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
+			assert.NoError(t, err)
 
-		project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
+			project := domain.NewProjectEntity(*id, *name, *description, *createdAt, *updatedAt)
 
-		s.EXPECT().
-			FindProject(gomock.Any(), gomock.Any()).
-			Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject) {
-				assert.Equal(t, testutil.ReadOnlyUserId(), userId.Value())
-				assert.Equal(t, tc.projectId, projectId.Value())
-			}).
-			Return(project, nil)
+			s.EXPECT().
+				FindProject(gomock.Any(), gomock.Any()).
+				Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject) {
+					assert.Equal(t, testutil.ReadOnlyUserId(), userId.Value())
+					assert.Equal(t, tc.projectId, projectId.Value())
+				}).
+				Return(project, nil)
 
-		uc := usecase.NewProjectUseCase(s)
+			uc := usecase.NewProjectUseCase(s)
 
-		res, ucErr := uc.FindProject(model.ProjectFindRequest{
-			User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-			Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.FindProject(model.ProjectFindRequest{
+				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+			})
+			assert.Nil(t, ucErr)
+
+			assert.Equal(t, tc.projectId, res.Project.Id)
+			assert.Equal(t, tc.projectName, res.Project.Name)
+			assert.Equal(t, tc.projectDescription, res.Project.Description)
 		})
-		assert.Nil(t, ucErr)
-
-		assert.Equal(t, tc.projectId, res.Project.Id)
-		assert.Equal(t, tc.projectName, res.Project.Name)
-		assert.Equal(t, tc.projectDescription, res.Project.Description)
 	}
 }
 
@@ -207,7 +209,7 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 		expected  model.ProjectFindErrorResponse
 	}{
 		{
-			name:      "empty user id",
+			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
 			expected: model.ProjectFindErrorResponse{
@@ -216,7 +218,7 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty project id",
+			name:      "should return error when project id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			expected: model.ProjectFindErrorResponse{
@@ -225,7 +227,7 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty all fields",
+			name:      "should return error when all fields are empty",
 			userId:    "",
 			projectId: "",
 			expected: model.ProjectFindErrorResponse{
@@ -236,25 +238,27 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockProjectService(ctrl)
+			s := mock_service.NewMockProjectService(ctrl)
 
-		uc := usecase.NewProjectUseCase(s)
+			uc := usecase.NewProjectUseCase(s)
 
-		res, ucErr := uc.FindProject(model.ProjectFindRequest{
-			User:    model.UserOnlyId{Id: tc.userId},
-			Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.FindProject(model.ProjectFindRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+			})
+			assert.Error(t, ucErr)
+
+			expectedJson, _ := json.Marshal(tc.expected)
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
+			assert.Equal(t, tc.expected, *ucErr.Response())
+
+			assert.Nil(t, res)
 		})
-		assert.Error(t, ucErr)
-
-		expectedJson, _ := json.Marshal(tc.expected)
-		assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
-		assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
-		assert.Equal(t, tc.expected, *ucErr.Response())
-
-		assert.Nil(t, res)
 	}
 }
 
@@ -267,14 +271,14 @@ func TestFindProjectServiceError(t *testing.T) {
 		expectedCode  usecase.ErrorCode
 	}{
 		{
-			name:          "not found",
+			name:          "should return error when project not found",
 			errorCode:     service.NotFoundError,
 			errorMessage:  "failed to find project",
 			expectedError: "not found: failed to find project",
 			expectedCode:  usecase.NotFoundError,
 		},
 		{
-			name:          "internal error",
+			name:          "should return error when repository failure",
 			errorCode:     service.RepositoryFailurePanic,
 			errorMessage:  "service error",
 			expectedError: "internal error: service error",
@@ -283,26 +287,28 @@ func TestFindProjectServiceError(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockProjectService(ctrl)
+			s := mock_service.NewMockProjectService(ctrl)
 
-		s.EXPECT().
-			FindProject(gomock.Any(), gomock.Any()).
-			Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+			s.EXPECT().
+				FindProject(gomock.Any(), gomock.Any()).
+				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
 
-		uc := usecase.NewProjectUseCase(s)
+			uc := usecase.NewProjectUseCase(s)
 
-		res, ucErr := uc.FindProject(model.ProjectFindRequest{
-			User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-			Project: model.ProjectOnlyId{Id: "0000000000000001"},
+			res, ucErr := uc.FindProject(model.ProjectFindRequest{
+				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+				Project: model.ProjectOnlyId{Id: "0000000000000001"},
+			})
+			assert.Error(t, ucErr)
+			assert.Equal(t, tc.expectedError, ucErr.Error())
+			assert.Equal(t, tc.expectedCode, ucErr.Code())
+			assert.Nil(t, ucErr.Response())
+			assert.Nil(t, res)
 		})
-		assert.Error(t, ucErr)
-		assert.Equal(t, tc.expectedError, ucErr.Error())
-		assert.Equal(t, tc.expectedCode, ucErr.Code())
-		assert.Nil(t, ucErr.Response())
-		assert.Nil(t, res)
 	}
 }
 

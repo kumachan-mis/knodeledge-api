@@ -70,7 +70,7 @@ func (s projectService) FindProject(
 ) (*domain.ProjectEntity, *Error) {
 	entry, rErr := s.repository.FetchProject(userId.Value(), projectId.Value())
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return nil, Errorf(NotFoundError, "failed to find project")
+		return nil, Errorf(NotFoundError, "failed to find project: %w", rErr.Unwrap())
 	}
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to fetch project: %w", rErr.Unwrap())
@@ -115,7 +115,7 @@ func (s projectService) UpdateProject(
 
 	entry, rErr := s.repository.UpdateProject(projectId.Value(), entryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return nil, Errorf(NotFoundError, "failed to update project")
+		return nil, Errorf(NotFoundError, "failed to update project: %w", rErr.Unwrap())
 	}
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to update project: %w", rErr.Unwrap())

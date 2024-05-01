@@ -133,28 +133,40 @@ func TestFetchProjectValidDocument(t *testing.T) {
 	}
 }
 
-func TestFetchProjectNoDocument(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewProjectRepository(*client)
+func TestFetchProjectNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project is not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			expectedError: "failed to get project",
+		},
+		{
+			name:          "should return error when user is not author of the project",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			expectedError: "failed to get project",
+		},
+	}
 
-	project, rErr := r.FetchProject(testutil.ReadOnlyUserId(), "UNKNOWN_PROJECT")
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
 
-	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: failed to get project", rErr.Error())
-	assert.Nil(t, project)
-}
+			project, rErr := r.FetchProject(tc.userId, tc.projectId)
 
-func TestFetchProjectUnauthorizedProject(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewProjectRepository(*client)
-
-	project, rErr := r.FetchProject(testutil.ModifyOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION")
-
-	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: failed to get project", rErr.Error())
-	assert.Nil(t, project)
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
+			assert.Nil(t, project)
+		})
+	}
 }
 
 func TestFetchProjectInvalidDocument(t *testing.T) {
@@ -281,42 +293,44 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 	}
 }
 
-func TestUpdateProjectNoDocument(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewProjectRepository(*client)
-
-	projectId := "UNKNOWN_PROJECT"
-	entry := record.ProjectWithoutAutofieldEntry{
-		Name:        "Updated Project",
-		Description: "This is updated project",
-		UserId:      testutil.ModifyOnlyUserId(),
+func TestUpdateProjectNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project is not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			expectedError: "failed to update project",
+		},
+		{
+			name:          "should return error when user is not author of the project",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			expectedError: "failed to update project",
+		},
 	}
 
-	project, rErr := r.UpdateProject(projectId, entry)
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
 
-	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: failed to update project", rErr.Error())
-	assert.Nil(t, project)
-}
+			project, rErr := r.UpdateProject(tc.projectId, record.ProjectWithoutAutofieldEntry{
+				Name:        "Updated Project",
+				Description: "This is updated project",
+				UserId:      tc.userId,
+			})
 
-func TestUpdateProjectUnauthorizedProject(t *testing.T) {
-	client := db.FirestoreClient()
-	r := repository.NewProjectRepository(*client)
-
-	projectId := "PROJECT_WITHOUT_DESCRIPTION"
-	entry := record.ProjectWithoutAutofieldEntry{
-		Name:        "Updated Project",
-		Description: "This is updated project",
-		UserId:      testutil.ModifyOnlyUserId(),
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
+			assert.Nil(t, project)
+		})
 	}
-
-	project, rErr := r.UpdateProject(projectId, entry)
-
-	assert.NotNil(t, rErr)
-	assert.Equal(t, repository.NotFoundError, rErr.Code())
-	assert.Equal(t, "not found: failed to update project", rErr.Error())
-	assert.Nil(t, project)
 }
 
 func TestUpdateProjectInvalidDocument(t *testing.T) {

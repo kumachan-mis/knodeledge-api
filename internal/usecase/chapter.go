@@ -50,9 +50,9 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 	}
 
 	entities, sErr := uc.service.ListChapters(*uid, *pid)
-	if sErr != nil && sErr.Code() == service.InvalidArgument {
+	if sErr != nil && sErr.Code() == service.NotFoundError {
 		return nil, NewMessageBasedError[model.ChapterListErrorResponse](
-			InvalidArgumentError,
+			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
@@ -126,6 +126,12 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	if sErr != nil && sErr.Code() == service.InvalidArgument {
 		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
 			InvalidArgumentError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
+			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
