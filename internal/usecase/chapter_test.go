@@ -87,7 +87,7 @@ func TestListChaptersDomainValidationError(t *testing.T) {
 		expected  model.ChapterListErrorResponse
 	}{
 		{
-			name:      "empty user id",
+			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
 			expected: model.ChapterListErrorResponse{
@@ -96,7 +96,7 @@ func TestListChaptersDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty project id",
+			name:      "should return error when project id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			expected: model.ChapterListErrorResponse{
@@ -189,7 +189,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 		chapter   model.ChapterWithoutAutofield
 	}{
 		{
-			name:      "valid chapter",
+			name:      "should create chapter",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
@@ -198,7 +198,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			},
 		},
 		{
-			name:      "valid chapter with max length name",
+			name:      "should create chapter with max length name",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
@@ -267,7 +267,7 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 		expected  model.ChapterCreateErrorResponse
 	}{
 		{
-			name:      "empty user id",
+			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
@@ -280,7 +280,7 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty project id",
+			name:      "should return error when project id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			chapter: model.ChapterWithoutAutofield{
@@ -293,7 +293,7 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty chapter name",
+			name:      "should return error when chapter name is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
@@ -307,7 +307,7 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "too long chapter name",
+			name:      "should return error when chapter name is too long",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
@@ -324,7 +324,7 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "zero chapter number",
+			name:      "should return error when chapter number is zero",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapter: model.ChapterWithoutAutofield{
@@ -439,7 +439,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 		chapter   model.ChapterWithoutAutofield
 	}{
 		{
-			name:      "valid chapter",
+			name:      "shold update chapter",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
@@ -449,7 +449,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 			},
 		},
 		{
-			name:      "valid chapter with max length name",
+			name:      "should update chapter with max length name",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
@@ -525,7 +525,7 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 		expected  model.ChapterUpdateErrorResponse
 	}{
 		{
-			name:      "empty user id",
+			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
@@ -541,7 +541,7 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty project id",
+			name:      "should return error when project id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			chapterId: "1000000000000001",
@@ -557,7 +557,7 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty chapter id",
+			name:      "should return error when chapter id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "",
@@ -573,7 +573,7 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty chapter name",
+			name:      "should return error when chapter name is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
@@ -589,7 +589,7 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "too long chapter name",
+			name:      "should return error when chapter name is too long",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
@@ -610,7 +610,7 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "zero chapter number",
+			name:      "should return error when chapter number is zero",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",

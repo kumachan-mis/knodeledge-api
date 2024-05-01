@@ -85,7 +85,7 @@ func TestListProjectsDomainValidationError(t *testing.T) {
 		expected model.ProjectListErrorResponse
 	}{
 		{
-			name:   "empty user id",
+			name:   "should return error when user id is empty",
 			userId: "",
 			expected: model.ProjectListErrorResponse{
 				User: model.UserOnlyIdError{Id: "user id is required, but got ''"},
@@ -209,7 +209,7 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 		expected  model.ProjectFindErrorResponse
 	}{
 		{
-			name:      "empty user id",
+			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
 			expected: model.ProjectFindErrorResponse{
@@ -218,7 +218,7 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty project id",
+			name:      "should return error when project id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			expected: model.ProjectFindErrorResponse{
@@ -227,7 +227,7 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty all fields",
+			name:      "should return error when all fields are empty",
 			userId:    "",
 			projectId: "",
 			expected: model.ProjectFindErrorResponse{
@@ -271,14 +271,14 @@ func TestFindProjectServiceError(t *testing.T) {
 		expectedCode  usecase.ErrorCode
 	}{
 		{
-			name:          "not found",
+			name:          "should return error when project not found",
 			errorCode:     service.NotFoundError,
 			errorMessage:  "failed to find project",
 			expectedError: "not found: failed to find project",
 			expectedCode:  usecase.NotFoundError,
 		},
 		{
-			name:          "internal error",
+			name:          "should return error when repository failure",
 			errorCode:     service.RepositoryFailurePanic,
 			errorMessage:  "service error",
 			expectedError: "internal error: service error",

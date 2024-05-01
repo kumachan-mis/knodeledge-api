@@ -139,7 +139,7 @@ func TestChapterListDomainValidationError(t *testing.T) {
 		expectedResponse map[string]any
 	}{
 		{
-			name:    "Empty request",
+			name:    "should return error when request is empty",
 			request: map[string]any{},
 			expectedResponse: map[string]any{
 				"user": map[string]any{
@@ -151,7 +151,7 @@ func TestChapterListDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty user id",
+			name: "should return error when user id is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": "",
@@ -168,7 +168,7 @@ func TestChapterListDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty project id",
+			name: "should return error when project id is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ReadOnlyUserId(),
@@ -427,7 +427,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 		expectedResponse map[string]any
 	}{
 		{
-			name:    "Empty request",
+			name:    "should return error when request is empty",
 			request: map[string]any{},
 			expectedResponse: map[string]any{
 				"user": map[string]any{
@@ -443,7 +443,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty user id",
+			name: "should return error when user id is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": "",
@@ -465,7 +465,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty project id",
+			name: "should return error when project id is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -487,7 +487,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty chapter name",
+			name: "should return error when chapter name is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -509,7 +509,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Zero chapter number",
+			name: "should return error when chapter number is zero",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -774,7 +774,7 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 		expectedResponse map[string]any
 	}{
 		{
-			name:    "Empty request",
+			name:    "should return error when request is empty",
 			request: map[string]any{},
 			expectedResponse: map[string]any{
 				"user": map[string]any{
@@ -791,7 +791,7 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty user id",
+			name: "should return error when user id is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": "",
@@ -814,7 +814,7 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty project id",
+			name: "should return error when project id is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -837,7 +837,7 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty chapter id",
+			name: "should return error when chapter id is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -860,7 +860,7 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty chapter name",
+			name: "should return error when chapter name is empty",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -883,7 +883,7 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
-			name: "Zero chapter number",
+			name: "should return error when chapter number is zero",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
