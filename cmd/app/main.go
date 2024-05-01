@@ -74,6 +74,7 @@ func main() {
 
 		router.POST("/api/chapters/list", chapterApi.HandleList)
 		router.POST("/api/chapters/create", chapterApi.HandleCreate)
+		router.POST("/api/chapters/update", chapterApi.HandleUpdate)
 	}
 
 	err = router.Run(":8080")

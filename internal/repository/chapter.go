@@ -146,14 +146,14 @@ func (r chapterRepository) UpdateChapter(projectId string, chapterId string, ent
 		return nil, Errorf(NotFoundError, "failed to update chapter")
 	}
 
-	chapterIdsWithoutUpdated := make([]string, len(projectValues.ChapterIds)-1)
+	chapterIdsWithoutUpdated := []string{}
 	updatedNumber := 0
 	for i, id := range projectValues.ChapterIds {
 		if id == chapterId {
 			updatedNumber = i + 1
 			continue
 		}
-		chapterIdsWithoutUpdated[i] = id
+		chapterIdsWithoutUpdated = append(chapterIdsWithoutUpdated, id)
 	}
 
 	if updatedNumber != entry.Number {

@@ -11,6 +11,7 @@ import (
 type ChapterApi interface {
 	HandleList(c *gin.Context)
 	HandleCreate(c *gin.Context)
+	HandleUpdate(c *gin.Context)
 }
 
 type chapterApi struct {
@@ -96,4 +97,50 @@ func (api chapterApi) HandleCreate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, res)
+}
+
+func (api chapterApi) HandleUpdate(c *gin.Context) {
+	var request model.ChapterUpdateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(400, model.ChapterUpdateErrorResponse{
+			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	res, ucErr := api.usecase.UpdateChapter(request)
+
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
+		resErr := UseCaseErrorToResponse(ucErr)
+		c.JSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+			User:    resErr.User,
+			Project: resErr.Project,
+			Chapter: resErr.Chapter,
+		})
+		return
+	}
+
+	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
+		c.JSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
+		c.JSON(http.StatusNotFound, model.ChapterUpdateErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	if ucErr != nil {
+		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }
