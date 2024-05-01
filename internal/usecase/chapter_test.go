@@ -410,3 +410,286 @@ func TestCreateChapterServiceError(t *testing.T) {
 		assert.Nil(t, res)
 	}
 }
+
+func TestUpdateChapterValidEntity(t *testing.T) {
+	maxLengthChapterName := testutil.RandomString(100)
+
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		chapterId string
+		chapter   model.ChapterWithoutAutofield
+	}{
+		{
+			name:      "valid chapter",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			chapter: model.ChapterWithoutAutofield{
+				Name:   "Chapter 1",
+				Number: int32(1),
+			},
+		},
+		{
+			name:      "valid chapter with max length name",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			chapter: model.ChapterWithoutAutofield{
+				Name:   maxLengthChapterName,
+				Number: int32(1),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := mock_service.NewMockChapterService(ctrl)
+
+		id, err := domain.NewChapterIdObject(tc.chapterId)
+		assert.Nil(t, err)
+		name, err := domain.NewChapterNameObject(tc.chapter.Name)
+		assert.Nil(t, err)
+		number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
+		assert.Nil(t, err)
+		createdAt, err := domain.NewCreatedAtObject(testutil.Date())
+		assert.Nil(t, err)
+		updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
+		assert.Nil(t, err)
+
+		chapter := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
+
+		s.EXPECT().
+			UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject, chapterId domain.ChapterIdObject, chapter domain.ChapterWithoutAutofieldEntity) {
+				assert.Equal(t, tc.userId, userId.Value())
+				assert.Equal(t, tc.projectId, projectId.Value())
+				assert.Equal(t, tc.chapterId, chapterId.Value())
+				assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
+				assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
+			}).
+			Return(chapter, nil)
+
+		uc := usecase.NewChapterUseCase(s)
+
+		res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
+			User:    model.UserOnlyId{Id: tc.userId},
+			Project: model.ProjectOnlyId{Id: tc.projectId},
+			Chapter: model.Chapter{
+				Id:     tc.chapterId,
+				Name:   tc.chapter.Name,
+				Number: tc.chapter.Number,
+			},
+		})
+
+		assert.Nil(t, ucErr)
+
+		assert.Equal(t, tc.chapterId, res.Chapter.Id)
+		assert.Equal(t, tc.chapter.Name, res.Chapter.Name)
+		assert.Equal(t, tc.chapter.Number, res.Chapter.Number)
+		assert.Len(t, res.Chapter.Sections, 0)
+	}
+}
+
+func TestUpdateChapterDomainValidationError(t *testing.T) {
+	tooLongChapterName := testutil.RandomString(101)
+
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		chapterId string
+		chapter   model.Chapter
+		expected  model.ChapterUpdateErrorResponse
+	}{
+		{
+			name:      "empty user id",
+			userId:    "",
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			chapter: model.Chapter{
+				Id:     "1000000000000001",
+				Name:   "Chapter 1",
+				Number: int32(1),
+			},
+			expected: model.ChapterUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterError{Id: "", Name: "", Number: ""},
+			},
+		},
+		{
+			name:      "empty project id",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "",
+			chapterId: "1000000000000001",
+			chapter: model.Chapter{
+				Id:     "1000000000000001",
+				Name:   "Chapter 1",
+				Number: int32(1),
+			},
+			expected: model.ChapterUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: model.ChapterError{Id: "", Name: "", Number: ""},
+			},
+		},
+		{
+			name:      "empty chapter id",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "",
+			chapter: model.Chapter{
+				Id:     "",
+				Name:   "Chapter 1",
+				Number: int32(1),
+			},
+			expected: model.ChapterUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterError{Id: "chapter id is required, but got ''", Name: "", Number: ""},
+			},
+		},
+		{
+			name:      "empty chapter name",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			chapter: model.Chapter{
+				Id:     "1000000000000001",
+				Name:   "",
+				Number: int32(1),
+			},
+			expected: model.ChapterUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterError{Id: "", Name: "chapter name is required, but got ''", Number: ""},
+			},
+		},
+		{
+			name:      "too long chapter name",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			chapter: model.Chapter{
+				Id:     "1000000000000001",
+				Name:   tooLongChapterName,
+				Number: int32(1),
+			},
+			expected: model.ChapterUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterError{
+					Id: "",
+					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%s'",
+						tooLongChapterName),
+					Number: "",
+				},
+			},
+		},
+		{
+			name:      "zero chapter number",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			chapter: model.Chapter{
+				Id:     "1000000000000001",
+				Name:   "Chapter 1",
+				Number: int32(0),
+			},
+			expected: model.ChapterUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterError{Id: "", Name: "", Number: "chapter number must be greater than 0, but got 0"},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := mock_service.NewMockChapterService(ctrl)
+
+		uc := usecase.NewChapterUseCase(s)
+
+		res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
+			User:    model.UserOnlyId{Id: tc.userId},
+			Project: model.ProjectOnlyId{Id: tc.projectId},
+			Chapter: tc.chapter,
+		})
+
+		expectedJson, _ := json.Marshal(tc.expected)
+		assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+		assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
+		assert.Equal(t, tc.expected, *ucErr.Response())
+
+		assert.Nil(t, res)
+	}
+}
+
+func TestUpdateChapterServiceError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     service.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  usecase.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     service.NotFoundError,
+			errorMessage:  "chapter document does not exist",
+			expectedError: "not found: chapter document does not exist",
+			expectedCode:  usecase.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns invalid argument error",
+			errorCode:     service.InvalidArgument,
+			errorMessage:  "chapter number is too large",
+			expectedError: "invalid argument: chapter number is too large",
+			expectedCode:  usecase.InvalidArgumentError,
+		},
+		{
+			name:          "should return error when repository returns failure panic",
+			errorCode:     service.RepositoryFailurePanic,
+			errorMessage:  "service error",
+			expectedError: "internal error: service error",
+			expectedCode:  usecase.InternalErrorPanic,
+		},
+	}
+
+	for _, tc := range tt {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := mock_service.NewMockChapterService(ctrl)
+
+		s.EXPECT().
+			UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+
+		uc := usecase.NewChapterUseCase(s)
+
+		res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
+			User: model.UserOnlyId{
+				Id: testutil.ReadOnlyUserId(),
+			},
+			Project: model.ProjectOnlyId{
+				Id: "0000000000000001",
+			},
+			Chapter: model.Chapter{
+				Id:     "1000000000000001",
+				Name:   "Chapter 1",
+				Number: int32(1),
+			},
+		})
+
+		assert.Equal(t, tc.expectedError, ucErr.Error())
+		assert.Equal(t, tc.expectedCode, ucErr.Code())
+		assert.Nil(t, res)
+	}
+}
