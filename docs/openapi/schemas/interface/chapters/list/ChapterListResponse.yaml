@@ -4,6 +4,6 @@ properties:
   chapters:
     type: array
     items:
-      $ref: ../../../entity/chapter/Chapter.yaml
+      $ref: ../../../entity/chapter/ChapterWithSections.yaml
 required:
   - chapters

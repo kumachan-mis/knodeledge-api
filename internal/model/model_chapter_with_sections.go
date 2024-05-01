@@ -9,8 +9,8 @@
 
 package model
 
-// Chapter - Chapter object
-type Chapter struct {
+// ChapterWithSections - ChapterWithSections object
+type ChapterWithSections struct {
 
 	// Auto-generated chapter ID
 	Id string `json:"id"`
@@ -20,4 +20,6 @@ type Chapter struct {
 
 	// Chapter number
 	Number int32 `json:"number"`
+
+	Sections []Section `json:"sections"`
 }

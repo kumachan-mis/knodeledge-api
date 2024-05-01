@@ -11,5 +11,5 @@ package model
 
 // ChapterListResponse - Response Body for Chapter List API
 type ChapterListResponse struct {
-	Chapters []Chapter `json:"chapters"`
+	Chapters []ChapterWithSections `json:"chapters"`
 }

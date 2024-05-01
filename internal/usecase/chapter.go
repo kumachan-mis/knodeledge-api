@@ -13,6 +13,8 @@ type ChapterUseCase interface {
 		*model.ChapterListResponse, *Error[model.ChapterListErrorResponse])
 	CreateChapter(req model.ChapterCreateRequest) (
 		*model.ChapterCreateResponse, *Error[model.ChapterCreateErrorResponse])
+	UpdateChapter(req model.ChapterUpdateRequest) (
+		*model.ChapterUpdateResponse, *Error[model.ChapterUpdateErrorResponse])
 }
 
 type chapterUseCase struct {
@@ -61,10 +63,10 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 		)
 	}
 
-	chapters := make([]model.Chapter, len(entities))
+	chapters := make([]model.ChapterWithSections, len(entities))
 	i := 0
 	for _, entity := range entities {
-		chapters[i] = model.Chapter{
+		chapters[i] = model.ChapterWithSections{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			Number:   int32(entity.Number().Value()),
@@ -135,7 +137,87 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	}
 
 	return &model.ChapterCreateResponse{
-		Chapter: model.Chapter{
+		Chapter: model.ChapterWithSections{
+			Id:       entity.Id().Value(),
+			Name:     entity.Name().Value(),
+			Number:   int32(entity.Number().Value()),
+			Sections: []model.Section{},
+		},
+	}, nil
+}
+
+func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
+	*model.ChapterUpdateResponse, *Error[model.ChapterUpdateErrorResponse]) {
+	uid, uidErr := domain.NewUserIdObject(req.User.Id)
+	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
+	cid, cidErr := domain.NewChapterIdObject(req.Chapter.Id)
+	cname, cnameErr := domain.NewChapterNameObject(req.Chapter.Name)
+	cnumber, cnumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
+
+	uidMsg := ""
+	if uidErr != nil {
+		uidMsg = uidErr.Error()
+	}
+	pidMsg := ""
+	if pidErr != nil {
+		pidMsg = pidErr.Error()
+	}
+	cidMsg := ""
+	if cidErr != nil {
+		cidMsg = cidErr.Error()
+	}
+	cnameMsg := ""
+	if cnameErr != nil {
+		cnameMsg = cnameErr.Error()
+	}
+	cnumberMsg := ""
+	if cnumberErr != nil {
+		cnumberMsg = cnumberErr.Error()
+	}
+
+	if uidErr != nil || pidErr != nil || cidErr != nil || cnameErr != nil || cnumberErr != nil {
+		return nil, NewModelBasedError(
+			DomainValidationError,
+			model.ChapterUpdateErrorResponse{
+				User: model.UserOnlyIdError{
+					Id: uidMsg,
+				},
+				Project: model.ProjectOnlyIdError{
+					Id: pidMsg,
+				},
+				Chapter: model.ChapterError{
+					Id:     cidMsg,
+					Name:   cnameMsg,
+					Number: cnumberMsg,
+				},
+			},
+		)
+	}
+
+	chapter := domain.NewChapterWithoutAutofieldEntity(*cname, *cnumber)
+
+	entity, sErr := uc.service.UpdateChapter(*uid, *pid, *cid, *chapter)
+	if sErr != nil && sErr.Code() == service.InvalidArgument {
+		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
+			InvalidArgumentError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
+			NotFoundError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil {
+		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
+		)
+	}
+
+	return &model.ChapterUpdateResponse{
+		Chapter: model.ChapterWithSections{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			Number:   int32(entity.Number().Value()),

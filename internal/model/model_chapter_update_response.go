@@ -9,7 +9,7 @@
 
 package model
 
-// ChapterCreateResponse - Response Body for Chapter Create API
-type ChapterCreateResponse struct {
+// ChapterUpdateResponse - Response Body for Chapter Update API
+type ChapterUpdateResponse struct {
 	Chapter ChapterWithSections `json:"chapter"`
 }

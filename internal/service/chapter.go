@@ -20,6 +20,12 @@ type ChapterService interface {
 		projectId domain.ProjectIdObject,
 		chapter domain.ChapterWithoutAutofieldEntity,
 	) (*domain.ChapterEntity, *Error)
+	UpdateChapter(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+		chapterId domain.ChapterIdObject,
+		chapter domain.ChapterWithoutAutofieldEntity,
+	) (*domain.ChapterEntity, *Error)
 }
 
 type chapterService struct {
@@ -80,6 +86,32 @@ func (s chapterService) CreateChapter(
 	}
 
 	return s.entryToEntity(key, *entry)
+}
+
+func (s chapterService) UpdateChapter(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+	chapterId domain.ChapterIdObject,
+	chapter domain.ChapterWithoutAutofieldEntity,
+) (*domain.ChapterEntity, *Error) {
+	entryyWithoutAutofield := record.ChapterWithoutAutofieldEntry{
+		Name:   chapter.Name().Value(),
+		Number: chapter.Number().Value(),
+		UserId: userId.Value(),
+	}
+
+	entry, rErr := s.repository.UpdateChapter(projectId.Value(), chapterId.Value(), entryyWithoutAutofield)
+	if rErr != nil && rErr.Code() == repository.InvalidArgument {
+		return nil, Errorf(InvalidArgument, "failed to update chapter: %w", rErr.Unwrap())
+	}
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to update chapter")
+	}
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to update chapter: %w", rErr.Unwrap())
+	}
+
+	return s.entryToEntity(chapterId.Value(), *entry)
 }
 
 func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*domain.ChapterEntity, *Error) {

@@ -1,5 +1,5 @@
 type: object
-description: Response Body for Chapter Create API
+description: Response Body for Chapter Update API
 properties:
   chapter:
     $ref: ../../../entity/chapter/ChapterWithSections.yaml

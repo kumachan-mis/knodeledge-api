@@ -17,6 +17,7 @@ const ChapterCollection = "chapters"
 type ChapterRepository interface {
 	FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error)
 	InsertChapter(projectId string, entry record.ChapterWithoutAutofieldEntry) (string, *record.ChapterEntry, *Error)
+	UpdateChapter(projectId string, chapterId string, entry record.ChapterWithoutAutofieldEntry) (*record.ChapterEntry, *Error)
 }
 
 type chapterRepository struct {
@@ -121,6 +122,72 @@ func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterW
 	}
 
 	return ref.ID, r.valuesToEntry(values, entry.Number, entry.UserId), nil
+}
+
+func (r chapterRepository) UpdateChapter(projectId string, chapterId string, entry record.ChapterWithoutAutofieldEntry) (*record.ChapterEntry, *Error) {
+	projectValues, rErr := r.projectValues(entry.UserId, projectId)
+	if rErr != nil {
+		return nil, rErr
+	}
+
+	if entry.Number > len(projectValues.ChapterIds) {
+		return nil, Errorf(InvalidArgument, "chapter number is too large")
+	}
+
+	_, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Update(db.FirestoreContext(), []firestore.Update{
+			{Path: "name", Value: entry.Name},
+			{Path: "updatedAt", Value: firestore.ServerTimestamp},
+		})
+	if err != nil {
+		return nil, Errorf(NotFoundError, "failed to update chapter")
+	}
+
+	chapterIdsWithoutUpdated := []string{}
+	updatedNumber := 0
+	for i, id := range projectValues.ChapterIds {
+		if id == chapterId {
+			updatedNumber = i + 1
+			continue
+		}
+		chapterIdsWithoutUpdated = append(chapterIdsWithoutUpdated, id)
+	}
+
+	if updatedNumber != entry.Number {
+		updatedChapterIds := make([]string, len(projectValues.ChapterIds))
+		copy(updatedChapterIds[:entry.Number-1], chapterIdsWithoutUpdated[:entry.Number-1])
+		updatedChapterIds[entry.Number-1] = chapterId
+		copy(updatedChapterIds[entry.Number:], chapterIdsWithoutUpdated[entry.Number-1:])
+
+		_, err = r.client.Collection(ProjectCollection).
+			Doc(projectId).
+			Update(db.FirestoreContext(), []firestore.Update{
+				{Path: "chapterIds", Value: updatedChapterIds},
+			})
+		if err != nil {
+			return nil, Errorf(WriteFailurePanic, "failed to update project: %w", err)
+		}
+	}
+
+	snapshot, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to get updated chapter: %w", err)
+	}
+
+	var values document.ChapterValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	return r.valuesToEntry(values, entry.Number, entry.UserId), nil
 }
 
 func (r chapterRepository) projectValues(userId string, projectId string) (*document.ProjectWithChapterIdsValues, *Error) {

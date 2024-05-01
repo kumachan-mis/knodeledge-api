@@ -1,5 +1,5 @@
 type: object
-description: Chapter object
+description: ChapterWithSections object
 properties:
   id:
     type: string
@@ -15,7 +15,12 @@ properties:
     description: Chapter number
     minimum: 1
     example: 1
+  sections:
+    type: array
+    items:
+      $ref: ../section/Section.yaml
 required:
   - id
   - name
   - number
+  - sections
