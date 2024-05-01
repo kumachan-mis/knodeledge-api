@@ -244,7 +244,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	}, chapters)
 }
 
-func TestInsertProjectChaptersInvalidArgument(t *testing.T) {
+func TestInsertChapterInvalidArgument(t *testing.T) {
 	tt := []struct {
 		name          string
 		projectId     string
@@ -296,6 +296,208 @@ func TestInsertProjectChaptersInvalidArgument(t *testing.T) {
 			assert.Equal(t, repository.InvalidArgument, rErr.Code())
 			assert.Equal(t, fmt.Sprintf("invalid argument: %s", tc.expectedError), rErr.Error())
 			assert.Nil(t, createdChapter)
+		})
+	}
+}
+
+func TestUpdateChapterValidEntry(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewChapterRepository(*client)
+
+	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
+
+	entry := record.ChapterWithoutAutofieldEntry{
+		Name:   "Chapter One",
+		Number: 1,
+		UserId: testutil.ModifyOnlyUserId(),
+	}
+
+	updatedChapter2, rErr := r.UpdateChapter(projectId, "CHAPTER_TWO", entry)
+	now := time.Now()
+
+	assert.Nil(t, rErr)
+
+	assert.Equal(t, "Chapter One", updatedChapter2.Name)
+	assert.Equal(t, 1, updatedChapter2.Number)
+	assert.Equal(t, testutil.ModifyOnlyUserId(), updatedChapter2.UserId)
+	assert.Equal(t, testutil.Date(), updatedChapter2.CreatedAt)
+	assert.Less(t, now.Sub(updatedChapter2.UpdatedAt), time.Second)
+
+	chapters, err := r.FetchProjectChapters(testutil.ModifyOnlyUserId(), projectId)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, map[string]record.ChapterEntry{
+		"CHAPTER_TWO": {
+			Name:      "Chapter One",
+			Number:    1,
+			UserId:    testutil.ModifyOnlyUserId(),
+			CreatedAt: testutil.Date(),
+			UpdatedAt: updatedChapter2.UpdatedAt,
+		},
+		"CHAPTER_ONE": {
+			Name:      "Chapter One",
+			Number:    2,
+			UserId:    testutil.ModifyOnlyUserId(),
+			CreatedAt: testutil.Date(),
+			UpdatedAt: testutil.Date(),
+		},
+	}, chapters)
+
+	entry = record.ChapterWithoutAutofieldEntry{
+		Name:   "Chapter Two",
+		Number: 2,
+		UserId: testutil.ModifyOnlyUserId(),
+	}
+
+	updatedChapter1, rErr := r.UpdateChapter(projectId, "CHAPTER_ONE", entry)
+
+	assert.Nil(t, rErr)
+
+	assert.Equal(t, "Chapter Two", updatedChapter1.Name)
+	assert.Equal(t, 2, updatedChapter1.Number)
+	assert.Equal(t, testutil.ModifyOnlyUserId(), updatedChapter1.UserId)
+	assert.Equal(t, testutil.Date(), updatedChapter1.CreatedAt)
+	assert.Less(t, now.Sub(updatedChapter1.UpdatedAt), time.Second)
+
+	chapters, err = r.FetchProjectChapters(testutil.ModifyOnlyUserId(), projectId)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, map[string]record.ChapterEntry{
+		"CHAPTER_TWO": {
+			Name:      "Chapter One",
+			Number:    1,
+			UserId:    testutil.ModifyOnlyUserId(),
+			CreatedAt: testutil.Date(),
+			UpdatedAt: updatedChapter2.UpdatedAt,
+		},
+		"CHAPTER_ONE": {
+			Name:      "Chapter Two",
+			Number:    2,
+			UserId:    testutil.ModifyOnlyUserId(),
+			CreatedAt: testutil.Date(),
+			UpdatedAt: updatedChapter1.UpdatedAt,
+		},
+	}, chapters)
+}
+
+func TestUpdateChapterNoDocument(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewChapterRepository(*client)
+
+	updatedChapter, rErr := r.UpdateChapter(
+		"PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+		"UNKNOWN_CHAPTER",
+		record.ChapterWithoutAutofieldEntry{
+			Name:   "Chapter One",
+			Number: 1,
+			UserId: testutil.ModifyOnlyUserId(),
+		})
+
+	assert.NotNil(t, rErr)
+
+	assert.Nil(t, updatedChapter)
+	assert.Equal(t, repository.NotFoundError, rErr.Code())
+	assert.Equal(t, "not found: failed to update chapter", rErr.Error())
+}
+
+func TestUpdateChapterInvalidArgument(t *testing.T) {
+	tt := []struct {
+		name          string
+		projectId     string
+		chapterId     string
+		entry         record.ChapterWithoutAutofieldEntry
+		expectedError string
+	}{
+		{
+			name:      "should return error when chapter number is too large",
+			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			chapterId: "CHAPTER_ONE",
+			entry: record.ChapterWithoutAutofieldEntry{
+				Name:   "Chapter Ninety-Nine",
+				Number: 99,
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+			expectedError: "chapter number is too large",
+		},
+		{
+			name:      "should return error when project is not found",
+			projectId: "UNKNOWN_PROJECT",
+			chapterId: "CHAPTER_ONE",
+			entry: record.ChapterWithoutAutofieldEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+			expectedError: "project document does not exist",
+		},
+		{
+			name:      "should return error when user is not author of the project",
+			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			chapterId: "CHAPTER_ONE",
+			entry: record.ChapterWithoutAutofieldEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				UserId: testutil.ReadOnlyUserId(),
+			},
+			expectedError: "project document does not exist",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewChapterRepository(*client)
+
+			updatedChapter, rErr := r.UpdateChapter(tc.projectId, tc.chapterId, tc.entry)
+
+			assert.NotNil(t, rErr)
+
+			assert.Nil(t, updatedChapter)
+			assert.Equal(t, repository.InvalidArgument, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("invalid argument: %s", tc.expectedError), rErr.Error())
+		})
+	}
+}
+
+func TestUpdateChapterInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when chapter ids are invalid",
+			userId:    testutil.ErrorUserId(3),
+			projectId: "PROJECT_WITH_INVALID_CHAPTER_IDS",
+			chapterId: "CHAPTER",
+			expectedError: "failed to convert snapshot to values: document.ProjectWithChapterIdsValues.chapterIds: " +
+				"firestore: cannot set type []string to string",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewChapterRepository(*client)
+
+			updatedChapter, rErr := r.UpdateChapter(
+				tc.projectId,
+				tc.chapterId,
+				record.ChapterWithoutAutofieldEntry{
+					Name:   "Updated Chapter",
+					Number: 1,
+					UserId: tc.userId,
+				})
+
+			assert.NotNil(t, rErr)
+
+			assert.Nil(t, updatedChapter)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %s", tc.expectedError), rErr.Error())
 		})
 	}
 }
