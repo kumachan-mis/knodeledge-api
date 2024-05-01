@@ -25,7 +25,7 @@ func NewChapterApi(usecase usecase.ChapterUseCase) ChapterApi {
 func (api chapterApi) HandleList(c *gin.Context) {
 	var request model.ChapterListRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(400, model.ChapterListErrorResponse{
+		c.JSON(http.StatusBadRequest, model.ChapterListErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
@@ -50,6 +50,13 @@ func (api chapterApi) HandleList(c *gin.Context) {
 		return
 	}
 
+	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
+		c.JSON(http.StatusNotFound, model.ChapterListErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
 	if ucErr != nil {
 		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
@@ -63,7 +70,7 @@ func (api chapterApi) HandleList(c *gin.Context) {
 func (api chapterApi) HandleCreate(c *gin.Context) {
 	var request model.ChapterCreateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(400, model.ChapterCreateErrorResponse{
+		c.JSON(http.StatusBadRequest, model.ChapterCreateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
@@ -89,6 +96,13 @@ func (api chapterApi) HandleCreate(c *gin.Context) {
 		return
 	}
 
+	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
+		c.JSON(http.StatusNotFound, model.ChapterCreateErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
 	if ucErr != nil {
 		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
@@ -102,7 +116,7 @@ func (api chapterApi) HandleCreate(c *gin.Context) {
 func (api chapterApi) HandleUpdate(c *gin.Context) {
 	var request model.ChapterUpdateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(400, model.ChapterUpdateErrorResponse{
+		c.JSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return

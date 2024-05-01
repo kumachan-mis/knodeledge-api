@@ -107,24 +107,26 @@ func TestListChaptersDomainValidationError(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockChapterService(ctrl)
+			s := mock_service.NewMockChapterService(ctrl)
 
-		uc := usecase.NewChapterUseCase(s)
+			uc := usecase.NewChapterUseCase(s)
 
-		res, ucErr := uc.ListChapters(model.ChapterListRequest{
-			User:    model.UserOnlyId{Id: tc.userId},
-			Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.ListChapters(model.ChapterListRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+			})
+
+			expectedJson, _ := json.Marshal(tc.expected)
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
+			assert.Equal(t, tc.expected, *ucErr.Response())
+
+			assert.Nil(t, res)
 		})
-
-		expectedJson, _ := json.Marshal(tc.expected)
-		assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
-		assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
-		assert.Equal(t, tc.expected, *ucErr.Response())
-
-		assert.Nil(t, res)
 	}
 }
 
@@ -137,11 +139,11 @@ func TestListChaptersServiceError(t *testing.T) {
 		expectedCode  usecase.ErrorCode
 	}{
 		{
-			name:          "should return error when repository returns invalid argument error",
-			errorCode:     service.InvalidArgument,
-			errorMessage:  "project document does not exist",
-			expectedError: "invalid argument: project document does not exist",
-			expectedCode:  usecase.InvalidArgumentError,
+			name:          "should return error when repository returns not found error",
+			errorCode:     service.NotFoundError,
+			errorMessage:  "project not found",
+			expectedError: "not found: project not found",
+			expectedCode:  usecase.NotFoundError,
 		},
 		{
 			name:          "should return error when repository returns failure panic",
@@ -153,25 +155,27 @@ func TestListChaptersServiceError(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockChapterService(ctrl)
+			s := mock_service.NewMockChapterService(ctrl)
 
-		s.EXPECT().
-			ListChapters(gomock.Any(), gomock.Any()).
-			Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+			s.EXPECT().
+				ListChapters(gomock.Any(), gomock.Any()).
+				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
 
-		uc := usecase.NewChapterUseCase(s)
+			uc := usecase.NewChapterUseCase(s)
 
-		res, ucErr := uc.ListChapters(model.ChapterListRequest{
-			User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-			Project: model.ProjectOnlyId{Id: "0000000000000001"},
+			res, ucErr := uc.ListChapters(model.ChapterListRequest{
+				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+				Project: model.ProjectOnlyId{Id: "0000000000000001"},
+			})
+
+			assert.Equal(t, tc.expectedError, ucErr.Error())
+			assert.Equal(t, tc.expectedCode, ucErr.Code())
+			assert.Nil(t, res)
 		})
-
-		assert.Equal(t, tc.expectedError, ucErr.Error())
-		assert.Equal(t, tc.expectedCode, ucErr.Code())
-		assert.Nil(t, res)
 	}
 }
 
@@ -205,48 +209,50 @@ func TestCreateChapterValidEntity(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockChapterService(ctrl)
+			s := mock_service.NewMockChapterService(ctrl)
 
-		id, err := domain.NewChapterIdObject("1000000000000001")
-		assert.Nil(t, err)
-		name, err := domain.NewChapterNameObject(tc.chapter.Name)
-		assert.Nil(t, err)
-		number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
-		assert.Nil(t, err)
-		createdAt, err := domain.NewCreatedAtObject(testutil.Date())
-		assert.Nil(t, err)
-		updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
-		assert.Nil(t, err)
+			id, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+			name, err := domain.NewChapterNameObject(tc.chapter.Name)
+			assert.Nil(t, err)
+			number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
+			assert.Nil(t, err)
+			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
+			assert.Nil(t, err)
+			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
+			assert.Nil(t, err)
 
-		chapter := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
+			chapter := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
 
-		s.EXPECT().
-			CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
-			Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject, chapter domain.ChapterWithoutAutofieldEntity) {
-				assert.Equal(t, tc.userId, userId.Value())
-				assert.Equal(t, tc.projectId, projectId.Value())
-				assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
-				assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
-			}).
-			Return(chapter, nil)
+			s.EXPECT().
+				CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
+				Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject, chapter domain.ChapterWithoutAutofieldEntity) {
+					assert.Equal(t, tc.userId, userId.Value())
+					assert.Equal(t, tc.projectId, projectId.Value())
+					assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
+					assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
+				}).
+				Return(chapter, nil)
 
-		uc := usecase.NewChapterUseCase(s)
+			uc := usecase.NewChapterUseCase(s)
 
-		res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
-			User:    model.UserOnlyId{Id: tc.userId},
-			Project: model.ProjectOnlyId{Id: tc.projectId},
-			Chapter: tc.chapter,
+			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+				Chapter: tc.chapter,
+			})
+
+			assert.Nil(t, ucErr)
+
+			assert.Equal(t, "1000000000000001", res.Chapter.Id)
+			assert.Equal(t, tc.chapter.Name, res.Chapter.Name)
+			assert.Equal(t, tc.chapter.Number, res.Chapter.Number)
+			assert.Len(t, res.Chapter.Sections, 0)
 		})
-
-		assert.Nil(t, ucErr)
-
-		assert.Equal(t, "1000000000000001", res.Chapter.Id)
-		assert.Equal(t, tc.chapter.Name, res.Chapter.Name)
-		assert.Equal(t, tc.chapter.Number, res.Chapter.Number)
-		assert.Len(t, res.Chapter.Sections, 0)
 	}
 }
 
@@ -334,25 +340,27 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockChapterService(ctrl)
+			s := mock_service.NewMockChapterService(ctrl)
 
-		uc := usecase.NewChapterUseCase(s)
+			uc := usecase.NewChapterUseCase(s)
 
-		res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
-			User:    model.UserOnlyId{Id: tc.userId},
-			Project: model.ProjectOnlyId{Id: tc.projectId},
-			Chapter: tc.chapter,
+			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+				Chapter: tc.chapter,
+			})
+
+			expectedJson, _ := json.Marshal(tc.expected)
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
+			assert.Equal(t, tc.expected, *ucErr.Response())
+
+			assert.Nil(t, res)
 		})
-
-		expectedJson, _ := json.Marshal(tc.expected)
-		assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
-		assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
-		assert.Equal(t, tc.expected, *ucErr.Response())
-
-		assert.Nil(t, res)
 	}
 }
 
@@ -365,49 +373,58 @@ func TestCreateChapterServiceError(t *testing.T) {
 		expectedCode  usecase.ErrorCode
 	}{
 		{
-			name:          "should return error when repository returns failure panic",
-			errorCode:     service.RepositoryFailurePanic,
-			errorMessage:  "service error",
-			expectedError: "internal error: service error",
-			expectedCode:  usecase.InternalErrorPanic,
-		},
-		{
 			name:          "should return error when repository returns invalid argument error",
 			errorCode:     service.InvalidArgument,
 			errorMessage:  "chapter number is too large",
 			expectedError: "invalid argument: chapter number is too large",
 			expectedCode:  usecase.InvalidArgumentError,
 		},
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     service.NotFoundError,
+			errorMessage:  "project not found",
+			expectedError: "not found: project not found",
+			expectedCode:  usecase.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns failure panic",
+			errorCode:     service.RepositoryFailurePanic,
+			errorMessage:  "service error",
+			expectedError: "internal error: service error",
+			expectedCode:  usecase.InternalErrorPanic,
+		},
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockChapterService(ctrl)
+			s := mock_service.NewMockChapterService(ctrl)
 
-		s.EXPECT().
-			CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+			s.EXPECT().
+				CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
 
-		uc := usecase.NewChapterUseCase(s)
+			uc := usecase.NewChapterUseCase(s)
 
-		res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
-			User: model.UserOnlyId{
-				Id: testutil.ReadOnlyUserId(),
-			},
-			Project: model.ProjectOnlyId{
-				Id: "0000000000000001",
-			},
-			Chapter: model.ChapterWithoutAutofield{
-				Name:   "Chapter 1",
-				Number: int32(1),
-			},
+			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
+				User: model.UserOnlyId{
+					Id: testutil.ReadOnlyUserId(),
+				},
+				Project: model.ProjectOnlyId{
+					Id: "0000000000000001",
+				},
+				Chapter: model.ChapterWithoutAutofield{
+					Name:   "Chapter 1",
+					Number: int32(1),
+				},
+			})
+
+			assert.Equal(t, tc.expectedError, ucErr.Error())
+			assert.Equal(t, tc.expectedCode, ucErr.Code())
+			assert.Nil(t, res)
 		})
-
-		assert.Equal(t, tc.expectedError, ucErr.Error())
-		assert.Equal(t, tc.expectedCode, ucErr.Code())
-		assert.Nil(t, res)
 	}
 }
 
@@ -444,53 +461,55 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockChapterService(ctrl)
+			s := mock_service.NewMockChapterService(ctrl)
 
-		id, err := domain.NewChapterIdObject(tc.chapterId)
-		assert.Nil(t, err)
-		name, err := domain.NewChapterNameObject(tc.chapter.Name)
-		assert.Nil(t, err)
-		number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
-		assert.Nil(t, err)
-		createdAt, err := domain.NewCreatedAtObject(testutil.Date())
-		assert.Nil(t, err)
-		updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
-		assert.Nil(t, err)
+			id, err := domain.NewChapterIdObject(tc.chapterId)
+			assert.Nil(t, err)
+			name, err := domain.NewChapterNameObject(tc.chapter.Name)
+			assert.Nil(t, err)
+			number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
+			assert.Nil(t, err)
+			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
+			assert.Nil(t, err)
+			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
+			assert.Nil(t, err)
 
-		chapter := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
+			chapter := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
 
-		s.EXPECT().
-			UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject, chapterId domain.ChapterIdObject, chapter domain.ChapterWithoutAutofieldEntity) {
-				assert.Equal(t, tc.userId, userId.Value())
-				assert.Equal(t, tc.projectId, projectId.Value())
-				assert.Equal(t, tc.chapterId, chapterId.Value())
-				assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
-				assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
-			}).
-			Return(chapter, nil)
+			s.EXPECT().
+				UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject, chapterId domain.ChapterIdObject, chapter domain.ChapterWithoutAutofieldEntity) {
+					assert.Equal(t, tc.userId, userId.Value())
+					assert.Equal(t, tc.projectId, projectId.Value())
+					assert.Equal(t, tc.chapterId, chapterId.Value())
+					assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
+					assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
+				}).
+				Return(chapter, nil)
 
-		uc := usecase.NewChapterUseCase(s)
+			uc := usecase.NewChapterUseCase(s)
 
-		res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
-			User:    model.UserOnlyId{Id: tc.userId},
-			Project: model.ProjectOnlyId{Id: tc.projectId},
-			Chapter: model.Chapter{
-				Id:     tc.chapterId,
-				Name:   tc.chapter.Name,
-				Number: tc.chapter.Number,
-			},
+			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+				Chapter: model.Chapter{
+					Id:     tc.chapterId,
+					Name:   tc.chapter.Name,
+					Number: tc.chapter.Number,
+				},
+			})
+
+			assert.Nil(t, ucErr)
+
+			assert.Equal(t, tc.chapterId, res.Chapter.Id)
+			assert.Equal(t, tc.chapter.Name, res.Chapter.Name)
+			assert.Equal(t, tc.chapter.Number, res.Chapter.Number)
+			assert.Len(t, res.Chapter.Sections, 0)
 		})
-
-		assert.Nil(t, ucErr)
-
-		assert.Equal(t, tc.chapterId, res.Chapter.Id)
-		assert.Equal(t, tc.chapter.Name, res.Chapter.Name)
-		assert.Equal(t, tc.chapter.Number, res.Chapter.Number)
-		assert.Len(t, res.Chapter.Sections, 0)
 	}
 }
 
@@ -609,25 +628,27 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockChapterService(ctrl)
+			s := mock_service.NewMockChapterService(ctrl)
 
-		uc := usecase.NewChapterUseCase(s)
+			uc := usecase.NewChapterUseCase(s)
 
-		res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
-			User:    model.UserOnlyId{Id: tc.userId},
-			Project: model.ProjectOnlyId{Id: tc.projectId},
-			Chapter: tc.chapter,
+			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+				Chapter: tc.chapter,
+			})
+
+			expectedJson, _ := json.Marshal(tc.expected)
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
+			assert.Equal(t, tc.expected, *ucErr.Response())
+
+			assert.Nil(t, res)
 		})
-
-		expectedJson, _ := json.Marshal(tc.expected)
-		assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
-		assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
-		assert.Equal(t, tc.expected, *ucErr.Response())
-
-		assert.Nil(t, res)
 	}
 }
 
@@ -642,8 +663,8 @@ func TestUpdateChapterServiceError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     service.NotFoundError,
-			errorMessage:  "chapter document does not exist",
-			expectedError: "not found: chapter document does not exist",
+			errorMessage:  "failed to update chapter",
+			expectedError: "not found: failed to update chapter",
 			expectedCode:  usecase.NotFoundError,
 		},
 		{
@@ -663,33 +684,35 @@ func TestUpdateChapterServiceError(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		s := mock_service.NewMockChapterService(ctrl)
+			s := mock_service.NewMockChapterService(ctrl)
 
-		s.EXPECT().
-			UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+			s.EXPECT().
+				UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
 
-		uc := usecase.NewChapterUseCase(s)
+			uc := usecase.NewChapterUseCase(s)
 
-		res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
-			User: model.UserOnlyId{
-				Id: testutil.ReadOnlyUserId(),
-			},
-			Project: model.ProjectOnlyId{
-				Id: "0000000000000001",
-			},
-			Chapter: model.Chapter{
-				Id:     "1000000000000001",
-				Name:   "Chapter 1",
-				Number: int32(1),
-			},
+			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
+				User: model.UserOnlyId{
+					Id: testutil.ReadOnlyUserId(),
+				},
+				Project: model.ProjectOnlyId{
+					Id: "0000000000000001",
+				},
+				Chapter: model.Chapter{
+					Id:     "1000000000000001",
+					Name:   "Chapter 1",
+					Number: int32(1),
+				},
+			})
+
+			assert.Equal(t, tc.expectedError, ucErr.Error())
+			assert.Equal(t, tc.expectedCode, ucErr.Code())
+			assert.Nil(t, res)
 		})
-
-		assert.Equal(t, tc.expectedError, ucErr.Error())
-		assert.Equal(t, tc.expectedCode, ucErr.Code())
-		assert.Nil(t, res)
 	}
 }

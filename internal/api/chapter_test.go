@@ -86,7 +86,7 @@ func TestChapterListProjectNotFound(t *testing.T) {
 		request map[string]any
 	}{
 		{
-			name: "should return invalid argument when project id is not found",
+			name: "should return not found when project is not found",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ReadOnlyUserId(),
@@ -97,7 +97,7 @@ func TestChapterListProjectNotFound(t *testing.T) {
 			},
 		},
 		{
-			name: "should return invalid argument when user is not author of the project",
+			name: "should return not found when user is not author of the project",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -119,13 +119,12 @@ func TestChapterListProjectNotFound(t *testing.T) {
 
 			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
 			assert.Equal(t, map[string]any{
-				"message": "invalid request value: " +
-					"failed to list chapters: project document does not exist",
+				"message": "not found",
 				"user":    map[string]any{},
 				"project": map[string]any{},
 			}, responseBody)
@@ -333,7 +332,7 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 		request map[string]any
 	}{
 		{
-			name: "should return invalid argument when project id is not found",
+			name: "should return not found when project is not found",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -348,7 +347,7 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 			},
 		},
 		{
-			name: "should return invalid argument when user is not author of the project",
+			name: "should return not found when user is not author of the project",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ReadOnlyUserId(),
@@ -374,13 +373,12 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 
 			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
 			assert.Equal(t, map[string]any{
-				"message": "invalid request value: " +
-					"failed to create chapter: project document does not exist",
+				"message": "not found",
 				"user":    map[string]any{},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
@@ -656,13 +654,13 @@ func TestChapterUpdate(t *testing.T) {
 	}, responseBody)
 }
 
-func TestChapterUpdateProjectNotFound(t *testing.T) {
+func TestChapterUpdateNotFound(t *testing.T) {
 	tt := []struct {
 		name    string
 		request map[string]any
 	}{
 		{
-			name: "should return invalid argument when project id is not found",
+			name: "should return not found when project is not found",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ModifyOnlyUserId(),
@@ -678,7 +676,7 @@ func TestChapterUpdateProjectNotFound(t *testing.T) {
 			},
 		},
 		{
-			name: "should return invalid argument when user is not author of the project",
+			name: "should return not found when user is not author of the project",
 			request: map[string]any{
 				"user": map[string]any{
 					"id": testutil.ReadOnlyUserId(),
@@ -688,6 +686,22 @@ func TestChapterUpdateProjectNotFound(t *testing.T) {
 				},
 				"chapter": map[string]any{
 					"id":     "CHAPTER_ONE",
+					"name":   "Updated Chapter One",
+					"number": 1,
+				},
+			},
+		},
+		{
+			name: "should return not found when chapter is not found",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id":     "UNKNOWN_CHAPTER",
 					"name":   "Updated Chapter One",
 					"number": 1,
 				},
@@ -705,52 +719,18 @@ func TestChapterUpdateProjectNotFound(t *testing.T) {
 
 			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
 			assert.Equal(t, map[string]any{
-				"message": "invalid request value: " +
-					"failed to update chapter: project document does not exist",
+				"message": "not found",
 				"user":    map[string]any{},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
 			}, responseBody)
 		})
 	}
-}
-
-func TestChapterUpdateNotFound(t *testing.T) {
-	router := setupChapterRouter()
-
-	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ModifyOnlyUserId(),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
-		},
-		"chapter": map[string]any{
-			"id":     "UNKNOWN_CHAPTER",
-			"name":   "Updated Chapter One",
-			"number": 1,
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/chapters/update", strings.NewReader(string(requestBody)))
-
-	router.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusNotFound, recorder.Code)
-
-	var responseBody map[string]any
-	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-	assert.Equal(t, map[string]any{
-		"message": "not found",
-		"user":    map[string]any{},
-		"project": map[string]any{},
-		"chapter": map[string]any{},
-	}, responseBody)
 }
 
 func TestChapterUpdateTooLargeChapterNumber(t *testing.T) {

@@ -21,6 +21,12 @@ post:
         application/json:
           schema:
             $ref: ../../schemas/interface/chapters/create/ChapterCreateErrorResponse.yaml
+    "404":
+      description: Not Found - Project (parent object of Chapter) not found or not authorized
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/chapters/create/ChapterCreateErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:

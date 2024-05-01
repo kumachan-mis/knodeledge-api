@@ -79,22 +79,24 @@ func TestProjectListDomainValidationError(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		router := setupProjectRouter()
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
 
-		recorder := httptest.NewRecorder()
-		requestBody, _ := json.Marshal(tc.request)
-		req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(string(requestBody)))
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(string(requestBody)))
 
-		router.ServeHTTP(recorder, req)
+			router.ServeHTTP(recorder, req)
 
-		assert.Equal(t, http.StatusBadRequest, recorder.Code)
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
-		var responseBody map[string]any
-		assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-		assert.Equal(t, map[string]any{
-			"message": "invalid request value",
-			"user":    tc.expectedResponse["user"],
-		}, responseBody)
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "invalid request value",
+				"user":    tc.expectedResponse["user"],
+			}, responseBody)
+		})
 	}
 }
 
@@ -225,7 +227,7 @@ func TestProjectFindNotFound(t *testing.T) {
 		request map[string]any
 	}{
 		{
-			name: "should return not found when project id is not found",
+			name: "should return not found when project is not found",
 			request: map[string]any{
 				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
 				"project": map[string]any{"id": "NOT_FOUND_PROJECT"},
@@ -678,7 +680,7 @@ func TestProjectUpdateNotFound(t *testing.T) {
 		project map[string]any
 	}{
 		{
-			name: "should return not found when project id is not found",
+			name: "should return not found when project is not found",
 			project: map[string]any{
 				"id":   "NOT_FOUND_PROJECT",
 				"name": "Updated Project",
