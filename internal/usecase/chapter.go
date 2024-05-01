@@ -197,15 +197,15 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 	chapter := domain.NewChapterWithoutAutofieldEntity(*cname, *cnumber)
 
 	entity, sErr := uc.service.UpdateChapter(*uid, *pid, *cid, *chapter)
-	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
-			NotFoundError,
-			sErr.Unwrap().Error(),
-		)
-	}
 	if sErr != nil && sErr.Code() == service.InvalidArgument {
 		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
 			InvalidArgumentError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
+			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
