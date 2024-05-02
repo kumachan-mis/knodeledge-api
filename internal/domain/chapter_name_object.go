@@ -8,10 +8,10 @@ type ChapterNameObject struct {
 
 func NewChapterNameObject(name string) (*ChapterNameObject, error) {
 	if name == "" {
-		return nil, fmt.Errorf("chapter name is required, but got '%s'", name)
+		return nil, fmt.Errorf("chapter name is required, but got '%v'", name)
 	}
 	if len(name) > 100 {
-		return nil, fmt.Errorf("chapter name cannot be longer than 100 characters, but got '%s'", name)
+		return nil, fmt.Errorf("chapter name cannot be longer than 100 characters, but got '%v'", name)
 	}
 	return &ChapterNameObject{value: name}, nil
 }

@@ -16,7 +16,7 @@ func UseCaseErrorToMessage[ErrorResponse any](err *usecase.Error[ErrorResponse])
 	case usecase.DomainValidationError:
 		return "invalid request value"
 	case usecase.InvalidArgumentError:
-		return fmt.Sprintf("invalid request value: %s", err.Message())
+		return fmt.Sprintf("invalid request value: %v", err.Message())
 	case usecase.NotFoundError:
 		return "not found"
 	default:

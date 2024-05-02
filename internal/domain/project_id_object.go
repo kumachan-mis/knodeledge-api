@@ -8,7 +8,7 @@ type ProjectIdObject struct {
 
 func NewProjectIdObject(projectId string) (*ProjectIdObject, error) {
 	if projectId == "" {
-		return nil, fmt.Errorf("project id is required, but got '%s'", projectId)
+		return nil, fmt.Errorf("project id is required, but got '%v'", projectId)
 	}
 	return &ProjectIdObject{value: projectId}, nil
 }

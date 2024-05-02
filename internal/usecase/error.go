@@ -43,12 +43,12 @@ func (e Error[ErrorResponse]) Response() *ErrorResponse {
 
 func (e Error[ErrorResponse]) Error() string {
 	if e.response == nil {
-		return fmt.Sprintf("%s: %s", e.code, e.message)
+		return fmt.Sprintf("%v: %v", e.code, e.message)
 	}
 
 	bytes, err := json.Marshal(e.response)
 	if err != nil {
-		return fmt.Sprintf("%s: %s", e.code, e.message)
+		return fmt.Sprintf("%v: %v", e.code, e.message)
 	}
-	return fmt.Sprintf("%s: %s", e.code, string(bytes))
+	return fmt.Sprintf("%v: %v", e.code, string(bytes))
 }
