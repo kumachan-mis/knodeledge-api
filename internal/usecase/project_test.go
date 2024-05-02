@@ -438,7 +438,7 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 			expected: model.ProjectCreateErrorResponse{
 				Project: model.ProjectWithoutAutofieldError{
 					Name: fmt.Sprintf(
-						"project name cannot be longer than 100 characters, but got '%s'",
+						"project name cannot be longer than 100 characters, but got '%v'",
 						tooLongProjectName,
 					),
 				},
@@ -454,7 +454,7 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 			expected: model.ProjectCreateErrorResponse{
 				Project: model.ProjectWithoutAutofieldError{
 					Description: fmt.Sprintf(
-						"project description cannot be longer than 400 characters, but got '%s'",
+						"project description cannot be longer than 400 characters, but got '%v'",
 						tooLongProjectDescription,
 					),
 				},
@@ -668,7 +668,7 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 			expected: model.ProjectUpdateErrorResponse{
 				Project: model.ProjectError{
 					Name: fmt.Sprintf(
-						"project name cannot be longer than 100 characters, but got '%s'",
+						"project name cannot be longer than 100 characters, but got '%v'",
 						tooLongProjectName,
 					),
 				},
@@ -685,7 +685,7 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 			expected: model.ProjectUpdateErrorResponse{
 				Project: model.ProjectError{
 					Description: fmt.Sprintf(
-						"project description cannot be longer than 400 characters, but got '%s'",
+						"project description cannot be longer than 400 characters, but got '%v'",
 						tooLongProjectDescription,
 					),
 				},

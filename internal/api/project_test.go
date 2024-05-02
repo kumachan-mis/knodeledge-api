@@ -115,7 +115,7 @@ func TestProjectListInvalidRequestFormat(t *testing.T) {
 		},
 		{
 			name:    "should return error when request body is invalid JSON",
-			request: fmt.Sprintf(`{"user": {"id": "%s"`, testutil.ReadOnlyUserId()),
+			request: fmt.Sprintf(`{"user": {"id": "%v"`, testutil.ReadOnlyUserId()),
 		},
 		{
 			name:    "should return error when request body is empty",
@@ -527,11 +527,11 @@ func TestProjectCreateDomainValidationError(t *testing.T) {
 				},
 				"project": map[string]any{
 					"name": fmt.Sprintf(
-						"project name cannot be longer than 100 characters, but got '%s'",
+						"project name cannot be longer than 100 characters, but got '%v'",
 						tooLongProjectName,
 					),
 					"description": fmt.Sprintf(
-						"project description cannot be longer than 400 characters, but got '%s'",
+						"project description cannot be longer than 400 characters, but got '%v'",
 						tooLongProjectDescription,
 					),
 				},
@@ -794,11 +794,11 @@ func TestProjectUpdateDomainValidationError(t *testing.T) {
 				},
 				"project": map[string]any{
 					"name": fmt.Sprintf(
-						"project name cannot be longer than 100 characters, but got '%s'",
+						"project name cannot be longer than 100 characters, but got '%v'",
 						tooLongProjectName,
 					),
 					"description": fmt.Sprintf(
-						"project description cannot be longer than 400 characters, but got '%s'",
+						"project description cannot be longer than 400 characters, but got '%v'",
 						tooLongProjectDescription,
 					),
 				},

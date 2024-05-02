@@ -8,10 +8,10 @@ type ProjectNameObject struct {
 
 func NewProjectNameObject(name string) (*ProjectNameObject, error) {
 	if name == "" {
-		return nil, fmt.Errorf("project name is required, but got '%s'", name)
+		return nil, fmt.Errorf("project name is required, but got '%v'", name)
 	}
 	if len(name) > 100 {
-		return nil, fmt.Errorf("project name cannot be longer than 100 characters, but got '%s'", name)
+		return nil, fmt.Errorf("project name cannot be longer than 100 characters, but got '%v'", name)
 	}
 	return &ProjectNameObject{value: name}, nil
 }

@@ -79,7 +79,7 @@ func TestFetchProjectsInvalidDocument(t *testing.T) {
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
-			assert.Equal(t, fmt.Sprintf("read failure: %s", tc.expectedError), rErr.Error())
+			assert.Equal(t, fmt.Sprintf("read failure: %v", tc.expectedError), rErr.Error())
 			assert.Nil(t, projects)
 		})
 	}
@@ -163,7 +163,7 @@ func TestFetchProjectNotFound(t *testing.T) {
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.NotFoundError, rErr.Code())
-			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
+			assert.Equal(t, fmt.Sprintf("not found: %v", tc.expectedError), rErr.Error())
 			assert.Nil(t, project)
 		})
 	}
@@ -201,7 +201,7 @@ func TestFetchProjectInvalidDocument(t *testing.T) {
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
-			assert.Equal(t, fmt.Sprintf("read failure: %s", tc.expectedError), rErr.Error())
+			assert.Equal(t, fmt.Sprintf("read failure: %v", tc.expectedError), rErr.Error())
 			assert.Nil(t, project)
 		})
 	}
@@ -327,7 +327,7 @@ func TestUpdateProjectNotFound(t *testing.T) {
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.NotFoundError, rErr.Code())
-			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
+			assert.Equal(t, fmt.Sprintf("not found: %v", tc.expectedError), rErr.Error())
 			assert.Nil(t, project)
 		})
 	}
@@ -369,7 +369,7 @@ func TestUpdateProjectInvalidDocument(t *testing.T) {
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
-			assert.Equal(t, fmt.Sprintf("read failure: %s", tc.expectedError), rErr.Error())
+			assert.Equal(t, fmt.Sprintf("read failure: %v", tc.expectedError), rErr.Error())
 			assert.Nil(t, project)
 		})
 	}

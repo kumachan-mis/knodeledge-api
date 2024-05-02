@@ -167,7 +167,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (name): " + fmt.Sprintf(
-				"chapter name cannot be longer than 100 characters, but got '%s'",
+				"chapter name cannot be longer than 100 characters, but got '%v'",
 				tooLongChapterName,
 			),
 		},
@@ -205,7 +205,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			chapters, sErr := s.ListChapters(*userId, *projectId)
 			assert.NotNil(t, sErr)
 			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
-			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
 			assert.Nil(t, chapters)
 		})
 	}
@@ -256,7 +256,7 @@ func TestListChaptersRepositoryError(t *testing.T) {
 			chapters, sErr := s.ListChapters(*userId, *projectId)
 			assert.NotNil(t, sErr)
 			assert.Equal(t, tc.expectedCode, sErr.Code())
-			assert.Equal(t, fmt.Sprintf("%s: %s", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
 			assert.Nil(t, chapters)
 		})
 	}
@@ -358,7 +358,7 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (name): " + fmt.Sprintf(
-				"chapter name cannot be longer than 100 characters, but got '%s'",
+				"chapter name cannot be longer than 100 characters, but got '%v'",
 				tooLongChapterName,
 			),
 		},
@@ -407,7 +407,7 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 			assert.NotNil(t, sErr)
 			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
 
-			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
 			assert.Nil(t, createdChapter)
 		})
 	}
@@ -475,7 +475,7 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
 			assert.NotNil(t, sErr)
 			assert.Equal(t, tc.expectedCode, sErr.Code())
-			assert.Equal(t, fmt.Sprintf("%s: %s", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
 			assert.Nil(t, createdChapter)
 		})
 	}
@@ -579,7 +579,7 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (name): " + fmt.Sprintf(
-				"chapter name cannot be longer than 100 characters, but got '%s'",
+				"chapter name cannot be longer than 100 characters, but got '%v'",
 				tooLongChapterName,
 			),
 		},
@@ -630,7 +630,7 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 			assert.NotNil(t, sErr)
 			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
 
-			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
 			assert.Nil(t, updatedChapter)
 		})
 	}
@@ -701,7 +701,7 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 
 			assert.NotNil(t, sErr)
 			assert.Equal(t, tc.expectedCode, sErr.Code())
-			assert.Equal(t, fmt.Sprintf("%s: %s", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
 			assert.Nil(t, updatedChapter)
 		})
 	}

@@ -60,7 +60,7 @@ func (r chapterRepository) FetchProjectChapters(userId string, projectId string)
 
 		number, ok := chapterNumbers[snapshot.Ref.ID]
 		if !ok {
-			err = fmt.Errorf("%s.chapterIds have deficient elements", reflect.TypeOf(*projectValues))
+			err = fmt.Errorf("%v.chapterIds have deficient elements", reflect.TypeOf(*projectValues))
 			return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
 		}
 
@@ -68,7 +68,7 @@ func (r chapterRepository) FetchProjectChapters(userId string, projectId string)
 	}
 
 	if len(entries) != len(projectValues.ChapterIds) {
-		err := fmt.Errorf("%s.chapterIds have excessive elements", reflect.TypeOf(*projectValues))
+		err := fmt.Errorf("%v.chapterIds have excessive elements", reflect.TypeOf(*projectValues))
 		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
 	}
 	return entries, nil

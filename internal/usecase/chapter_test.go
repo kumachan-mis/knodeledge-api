@@ -318,7 +318,7 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterWithoutAutofieldError{
-					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%s'",
+					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%v'",
 						tooLongChapterName),
 				},
 			},
@@ -603,7 +603,7 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterError{
 					Id: "",
-					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%s'",
+					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%v'",
 						tooLongChapterName),
 					Number: "",
 				},

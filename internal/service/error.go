@@ -23,7 +23,7 @@ func Errorf(code ErrorCode, format string, args ...any) *Error {
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("%s: %s", e.code, e.err.Error())
+	return fmt.Sprintf("%v: %v", e.code, e.err.Error())
 }
 
 func (e Error) Unwrap() error {

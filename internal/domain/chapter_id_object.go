@@ -8,7 +8,7 @@ type ChapterIdObject struct {
 
 func NewChapterIdObject(chapterId string) (*ChapterIdObject, error) {
 	if chapterId == "" {
-		return nil, fmt.Errorf("chapter id is required, but got '%s'", chapterId)
+		return nil, fmt.Errorf("chapter id is required, but got '%v'", chapterId)
 	}
 	return &ChapterIdObject{value: chapterId}, nil
 }

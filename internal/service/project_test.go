@@ -144,7 +144,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (name): " +
 				fmt.Sprintf(
-					"project name cannot be longer than 100 characters, but got '%s'",
+					"project name cannot be longer than 100 characters, but got '%v'",
 					tooLongProjectName,
 				),
 		},
@@ -160,7 +160,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (description): " +
 				fmt.Sprintf(
-					"project description cannot be longer than 400 characters, but got '%s'",
+					"project description cannot be longer than 400 characters, but got '%v'",
 					tooLongProjectDescription,
 				),
 		},
@@ -186,7 +186,7 @@ func TestListProjectsInvalidEntry(t *testing.T) {
 			projects, sErr := s.ListProjects(*userId)
 			assert.NotNil(t, sErr)
 			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
-			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
 			assert.Nil(t, projects)
 		})
 	}
@@ -307,7 +307,7 @@ func TestFindProjectInvalidEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (name): " +
 				fmt.Sprintf(
-					"project name cannot be longer than 100 characters, but got '%s'",
+					"project name cannot be longer than 100 characters, but got '%v'",
 					tooLongProjectName,
 				),
 		},
@@ -323,7 +323,7 @@ func TestFindProjectInvalidEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (description): " +
 				fmt.Sprintf(
-					"project description cannot be longer than 400 characters, but got '%s'",
+					"project description cannot be longer than 400 characters, but got '%v'",
 					tooLongProjectDescription,
 				),
 		},
@@ -350,7 +350,7 @@ func TestFindProjectInvalidEntry(t *testing.T) {
 			project, sErr := s.FindProject(*userId, *projectId)
 			assert.NotNil(t, sErr)
 			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
-			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
 			assert.Nil(t, project)
 		})
 	}
@@ -507,7 +507,7 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (name): " +
 				fmt.Sprintf(
-					"project name cannot be longer than 100 characters, but got '%s'",
+					"project name cannot be longer than 100 characters, but got '%v'",
 					tooLongProjectName,
 				),
 		},
@@ -522,7 +522,7 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (description): " +
 				fmt.Sprintf(
-					"project description cannot be longer than 400 characters, but got '%s'",
+					"project description cannot be longer than 400 characters, but got '%v'",
 					tooLongProjectDescription,
 				),
 		},
@@ -557,7 +557,7 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 			createdProject, sErr := s.CreateProject(*userId, *project)
 			assert.NotNil(t, sErr)
 			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
-			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
 			assert.Nil(t, createdProject)
 		})
 	}
@@ -694,7 +694,7 @@ func TestUpdateProjectInvalidUpdatedEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (name): " +
 				fmt.Sprintf(
-					"project name cannot be longer than 100 characters, but got '%s'",
+					"project name cannot be longer than 100 characters, but got '%v'",
 					tooLongProjectName,
 				),
 		},
@@ -709,7 +709,7 @@ func TestUpdateProjectInvalidUpdatedEntry(t *testing.T) {
 			},
 			expectedError: "failed to convert entry to entity (description): " +
 				fmt.Sprintf(
-					"project description cannot be longer than 400 characters, but got '%s'",
+					"project description cannot be longer than 400 characters, but got '%v'",
 					tooLongProjectDescription,
 				),
 		},
@@ -747,7 +747,7 @@ func TestUpdateProjectInvalidUpdatedEntry(t *testing.T) {
 			updatedProject, sErr := s.UpdateProject(*userId, *projectId, *project)
 			assert.NotNil(t, sErr)
 			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
-			assert.Equal(t, fmt.Sprintf("domain failure: %s", tc.expectedError), sErr.Error())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
 			assert.Nil(t, updatedProject)
 		})
 	}
