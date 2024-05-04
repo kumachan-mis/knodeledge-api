@@ -7,6 +7,8 @@ properties:
     $ref: ../../../entity/project/ProjectOnlyId.yaml
   chapter:
     $ref: ../../../entity/chapter/ChapterWithoutAutofield.yaml
+  paper:
+    $ref: ../../../entity/paper/PaperWithoutAutofield.yaml
 required:
   - user
   - project

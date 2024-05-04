@@ -15,9 +15,9 @@ type ChapterUpdateErrorResponse struct {
 	// Error message when request body format is invalid
 	Message string `json:"message,omitempty"`
 
-	User UserOnlyIdError `json:"user"`
+	User UserOnlyIdError `json:"user,omitempty"`
 
-	Project ProjectOnlyIdError `json:"project"`
+	Project ProjectOnlyIdError `json:"project,omitempty"`
 
-	Chapter ChapterError `json:"chapter"`
+	Chapter ChapterError `json:"chapter,omitempty"`
 }
