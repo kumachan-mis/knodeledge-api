@@ -13,3 +13,7 @@ func NewPaperContentObject(content string) (*PaperContentObject, error) {
 	}
 	return &PaperContentObject{value: content}, nil
 }
+
+func (o PaperContentObject) Value() string {
+	return o.value
+}
