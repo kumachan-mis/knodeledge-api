@@ -313,12 +313,14 @@ func TestCreateChapterValidEntity(t *testing.T) {
 
 func TestCreateChapterDomainValidationError(t *testing.T) {
 	tooLongChapterName := testutil.RandomString(101)
+	tooLongPaperContent := testutil.RandomString(40001)
 
 	tt := []struct {
 		name      string
 		userId    string
 		projectId string
 		chapter   model.ChapterWithoutAutofield
+		paper     model.PaperWithoutAutofield
 		expected  model.ChapterCreateErrorResponse
 	}{
 		{
@@ -329,9 +331,14 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
+			paper: model.PaperWithoutAutofield{
+				Content: "## Untitled Section",
+			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
 				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterWithoutAutofieldError{Name: "", Number: ""},
+				Paper:   model.PaperWithoutAutofieldError{Content: ""},
 			},
 		},
 		{
@@ -342,9 +349,14 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
+			paper: model.PaperWithoutAutofield{
+				Content: "## Untitled Section",
+			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: model.ChapterWithoutAutofieldError{Name: "", Number: ""},
+				Paper:   model.PaperWithoutAutofieldError{Content: ""},
 			},
 		},
 		{
@@ -355,10 +367,14 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   "",
 				Number: int32(1),
 			},
+			paper: model.PaperWithoutAutofield{
+				Content: "## Untitled Section",
+			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterWithoutAutofieldError{Name: "chapter name is required, but got ''"},
+				Paper:   model.PaperWithoutAutofieldError{Content: ""},
 			},
 		},
 		{
@@ -369,6 +385,9 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   tooLongChapterName,
 				Number: int32(1),
 			},
+			paper: model.PaperWithoutAutofield{
+				Content: "## Untitled Section",
+			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
@@ -376,6 +395,7 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%v'",
 						tooLongChapterName),
 				},
+				Paper: model.PaperWithoutAutofieldError{Content: ""},
 			},
 		},
 		{
@@ -386,10 +406,35 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   "Chapter 1",
 				Number: int32(0),
 			},
+			paper: model.PaperWithoutAutofield{
+				Content: "## Untitled Section",
+			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterWithoutAutofieldError{Number: "chapter number must be greater than 0, but got 0"},
+				Paper:   model.PaperWithoutAutofieldError{Content: ""},
+			},
+		},
+		{
+			name:      "should return error when paper content is too long",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapter: model.ChapterWithoutAutofield{
+				Name:   "Chapter 1",
+				Number: int32(1),
+			},
+			paper: model.PaperWithoutAutofield{
+				Content: tooLongPaperContent,
+			},
+			expected: model.ChapterCreateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterWithoutAutofieldError{Name: "", Number: ""},
+				Paper: model.PaperWithoutAutofieldError{
+					Content: fmt.Sprintf("paper content must be less than or equal to 40000 bytes, but got %v bytes",
+						len(tooLongPaperContent)),
+				},
 			},
 		},
 	}
@@ -409,6 +454,7 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: model.ProjectOnlyId{Id: tc.projectId},
 				Chapter: tc.chapter,
+				Paper:   tc.paper,
 			})
 
 			expectedJson, _ := json.Marshal(tc.expected)

@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -302,6 +303,9 @@ func TestChapterCreate(t *testing.T) {
 			"name":   "Chapter One",
 			"number": 1,
 		},
+		"paper": map[string]any{
+			"content": "## Untitled Section",
+		},
 	})
 	req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(string(requestBody)))
 
@@ -325,7 +329,7 @@ func TestChapterCreate(t *testing.T) {
 		},
 		"paper": map[string]any{
 			"id":      chapterId,
-			"content": "",
+			"content": "## Untitled Section",
 		},
 	}, responseBody)
 }
@@ -430,6 +434,9 @@ func TestChapterCreateTooLargeChapterNumber(t *testing.T) {
 }
 
 func TestChapterCreateDomainValidationError(t *testing.T) {
+	tooLongChapterName := testutil.RandomString(101)
+	tooLongPaperContent := testutil.RandomString(40001)
+
 	tt := []struct {
 		name             string
 		request          map[string]any
@@ -529,6 +536,33 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 			},
 		},
 		{
+			name: "should return error when chapter name is too long",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"name":   tooLongChapterName,
+					"number": 1,
+				},
+				"paper": map[string]any{
+					"content": "This is the content of the paper.",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{
+					"name": fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%v'",
+						tooLongChapterName),
+				},
+				"paper": map[string]any{},
+			},
+		},
+		{
 			name: "should return error when chapter number is zero",
 			request: map[string]any{
 				"user": map[string]any{
@@ -552,6 +586,33 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"number": "chapter number must be greater than 0, but got 0",
 				},
 				"paper": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when paper content is too long",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"name":   "Chapter One",
+					"number": 1,
+				},
+				"paper": map[string]any{
+					"content": tooLongPaperContent,
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"paper": map[string]any{
+					"content": fmt.Sprintf("paper content must be less than or equal to 40000 bytes, but got %v bytes",
+						len(tooLongPaperContent)),
+				},
 			},
 		},
 	}
