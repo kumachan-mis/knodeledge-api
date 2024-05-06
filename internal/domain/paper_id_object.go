@@ -6,11 +6,11 @@ type PaperIdObject struct {
 	value string
 }
 
-func NewPaperIdObject(chapterId string) (*PaperIdObject, error) {
-	if chapterId == "" {
-		return nil, fmt.Errorf("paper id is required, but got '%v'", chapterId)
+func NewPaperIdObject(paperId string) (*PaperIdObject, error) {
+	if paperId == "" {
+		return nil, fmt.Errorf("paper id is required, but got '%v'", paperId)
 	}
-	return &PaperIdObject{value: chapterId}, nil
+	return &PaperIdObject{value: paperId}, nil
 }
 
 func (o *PaperIdObject) Value() string {

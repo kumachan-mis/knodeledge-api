@@ -18,38 +18,39 @@ type ChapterUseCase interface {
 }
 
 type chapterUseCase struct {
-	service service.ChapterService
+	service      service.ChapterService
+	paperService service.PaperService
 }
 
-func NewChapterUseCase(service service.ChapterService) ChapterUseCase {
-	return chapterUseCase{service: service}
+func NewChapterUseCase(service service.ChapterService, paperService service.PaperService) ChapterUseCase {
+	return chapterUseCase{service: service, paperService: paperService}
 }
 
 func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 	*model.ChapterListResponse, *Error[model.ChapterListErrorResponse]) {
-	uid, uidErr := domain.NewUserIdObject(req.User.Id)
-	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 
-	uidMsg := ""
-	if uidErr != nil {
-		uidMsg = uidErr.Error()
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
 	}
-	pidMsg := ""
-	if pidErr != nil {
-		pidMsg = pidErr.Error()
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
 	}
 
-	if uidErr != nil || pidErr != nil {
+	if userIdErr != nil || projectIdErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ChapterListErrorResponse{
-				User:    model.UserOnlyIdError{Id: uidMsg},
-				Project: model.ProjectOnlyIdError{Id: pidMsg},
+				User:    model.UserOnlyIdError{Id: userIdMsg},
+				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
 			},
 		)
 	}
 
-	entities, sErr := uc.service.ListChapters(*uid, *pid)
+	entities, sErr := uc.service.ListChapters(*userId, *projectId)
 	if sErr != nil && sErr.Code() == service.NotFoundError {
 		return nil, NewMessageBasedError[model.ChapterListErrorResponse](
 			NotFoundError,
@@ -80,49 +81,58 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 
 func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	*model.ChapterCreateResponse, *Error[model.ChapterCreateErrorResponse]) {
-	uid, uidErr := domain.NewUserIdObject(req.User.Id)
-	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
-	cname, cnameErr := domain.NewChapterNameObject(req.Chapter.Name)
-	cnumber, cnumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+	chapterName, chapterNameErr := domain.NewChapterNameObject(req.Chapter.Name)
+	chapterNumber, chapterNumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
+	paperContent, paperContentErr := domain.NewPaperContentObject(req.Paper.Content)
 
-	uidMsg := ""
-	if uidErr != nil {
-		uidMsg = uidErr.Error()
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
 	}
-	pidMsg := ""
-	if pidErr != nil {
-		pidMsg = pidErr.Error()
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
 	}
-	cnameMsg := ""
-	if cnameErr != nil {
-		cnameMsg = cnameErr.Error()
+	chapterNameMsg := ""
+	if chapterNameErr != nil {
+		chapterNameMsg = chapterNameErr.Error()
 	}
-	cnumberMsg := ""
-	if cnumberErr != nil {
-		cnumberMsg = cnumberErr.Error()
+	chapterNumberMsg := ""
+	if chapterNumberErr != nil {
+		chapterNumberMsg = chapterNumberErr.Error()
+	}
+	paperContentMsg := ""
+	if paperContentErr != nil {
+		paperContentMsg = paperContentErr.Error()
 	}
 
-	if uidErr != nil || pidErr != nil || cnameErr != nil || cnumberErr != nil {
+	if userIdErr != nil || projectIdErr != nil ||
+		chapterNameErr != nil || chapterNumberErr != nil || paperContentErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ChapterCreateErrorResponse{
 				User: model.UserOnlyIdError{
-					Id: uidMsg,
+					Id: userIdMsg,
 				},
 				Project: model.ProjectOnlyIdError{
-					Id: pidMsg,
+					Id: projectIdMsg,
 				},
 				Chapter: model.ChapterWithoutAutofieldError{
-					Name:   cnameMsg,
-					Number: cnumberMsg,
+					Name:   chapterNameMsg,
+					Number: chapterNumberMsg,
+				},
+				Paper: model.PaperWithoutAutofieldError{
+					Content: paperContentMsg,
 				},
 			},
 		)
 	}
 
-	chapter := domain.NewChapterWithoutAutofieldEntity(*cname, *cnumber)
+	chapter := domain.NewChapterWithoutAutofieldEntity(*chapterName, *chapterNumber)
 
-	entity, sErr := uc.service.CreateChapter(*uid, *pid, *chapter)
+	chapterEntity, sErr := uc.service.CreateChapter(*userId, *projectId, *chapter)
 	if sErr != nil && sErr.Code() == service.InvalidArgument {
 		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
 			InvalidArgumentError,
@@ -142,67 +152,88 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 		)
 	}
 
+	chapterId := chapterEntity.Id()
+	paper := domain.NewPaperWithoutAutofieldEntity(*paperContent)
+
+	paperEntity, sErr := uc.paperService.CreatePaper(*userId, *projectId, *chapterId, *paper)
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
+			NotFoundError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil {
+		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
+		)
+	}
+
 	return &model.ChapterCreateResponse{
 		Chapter: model.ChapterWithSections{
-			Id:       entity.Id().Value(),
-			Name:     entity.Name().Value(),
-			Number:   int32(entity.Number().Value()),
+			Id:       chapterEntity.Id().Value(),
+			Name:     chapterEntity.Name().Value(),
+			Number:   int32(chapterEntity.Number().Value()),
 			Sections: []model.Section{},
+		},
+		Paper: model.Paper{
+			Id:      paperEntity.Id().Value(),
+			Content: paperEntity.Content().Value(),
 		},
 	}, nil
 }
 
 func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 	*model.ChapterUpdateResponse, *Error[model.ChapterUpdateErrorResponse]) {
-	uid, uidErr := domain.NewUserIdObject(req.User.Id)
-	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
-	cid, cidErr := domain.NewChapterIdObject(req.Chapter.Id)
-	cname, cnameErr := domain.NewChapterNameObject(req.Chapter.Name)
-	cnumber, cnumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
+	chapterName, chapterNameErr := domain.NewChapterNameObject(req.Chapter.Name)
+	chapterNumber, chapterNumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
 
-	uidMsg := ""
-	if uidErr != nil {
-		uidMsg = uidErr.Error()
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
 	}
-	pidMsg := ""
-	if pidErr != nil {
-		pidMsg = pidErr.Error()
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
 	}
-	cidMsg := ""
-	if cidErr != nil {
-		cidMsg = cidErr.Error()
+	chapterIdMsg := ""
+	if chapterIdErr != nil {
+		chapterIdMsg = chapterIdErr.Error()
 	}
-	cnameMsg := ""
-	if cnameErr != nil {
-		cnameMsg = cnameErr.Error()
+	chapterNameMsg := ""
+	if chapterNameErr != nil {
+		chapterNameMsg = chapterNameErr.Error()
 	}
-	cnumberMsg := ""
-	if cnumberErr != nil {
-		cnumberMsg = cnumberErr.Error()
+	chapterNumberMsg := ""
+	if chapterNumberErr != nil {
+		chapterNumberMsg = chapterNumberErr.Error()
 	}
 
-	if uidErr != nil || pidErr != nil || cidErr != nil || cnameErr != nil || cnumberErr != nil {
+	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || chapterNameErr != nil || chapterNumberErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ChapterUpdateErrorResponse{
 				User: model.UserOnlyIdError{
-					Id: uidMsg,
+					Id: userIdMsg,
 				},
 				Project: model.ProjectOnlyIdError{
-					Id: pidMsg,
+					Id: projectIdMsg,
 				},
 				Chapter: model.ChapterError{
-					Id:     cidMsg,
-					Name:   cnameMsg,
-					Number: cnumberMsg,
+					Id:     chapterIdMsg,
+					Name:   chapterNameMsg,
+					Number: chapterNumberMsg,
 				},
 			},
 		)
 	}
 
-	chapter := domain.NewChapterWithoutAutofieldEntity(*cname, *cnumber)
+	chapter := domain.NewChapterWithoutAutofieldEntity(*chapterName, *chapterNumber)
 
-	entity, sErr := uc.service.UpdateChapter(*uid, *pid, *cid, *chapter)
+	entity, sErr := uc.service.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
 	if sErr != nil && sErr.Code() == service.InvalidArgument {
 		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
 			InvalidArgumentError,

@@ -54,28 +54,27 @@ func main() {
 		log.Fatalf("Failed to get firestore client")
 	}
 
-	{
-		projectRepository := repository.NewProjectRepository(*client)
-		projectService := service.NewProjectService(projectRepository)
-		projectUseCase := usecase.NewProjectUseCase(projectService)
-		projectApi := api.NewProjectApi(projectUseCase)
+	projectRepository := repository.NewProjectRepository(*client)
+	chapterRepository := repository.NewChapterRepository(*client)
+	paperRepository := repository.NewPaperRepository(*client)
 
-		router.POST("/api/projects/list", projectApi.HandleList)
-		router.POST("/api/projects/create", projectApi.HandleCreate)
-		router.POST("/api/projects/find", projectApi.HandleFind)
-		router.POST("/api/projects/update", projectApi.HandleUpdate)
-	}
+	projectService := service.NewProjectService(projectRepository)
+	chapterService := service.NewChapterService(chapterRepository)
+	paperService := service.NewPaperService(paperRepository)
 
-	{
-		chapterRepository := repository.NewChapterRepository(*client)
-		chapterService := service.NewChapterService(chapterRepository)
-		chapterUseCase := usecase.NewChapterUseCase(chapterService)
-		chapterApi := api.NewChapterApi(chapterUseCase)
+	projectUseCase := usecase.NewProjectUseCase(projectService)
+	chapterUseCase := usecase.NewChapterUseCase(chapterService, paperService)
 
-		router.POST("/api/chapters/list", chapterApi.HandleList)
-		router.POST("/api/chapters/create", chapterApi.HandleCreate)
-		router.POST("/api/chapters/update", chapterApi.HandleUpdate)
-	}
+	projectApi := api.NewProjectApi(projectUseCase)
+	router.POST("/api/projects/list", projectApi.HandleList)
+	router.POST("/api/projects/create", projectApi.HandleCreate)
+	router.POST("/api/projects/find", projectApi.HandleFind)
+	router.POST("/api/projects/update", projectApi.HandleUpdate)
+
+	chapterApi := api.NewChapterApi(chapterUseCase)
+	router.POST("/api/chapters/list", chapterApi.HandleList)
+	router.POST("/api/chapters/create", chapterApi.HandleCreate)
+	router.POST("/api/chapters/update", chapterApi.HandleUpdate)
 
 	err = router.Run(":8080")
 	if err != nil {

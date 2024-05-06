@@ -324,7 +324,7 @@ func TestChapterCreate(t *testing.T) {
 			"sections": []any{},
 		},
 		"paper": map[string]any{
-			"id":      "", // TODO: paper id should be returned
+			"id":      chapterId,
 			"content": "",
 		},
 	}, responseBody)
@@ -1033,7 +1033,11 @@ func setupChapterRouter() *gin.Engine {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 	s := service.NewChapterService(r)
-	uc := usecase.NewChapterUseCase(s)
+
+	paperRepository := repository.NewPaperRepository(*client)
+	paperService := service.NewPaperService(paperRepository)
+
+	uc := usecase.NewChapterUseCase(s, paperService)
 	api := api.NewChapterApi(uc)
 
 	router.POST("/api/chapters/list", api.HandleList)

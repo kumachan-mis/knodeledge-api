@@ -6,6 +6,8 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
+
 type PaperService interface {
 	CreatePaper(
 		userId domain.UserIdObject,
