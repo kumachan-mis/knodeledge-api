@@ -323,6 +323,10 @@ func TestChapterCreate(t *testing.T) {
 			"number":   float64(1), // json.Unmarshal converts number to float64
 			"sections": []any{},
 		},
+		"paper": map[string]any{
+			"id":      "", // TODO: paper id should be returned
+			"content": "",
+		},
 	}, responseBody)
 }
 
@@ -382,6 +386,7 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 				"user":    map[string]any{},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
+				"paper":   map[string]any{},
 			}, responseBody)
 		})
 	}
@@ -402,6 +407,9 @@ func TestChapterCreateTooLargeChapterNumber(t *testing.T) {
 			"name":   "Chapter Ninety-Nine",
 			"number": 99,
 		},
+		"paper": map[string]any{
+			"content": "This is the content of the paper.",
+		},
 	})
 	req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(string(requestBody)))
 
@@ -417,6 +425,7 @@ func TestChapterCreateTooLargeChapterNumber(t *testing.T) {
 		"user":    map[string]any{},
 		"project": map[string]any{},
 		"chapter": map[string]any{},
+		"paper":   map[string]any{},
 	}, responseBody)
 }
 
@@ -440,6 +449,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "chapter name is required, but got ''",
 					"number": "chapter number must be greater than 0, but got 0",
 				},
+				"paper": map[string]any{},
 			},
 		},
 		{
@@ -455,6 +465,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "Chapter One",
 					"number": 1,
 				},
+				"paper": map[string]any{},
 			},
 			expectedResponse: map[string]any{
 				"user": map[string]any{
@@ -462,6 +473,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 				},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
+				"paper":   map[string]any{},
 			},
 		},
 		{
@@ -477,6 +489,9 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "Chapter One",
 					"number": 1,
 				},
+				"paper": map[string]any{
+					"content": "This is the content of the paper.",
+				},
 			},
 			expectedResponse: map[string]any{
 				"user": map[string]any{},
@@ -484,6 +499,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": "project id is required, but got ''",
 				},
 				"chapter": map[string]any{},
+				"paper":   map[string]any{},
 			},
 		},
 		{
@@ -499,6 +515,9 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "",
 					"number": 1,
 				},
+				"paper": map[string]any{
+					"content": "This is the content of the paper.",
+				},
 			},
 			expectedResponse: map[string]any{
 				"user":    map[string]any{},
@@ -506,6 +525,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 				"chapter": map[string]any{
 					"name": "chapter name is required, but got ''",
 				},
+				"paper": map[string]any{},
 			},
 		},
 		{
@@ -521,6 +541,9 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "Chapter One",
 					"number": 0,
 				},
+				"paper": map[string]any{
+					"content": "This is the content of the paper.",
+				},
 			},
 			expectedResponse: map[string]any{
 				"user":    map[string]any{},
@@ -528,6 +551,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 				"chapter": map[string]any{
 					"number": "chapter number must be greater than 0, but got 0",
 				},
+				"paper": map[string]any{},
 			},
 		},
 	}
@@ -551,6 +575,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 				"user":    tc.expectedResponse["user"],
 				"project": tc.expectedResponse["project"],
 				"chapter": tc.expectedResponse["chapter"],
+				"paper":   tc.expectedResponse["paper"],
 			}, responseBody)
 		})
 	}
@@ -613,6 +638,7 @@ func TestChapterCreateInvalidRequestFormat(t *testing.T) {
 				"user":    map[string]any{},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
+				"paper":   map[string]any{},
 			}, responseBody)
 		})
 	}
