@@ -9,9 +9,12 @@
 
 package model
 
-// ChapterCreateResponse - Response Body for Chapter Create API
-type ChapterCreateResponse struct {
-	Chapter ChapterWithSections `json:"chapter"`
+// Paper - Paper object
+type Paper struct {
 
-	Paper Paper `json:"paper"`
+	// Auto-generated paper ID
+	Id string `json:"id"`
+
+	// Paper content
+	Content string `json:"content"`
 }

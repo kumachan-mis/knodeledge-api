@@ -15,9 +15,11 @@ type ChapterCreateErrorResponse struct {
 	// Error message when request body format is invalid
 	Message string `json:"message,omitempty"`
 
-	User UserOnlyIdError `json:"user"`
+	User UserOnlyIdError `json:"user,omitempty"`
 
-	Project ProjectOnlyIdError `json:"project"`
+	Project ProjectOnlyIdError `json:"project,omitempty"`
 
-	Chapter ChapterWithoutAutofieldError `json:"chapter"`
+	Chapter ChapterWithoutAutofieldError `json:"chapter,omitempty"`
+
+	Paper PaperWithoutAutofieldError `json:"paper,omitempty"`
 }

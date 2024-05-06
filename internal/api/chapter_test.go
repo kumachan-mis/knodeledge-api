@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -302,6 +303,9 @@ func TestChapterCreate(t *testing.T) {
 			"name":   "Chapter One",
 			"number": 1,
 		},
+		"paper": map[string]any{
+			"content": "## Untitled Section",
+		},
 	})
 	req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(string(requestBody)))
 
@@ -322,6 +326,10 @@ func TestChapterCreate(t *testing.T) {
 			"name":     "Chapter One",
 			"number":   float64(1), // json.Unmarshal converts number to float64
 			"sections": []any{},
+		},
+		"paper": map[string]any{
+			"id":      chapterId,
+			"content": "## Untitled Section",
 		},
 	}, responseBody)
 }
@@ -382,6 +390,7 @@ func TestChapterCreateProjectNotFound(t *testing.T) {
 				"user":    map[string]any{},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
+				"paper":   map[string]any{},
 			}, responseBody)
 		})
 	}
@@ -402,6 +411,9 @@ func TestChapterCreateTooLargeChapterNumber(t *testing.T) {
 			"name":   "Chapter Ninety-Nine",
 			"number": 99,
 		},
+		"paper": map[string]any{
+			"content": "This is the content of the paper.",
+		},
 	})
 	req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(string(requestBody)))
 
@@ -417,10 +429,14 @@ func TestChapterCreateTooLargeChapterNumber(t *testing.T) {
 		"user":    map[string]any{},
 		"project": map[string]any{},
 		"chapter": map[string]any{},
+		"paper":   map[string]any{},
 	}, responseBody)
 }
 
 func TestChapterCreateDomainValidationError(t *testing.T) {
+	tooLongChapterName := testutil.RandomString(101)
+	tooLongPaperContent := testutil.RandomString(40001)
+
 	tt := []struct {
 		name             string
 		request          map[string]any
@@ -440,6 +456,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "chapter name is required, but got ''",
 					"number": "chapter number must be greater than 0, but got 0",
 				},
+				"paper": map[string]any{},
 			},
 		},
 		{
@@ -455,6 +472,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "Chapter One",
 					"number": 1,
 				},
+				"paper": map[string]any{},
 			},
 			expectedResponse: map[string]any{
 				"user": map[string]any{
@@ -462,6 +480,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 				},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
+				"paper":   map[string]any{},
 			},
 		},
 		{
@@ -477,6 +496,9 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "Chapter One",
 					"number": 1,
 				},
+				"paper": map[string]any{
+					"content": "This is the content of the paper.",
+				},
 			},
 			expectedResponse: map[string]any{
 				"user": map[string]any{},
@@ -484,6 +506,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"id": "project id is required, but got ''",
 				},
 				"chapter": map[string]any{},
+				"paper":   map[string]any{},
 			},
 		},
 		{
@@ -499,6 +522,9 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "",
 					"number": 1,
 				},
+				"paper": map[string]any{
+					"content": "This is the content of the paper.",
+				},
 			},
 			expectedResponse: map[string]any{
 				"user":    map[string]any{},
@@ -506,6 +532,34 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 				"chapter": map[string]any{
 					"name": "chapter name is required, but got ''",
 				},
+				"paper": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when chapter name is too long",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"name":   tooLongChapterName,
+					"number": 1,
+				},
+				"paper": map[string]any{
+					"content": "This is the content of the paper.",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{
+					"name": fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%v'",
+						tooLongChapterName),
+				},
+				"paper": map[string]any{},
 			},
 		},
 		{
@@ -521,12 +575,43 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 					"name":   "Chapter One",
 					"number": 0,
 				},
+				"paper": map[string]any{
+					"content": "This is the content of the paper.",
+				},
 			},
 			expectedResponse: map[string]any{
 				"user":    map[string]any{},
 				"project": map[string]any{},
 				"chapter": map[string]any{
 					"number": "chapter number must be greater than 0, but got 0",
+				},
+				"paper": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when paper content is too long",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"name":   "Chapter One",
+					"number": 1,
+				},
+				"paper": map[string]any{
+					"content": tooLongPaperContent,
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"paper": map[string]any{
+					"content": fmt.Sprintf("paper content must be less than or equal to 40000 bytes, but got %v bytes",
+						len(tooLongPaperContent)),
 				},
 			},
 		},
@@ -551,6 +636,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 				"user":    tc.expectedResponse["user"],
 				"project": tc.expectedResponse["project"],
 				"chapter": tc.expectedResponse["chapter"],
+				"paper":   tc.expectedResponse["paper"],
 			}, responseBody)
 		})
 	}
@@ -613,6 +699,7 @@ func TestChapterCreateInvalidRequestFormat(t *testing.T) {
 				"user":    map[string]any{},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
+				"paper":   map[string]any{},
 			}, responseBody)
 		})
 	}
@@ -1007,7 +1094,11 @@ func setupChapterRouter() *gin.Engine {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 	s := service.NewChapterService(r)
-	uc := usecase.NewChapterUseCase(s)
+
+	paperRepository := repository.NewPaperRepository(*client)
+	paperService := service.NewPaperService(paperRepository)
+
+	uc := usecase.NewChapterUseCase(s, paperService)
 	api := api.NewChapterApi(uc)
 
 	router.POST("/api/chapters/list", api.HandleList)

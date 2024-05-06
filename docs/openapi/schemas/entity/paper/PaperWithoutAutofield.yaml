@@ -1,0 +1,15 @@
+type: object
+description: Paper object
+properties:
+  content:
+    type: string
+    maxLength: 40000
+    description: Paper content
+    example: |
+      ## Introduction
+      This is the introduction of the paper.
+
+      ## What is note apps?
+      Note apps is a web application that allows users to create, read, update, and delete notes.
+required:
+  - content

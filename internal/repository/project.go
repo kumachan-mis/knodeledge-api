@@ -12,10 +12,20 @@ import (
 const ProjectCollection = "projects"
 
 type ProjectRepository interface {
-	FetchProjects(userId string) (map[string]record.ProjectEntry, *Error)
-	FetchProject(userId string, projectId string) (*record.ProjectEntry, *Error)
-	InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error)
-	UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error)
+	FetchProjects(
+		userId string,
+	) (map[string]record.ProjectEntry, *Error)
+	FetchProject(
+		userId string,
+		projectId string,
+	) (*record.ProjectEntry, *Error)
+	InsertProject(
+		entry record.ProjectWithoutAutofieldEntry,
+	) (string, *record.ProjectEntry, *Error)
+	UpdateProject(
+		projectId string,
+		entry record.ProjectWithoutAutofieldEntry,
+	) (*record.ProjectEntry, *Error)
 }
 
 type projectRepository struct {
@@ -26,7 +36,9 @@ func NewProjectRepository(client firestore.Client) ProjectRepository {
 	return projectRepository{client: client}
 }
 
-func (r projectRepository) FetchProjects(userId string) (map[string]record.ProjectEntry, *Error) {
+func (r projectRepository) FetchProjects(
+	userId string,
+) (map[string]record.ProjectEntry, *Error) {
 	iter := r.client.Collection(ProjectCollection).
 		Where("userId", "==", userId).
 		Documents(db.FirestoreContext())
@@ -51,7 +63,10 @@ func (r projectRepository) FetchProjects(userId string) (map[string]record.Proje
 	return entries, nil
 }
 
-func (r projectRepository) FetchProject(userId string, projectId string) (*record.ProjectEntry, *Error) {
+func (r projectRepository) FetchProject(
+	userId string,
+	projectId string,
+) (*record.ProjectEntry, *Error) {
 	snapshot, err := r.client.Collection(ProjectCollection).
 		Doc(projectId).
 		Get(db.FirestoreContext())
@@ -72,7 +87,9 @@ func (r projectRepository) FetchProject(userId string, projectId string) (*recor
 	return r.valuesToEntry(values), nil
 }
 
-func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEntry) (string, *record.ProjectEntry, *Error) {
+func (r projectRepository) InsertProject(
+	entry record.ProjectWithoutAutofieldEntry,
+) (string, *record.ProjectEntry, *Error) {
 	ref, _, err := r.client.Collection(ProjectCollection).
 		Add(db.FirestoreContext(), map[string]any{
 			"name":        entry.Name,
@@ -99,7 +116,10 @@ func (r projectRepository) InsertProject(entry record.ProjectWithoutAutofieldEnt
 	return ref.ID, r.valuesToEntry(values), nil
 }
 
-func (r projectRepository) UpdateProject(projectId string, entry record.ProjectWithoutAutofieldEntry) (*record.ProjectEntry, *Error) {
+func (r projectRepository) UpdateProject(
+	projectId string,
+	entry record.ProjectWithoutAutofieldEntry,
+) (*record.ProjectEntry, *Error) {
 	ref := r.client.Collection(ProjectCollection).
 		Doc(projectId)
 
@@ -141,7 +161,9 @@ func (r projectRepository) UpdateProject(projectId string, entry record.ProjectW
 	return r.valuesToEntry(values), nil
 }
 
-func (r projectRepository) valuesToEntry(values document.ProjectValues) *record.ProjectEntry {
+func (r projectRepository) valuesToEntry(
+	values document.ProjectValues,
+) *record.ProjectEntry {
 	return &record.ProjectEntry{
 		Name:        values.Name,
 		Description: values.Description,

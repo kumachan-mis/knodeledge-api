@@ -15,9 +15,19 @@ import (
 const ChapterCollection = "chapters"
 
 type ChapterRepository interface {
-	FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error)
-	InsertChapter(projectId string, entry record.ChapterWithoutAutofieldEntry) (string, *record.ChapterEntry, *Error)
-	UpdateChapter(projectId string, chapterId string, entry record.ChapterWithoutAutofieldEntry) (*record.ChapterEntry, *Error)
+	FetchProjectChapters(
+		userId string,
+		projectId string,
+	) (map[string]record.ChapterEntry, *Error)
+	InsertChapter(
+		projectId string,
+		entry record.ChapterWithoutAutofieldEntry,
+	) (string, *record.ChapterEntry, *Error)
+	UpdateChapter(
+		projectId string,
+		chapterId string,
+		entry record.ChapterWithoutAutofieldEntry,
+	) (*record.ChapterEntry, *Error)
 }
 
 type chapterRepository struct {
@@ -28,7 +38,10 @@ func NewChapterRepository(client firestore.Client) ChapterRepository {
 	return chapterRepository{client: client}
 }
 
-func (r chapterRepository) FetchProjectChapters(userId string, projectId string) (map[string]record.ChapterEntry, *Error) {
+func (r chapterRepository) FetchProjectChapters(
+	userId string,
+	projectId string,
+) (map[string]record.ChapterEntry, *Error) {
 	projectValues, rErr := r.projectValues(userId, projectId)
 	if rErr != nil {
 		return nil, rErr
@@ -74,7 +87,10 @@ func (r chapterRepository) FetchProjectChapters(userId string, projectId string)
 	return entries, nil
 }
 
-func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterWithoutAutofieldEntry) (string, *record.ChapterEntry, *Error) {
+func (r chapterRepository) InsertChapter(
+	projectId string,
+	entry record.ChapterWithoutAutofieldEntry,
+) (string, *record.ChapterEntry, *Error) {
 	projectValues, rErr := r.projectValues(entry.UserId, projectId)
 	if rErr != nil {
 		return "", nil, rErr
@@ -124,7 +140,11 @@ func (r chapterRepository) InsertChapter(projectId string, entry record.ChapterW
 	return ref.ID, r.valuesToEntry(values, entry.Number, entry.UserId), nil
 }
 
-func (r chapterRepository) UpdateChapter(projectId string, chapterId string, entry record.ChapterWithoutAutofieldEntry) (*record.ChapterEntry, *Error) {
+func (r chapterRepository) UpdateChapter(
+	projectId string,
+	chapterId string,
+	entry record.ChapterWithoutAutofieldEntry,
+) (*record.ChapterEntry, *Error) {
 	projectValues, rErr := r.projectValues(entry.UserId, projectId)
 	if rErr != nil {
 		return nil, rErr
@@ -190,7 +210,10 @@ func (r chapterRepository) UpdateChapter(projectId string, chapterId string, ent
 	return r.valuesToEntry(values, entry.Number, entry.UserId), nil
 }
 
-func (r chapterRepository) projectValues(userId string, projectId string) (*document.ProjectWithChapterIdsValues, *Error) {
+func (r chapterRepository) projectValues(
+	userId string,
+	projectId string,
+) (*document.ProjectWithChapterIdsValues, *Error) {
 	ref := r.client.Collection(ProjectCollection).
 		Doc(projectId)
 
@@ -215,7 +238,11 @@ func (r chapterRepository) projectValues(userId string, projectId string) (*docu
 	return &projectValues, nil
 }
 
-func (r chapterRepository) valuesToEntry(values document.ChapterValues, number int, userId string) *record.ChapterEntry {
+func (r chapterRepository) valuesToEntry(
+	values document.ChapterValues,
+	number int,
+	userId string,
+) *record.ChapterEntry {
 	return &record.ChapterEntry{
 		Name:      values.Name,
 		Number:    number,

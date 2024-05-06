@@ -1,0 +1,7 @@
+type: object
+description: Error Message for Paper object
+properties:
+  content:
+    type: string
+    description: Error message for paper content
+    example: paper content must be less than or equal to 40000 bytes

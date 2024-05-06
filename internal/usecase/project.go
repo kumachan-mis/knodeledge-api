@@ -29,15 +29,15 @@ func NewProjectUseCase(service service.ProjectService) ProjectUseCase {
 
 func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 	*model.ProjectListResponse, *Error[model.ProjectListErrorResponse]) {
-	uid, uidErr := domain.NewUserIdObject(req.User.Id)
-	if uidErr != nil {
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	if userIdErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.ProjectListErrorResponse{User: model.UserOnlyIdError{Id: uidErr.Error()}},
+			model.ProjectListErrorResponse{User: model.UserOnlyIdError{Id: userIdErr.Error()}},
 		)
 	}
 
-	entities, sErr := uc.service.ListProjects(*uid)
+	entities, sErr := uc.service.ListProjects(*userId)
 	if sErr != nil {
 		return nil, NewMessageBasedError[model.ProjectListErrorResponse](
 			InternalErrorPanic,
@@ -60,29 +60,29 @@ func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 
 func (uc projectUseCase) FindProject(req model.ProjectFindRequest) (
 	*model.ProjectFindResponse, *Error[model.ProjectFindErrorResponse]) {
-	uid, uidErr := domain.NewUserIdObject(req.User.Id)
-	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 
-	uidMsg := ""
-	if uidErr != nil {
-		uidMsg = uidErr.Error()
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
 	}
-	pidMsg := ""
-	if pidErr != nil {
-		pidMsg = pidErr.Error()
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
 	}
 
-	if uidErr != nil || pidErr != nil {
+	if userIdErr != nil || projectIdErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ProjectFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: uidMsg},
-				Project: model.ProjectOnlyIdError{Id: pidMsg},
+				User:    model.UserOnlyIdError{Id: userIdMsg},
+				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
 			},
 		)
 	}
 
-	entity, sErr := uc.service.FindProject(*uid, *pid)
+	entity, sErr := uc.service.FindProject(*userId, *projectId)
 	if sErr != nil && sErr.Code() == service.NotFoundError {
 		return nil, NewMessageBasedError[model.ProjectFindErrorResponse](
 			NotFoundError,
@@ -107,41 +107,41 @@ func (uc projectUseCase) FindProject(req model.ProjectFindRequest) (
 
 func (uc projectUseCase) CreateProject(req model.ProjectCreateRequest) (
 	*model.ProjectCreateResponse, *Error[model.ProjectCreateErrorResponse]) {
-	uid, uidErr := domain.NewUserIdObject(req.User.Id)
-	pname, pnameErr := domain.NewProjectNameObject(req.Project.Name)
-	pdesc, pdescErr := domain.NewProjectDescriptionObject(req.Project.Description)
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectName, projectNameErr := domain.NewProjectNameObject(req.Project.Name)
+	projectDesc, projectDescErr := domain.NewProjectDescriptionObject(req.Project.Description)
 
-	uidMsg := ""
-	if uidErr != nil {
-		uidMsg = uidErr.Error()
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
 	}
-	pnameMsg := ""
-	if pnameErr != nil {
-		pnameMsg = pnameErr.Error()
+	projectNameMsg := ""
+	if projectNameErr != nil {
+		projectNameMsg = projectNameErr.Error()
 	}
-	pdescMsg := ""
-	if pdescErr != nil {
-		pdescMsg = pdescErr.Error()
+	projectDescMsg := ""
+	if projectDescErr != nil {
+		projectDescMsg = projectDescErr.Error()
 	}
 
-	if uidErr != nil || pnameErr != nil || pdescErr != nil {
+	if userIdErr != nil || projectNameErr != nil || projectDescErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ProjectCreateErrorResponse{
 				User: model.UserOnlyIdError{
-					Id: uidMsg,
+					Id: userIdMsg,
 				},
 				Project: model.ProjectWithoutAutofieldError{
-					Name:        pnameMsg,
-					Description: pdescMsg,
+					Name:        projectNameMsg,
+					Description: projectDescMsg,
 				},
 			},
 		)
 	}
 
-	project := domain.NewProjectWithoutAutofieldEntity(*pname, *pdesc)
+	project := domain.NewProjectWithoutAutofieldEntity(*projectName, *projectDesc)
 
-	entity, sErr := uc.service.CreateProject(*uid, *project)
+	entity, sErr := uc.service.CreateProject(*userId, *project)
 	if sErr != nil {
 		return nil, NewMessageBasedError[model.ProjectCreateErrorResponse](
 			InternalErrorPanic,
@@ -160,47 +160,47 @@ func (uc projectUseCase) CreateProject(req model.ProjectCreateRequest) (
 
 func (uc projectUseCase) UpdateProject(req model.ProjectUpdateRequest) (
 	*model.ProjectUpdateResponse, *Error[model.ProjectUpdateErrorResponse]) {
-	uid, uidErr := domain.NewUserIdObject(req.User.Id)
-	pid, pidErr := domain.NewProjectIdObject(req.Project.Id)
-	pname, pnameErr := domain.NewProjectNameObject(req.Project.Name)
-	pdesc, pdescErr := domain.NewProjectDescriptionObject(req.Project.Description)
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+	projectName, projectNameErr := domain.NewProjectNameObject(req.Project.Name)
+	projectDesc, projectDescErr := domain.NewProjectDescriptionObject(req.Project.Description)
 
-	uidMsg := ""
-	if uidErr != nil {
-		uidMsg = uidErr.Error()
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
 	}
-	pidMsg := ""
-	if pidErr != nil {
-		pidMsg = pidErr.Error()
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
 	}
-	pnameMsg := ""
-	if pnameErr != nil {
-		pnameMsg = pnameErr.Error()
+	projectNameMsg := ""
+	if projectNameErr != nil {
+		projectNameMsg = projectNameErr.Error()
 	}
-	pdescMsg := ""
-	if pdescErr != nil {
-		pdescMsg = pdescErr.Error()
+	projectDescMsg := ""
+	if projectDescErr != nil {
+		projectDescMsg = projectDescErr.Error()
 	}
 
-	if uidErr != nil || pidErr != nil || pnameErr != nil || pdescErr != nil {
+	if userIdErr != nil || projectIdErr != nil || projectNameErr != nil || projectDescErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ProjectUpdateErrorResponse{
 				User: model.UserOnlyIdError{
-					Id: uidMsg,
+					Id: userIdMsg,
 				},
 				Project: model.ProjectError{
-					Id:          pidMsg,
-					Name:        pnameMsg,
-					Description: pdescMsg,
+					Id:          projectIdMsg,
+					Name:        projectNameMsg,
+					Description: projectDescMsg,
 				},
 			},
 		)
 	}
 
-	project := domain.NewProjectWithoutAutofieldEntity(*pname, *pdesc)
+	project := domain.NewProjectWithoutAutofieldEntity(*projectName, *projectDesc)
 
-	entity, sErr := uc.service.UpdateProject(*uid, *pid, *project)
+	entity, sErr := uc.service.UpdateProject(*userId, *projectId, *project)
 	if sErr != nil && sErr.Code() == service.NotFoundError {
 		return nil, NewMessageBasedError[model.ProjectUpdateErrorResponse](
 			NotFoundError,
