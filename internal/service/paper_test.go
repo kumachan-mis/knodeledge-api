@@ -14,6 +14,163 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func TestFindPaperValidEntry(t *testing.T) {
+	maxLengthPaperContent := testutil.RandomString(40000)
+
+	tt := []struct {
+		name  string
+		entry record.PaperEntry
+	}{
+		{
+			name: "should return paper with valid entry",
+			entry: record.PaperEntry{
+				Content:   "valid content",
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+		},
+		{
+			name: "should return paper with max-length valid entry",
+			entry: record.PaperEntry{
+				Content:   maxLengthPaperContent,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockPaperRepository(ctrl)
+			r.EXPECT().
+				FetchPaper("USER", "PROJECT", "CHAPTER").
+				Return(&tc.entry, nil)
+
+			s := service.NewPaperService(r)
+
+			userId, err := domain.NewUserIdObject("USER")
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("PROJECT")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			assert.Nil(t, err)
+
+			paper, sErr := s.FindPaper(*userId, *projectId, *chapterId)
+			assert.Nil(t, sErr)
+
+			assert.Equal(t, tc.entry.Content, paper.Content().Value())
+			assert.Equal(t, tc.entry.CreatedAt, paper.CreatedAt().Value())
+			assert.Equal(t, tc.entry.UpdatedAt, paper.UpdatedAt().Value())
+		})
+	}
+}
+
+func TestFindPaperInvalidEntry(t *testing.T) {
+	tooLongPaperContent := testutil.RandomString(40001)
+
+	tt := []struct {
+		name          string
+		entry         record.PaperEntry
+		expectedError string
+	}{
+		{
+			name: "should return error when content is too long",
+			entry: record.PaperEntry{
+				Content:   tooLongPaperContent,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (content): " +
+				"paper content must be less than or equal to 40000 bytes, but got 40001 bytes",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockPaperRepository(ctrl)
+			r.EXPECT().
+				FetchPaper("USER", "PROJECT", "CHAPTER").
+				Return(&tc.entry, nil)
+
+			s := service.NewPaperService(r)
+
+			userId, err := domain.NewUserIdObject("USER")
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("PROJECT")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			assert.Nil(t, err)
+
+			paper, sErr := s.FindPaper(*userId, *projectId, *chapterId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
+			assert.Nil(t, paper)
+		})
+	}
+}
+
+func TestFindPaperRepositoryError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "paper not found",
+			expectedError: "failed to find paper: paper not found",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns read failure error",
+			errorCode:     repository.ReadFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to fetch paper: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockPaperRepository(ctrl)
+			r.EXPECT().
+				FetchPaper("USER", "PROJECT", "CHAPTER").
+				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+
+			s := service.NewPaperService(r)
+
+			userId, err := domain.NewUserIdObject("USER")
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("PROJECT")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			assert.Nil(t, err)
+
+			paper, sErr := s.FindPaper(*userId, *projectId, *chapterId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Nil(t, paper)
+		})
+	}
+}
+
 func TestCreatePaperValidEntry(t *testing.T) {
 	maxLengthPaperContent := testutil.RandomString(40000)
 
