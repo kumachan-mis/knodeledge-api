@@ -48,16 +48,16 @@ func TestFindPaperValidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				FetchPaper("USER", "PROJECT", "CHAPTER").
+				FetchPaper(testutil.ReadOnlyUserId(), "0000000000000001", "1000000000000001").
 				Return(&tc.entry, nil)
 
 			s := service.NewPaperService(r)
 
-			userId, err := domain.NewUserIdObject("USER")
+			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 			assert.Nil(t, err)
-			projectId, err := domain.NewProjectIdObject("PROJECT")
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
-			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
 			assert.Nil(t, err)
 
 			paper, sErr := s.FindPaper(*userId, *projectId, *chapterId)
@@ -98,16 +98,16 @@ func TestFindPaperInvalidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				FetchPaper("USER", "PROJECT", "CHAPTER").
+				FetchPaper(testutil.ReadOnlyUserId(), "0000000000000001", "1000000000000001").
 				Return(&tc.entry, nil)
 
 			s := service.NewPaperService(r)
 
-			userId, err := domain.NewUserIdObject("USER")
+			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 			assert.Nil(t, err)
-			projectId, err := domain.NewProjectIdObject("PROJECT")
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
-			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
 			assert.Nil(t, err)
 
 			paper, sErr := s.FindPaper(*userId, *projectId, *chapterId)
@@ -150,16 +150,16 @@ func TestFindPaperRepositoryError(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				FetchPaper("USER", "PROJECT", "CHAPTER").
+				FetchPaper(testutil.ReadOnlyUserId(), "0000000000000001", "1000000000000001").
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
 			s := service.NewPaperService(r)
 
-			userId, err := domain.NewUserIdObject("USER")
+			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 			assert.Nil(t, err)
-			projectId, err := domain.NewProjectIdObject("PROJECT")
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
-			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
 			assert.Nil(t, err)
 
 			paper, sErr := s.FindPaper(*userId, *projectId, *chapterId)
@@ -202,8 +202,8 @@ func TestCreatePaperValidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				InsertPaper("PROJECT", "CHAPTER", tc.paper).
-				Return("CHAPTER", &record.PaperEntry{
+				InsertPaper("0000000000000001", "1000000000000001", tc.paper).
+				Return("1000000000000001", &record.PaperEntry{
 					Content:   tc.paper.Content,
 					UserId:    tc.paper.UserId,
 					CreatedAt: testutil.Date(),
@@ -214,9 +214,9 @@ func TestCreatePaperValidEntry(t *testing.T) {
 
 			userId, err := domain.NewUserIdObject(tc.paper.UserId)
 			assert.Nil(t, err)
-			projectId, err := domain.NewProjectIdObject("PROJECT")
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
-			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
 			assert.Nil(t, err)
 
 			content, err := domain.NewPaperContentObject(tc.paper.Content)
@@ -227,7 +227,7 @@ func TestCreatePaperValidEntry(t *testing.T) {
 			createdPaper, sErr := s.CreatePaper(*userId, *projectId, *chapterId, *paper)
 			assert.Nil(t, sErr)
 
-			assert.Equal(t, "CHAPTER", createdPaper.Id().Value())
+			assert.Equal(t, "1000000000000001", createdPaper.Id().Value())
 			assert.Equal(t, tc.paper.Content, createdPaper.Content().Value())
 			assert.Equal(t, testutil.Date(), createdPaper.CreatedAt().Value())
 			assert.Equal(t, testutil.Date(), createdPaper.UpdatedAt().Value())
@@ -263,16 +263,16 @@ func TestCreatePaperInvalidCreatedEntry(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				InsertPaper("PROJECT", "CHAPTER", gomock.Any()).
-				Return("CHAPTER", &tc.createdPaper, nil)
+				InsertPaper("0000000000000001", "1000000000000001", gomock.Any()).
+				Return("1000000000000001", &tc.createdPaper, nil)
 
 			s := service.NewPaperService(r)
 
 			userId, err := domain.NewUserIdObject(tc.createdPaper.UserId)
 			assert.Nil(t, err)
-			projectId, err := domain.NewProjectIdObject("PROJECT")
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
-			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
 			assert.Nil(t, err)
 
 			content, err := domain.NewPaperContentObject("content")
@@ -320,16 +320,16 @@ func TestCreatePaperRepositoryError(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				InsertPaper("PROJECT", "CHAPTER", gomock.Any()).
+				InsertPaper("0000000000000001", "1000000000000001", gomock.Any()).
 				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
 			s := service.NewPaperService(r)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
-			projectId, err := domain.NewProjectIdObject("PROJECT")
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
-			chapterId, err := domain.NewChapterIdObject("CHAPTER")
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
 			assert.Nil(t, err)
 
 			content, err := domain.NewPaperContentObject("content")
