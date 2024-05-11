@@ -13,6 +13,104 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestFetchPaperValidEntry(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewPaperRepository(*client)
+
+	projectId := "PROJECT_WITHOUT_DESCRIPTION"
+	chapterId := "CHAPTER_ONE"
+
+	entry, err := r.FetchPaper(testutil.ReadOnlyUserId(), projectId, chapterId)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, "This is paper content.", entry.Content)
+	assert.Equal(t, testutil.ReadOnlyUserId(), entry.UserId)
+	assert.Equal(t, testutil.Date(), entry.CreatedAt)
+	assert.Equal(t, testutil.Date(), entry.UpdatedAt)
+}
+
+func TestFetchPaperProjectOrChapterNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			chapterId:     "CHAPTER_ONE",
+			expectedError: "project not found",
+		},
+		{
+			name:          "should return not found when user is not author of the project",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITH_DESCRIPTION",
+			chapterId:     "CHAPTER_ONE",
+			expectedError: "project not found",
+		},
+		{
+			name:          "should return error when chapter not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITH_DESCRIPTION",
+			chapterId:     "UNKNOWN_CHAPTER",
+			expectedError: "chapter not found",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewPaperRepository(*client)
+
+			entry, rErr := r.FetchPaper(tc.userId, tc.projectId, tc.chapterId)
+
+			assert.NotNil(t, rErr)
+
+			assert.Nil(t, entry)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
+		})
+	}
+}
+
+func TestFetchPaperInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when paper content is invalid",
+			userId:    testutil.ErrorUserId(6),
+			projectId: "PROJECT_WITH_INVALID_PAPER_CONTENT",
+			chapterId: "CHAPTER_WITH_INVALID_PAPER_CONTENT",
+			expectedError: "failed to convert snapshot to values: document.PaperValues.content: " +
+				"firestore: cannot set type string to array",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewPaperRepository(*client)
+
+			entry, rErr := r.FetchPaper(tc.userId, tc.projectId, tc.chapterId)
+
+			assert.NotNil(t, rErr)
+
+			assert.Nil(t, entry)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %v", tc.expectedError), rErr.Error())
+		})
+	}
+}
+
 func TestInsertPaperValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewPaperRepository(*client)

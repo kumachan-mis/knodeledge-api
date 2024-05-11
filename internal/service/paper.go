@@ -9,6 +9,11 @@ import (
 //go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
 
 type PaperService interface {
+	FindPaper(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+		chapterId domain.ChapterIdObject,
+	) (*domain.PaperEntity, *Error)
 	CreatePaper(
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
@@ -23,6 +28,22 @@ type paperService struct {
 
 func NewPaperService(repository repository.PaperRepository) PaperService {
 	return paperService{repository: repository}
+}
+
+func (s paperService) FindPaper(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+	chapterId domain.ChapterIdObject,
+) (*domain.PaperEntity, *Error) {
+	entry, rErr := s.repository.FetchPaper(userId.Value(), projectId.Value(), chapterId.Value())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to find paper: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to fetch paper: %w", rErr.Unwrap())
+	}
+
+	return s.entryToEntity(chapterId.Value(), *entry)
 }
 
 func (s paperService) CreatePaper(

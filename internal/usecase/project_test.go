@@ -103,7 +103,7 @@ func TestListProjectsDomainValidationError(t *testing.T) {
 			res, ucErr := uc.ListProjects(model.ProjectListRequest{
 				User: model.UserOnlyId{Id: tc.userId},
 			})
-			assert.Error(t, ucErr)
+			assert.NotNil(t, ucErr)
 
 			expectedJson, _ := json.Marshal(tc.expected)
 			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
@@ -130,7 +130,7 @@ func TestListProjectsServiceError(t *testing.T) {
 	res, ucErr := uc.ListProjects(model.ProjectListRequest{
 		User: model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
 	})
-	assert.Error(t, ucErr)
+	assert.NotNil(t, ucErr)
 	assert.Equal(t, "internal error: service error", ucErr.Error())
 	assert.Equal(t, usecase.InternalErrorPanic, ucErr.Code())
 	assert.Nil(t, ucErr.Response())
@@ -250,7 +250,7 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: model.ProjectOnlyId{Id: tc.projectId},
 			})
-			assert.Error(t, ucErr)
+			assert.NotNil(t, ucErr)
 
 			expectedJson, _ := json.Marshal(tc.expected)
 			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
@@ -303,7 +303,7 @@ func TestFindProjectServiceError(t *testing.T) {
 				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
 				Project: model.ProjectOnlyId{Id: "0000000000000001"},
 			})
-			assert.Error(t, ucErr)
+			assert.NotNil(t, ucErr)
 			assert.Equal(t, tc.expectedError, ucErr.Error())
 			assert.Equal(t, tc.expectedCode, ucErr.Code())
 			assert.Nil(t, ucErr.Response())
@@ -488,7 +488,7 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: tc.project,
 			})
-			assert.Error(t, ucErr)
+			assert.NotNil(t, ucErr)
 
 			expectedJson, _ := json.Marshal(tc.expected)
 			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
@@ -518,7 +518,7 @@ func TestCreateProjectServiceError(t *testing.T) {
 			Name: "Project Name",
 		},
 	})
-	assert.Error(t, ucErr)
+	assert.NotNil(t, ucErr)
 	assert.Equal(t, "internal error: service error", ucErr.Error())
 	assert.Equal(t, usecase.InternalErrorPanic, ucErr.Code())
 	assert.Nil(t, ucErr.Response())
@@ -720,7 +720,7 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: tc.project,
 			})
-			assert.Error(t, ucErr)
+			assert.NotNil(t, ucErr)
 
 			expectedJson, _ := json.Marshal(tc.expected)
 			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
@@ -751,7 +751,7 @@ func TestUpdateProjectServiceError(t *testing.T) {
 			Name: "Project Name",
 		},
 	})
-	assert.Error(t, ucErr)
+	assert.NotNil(t, ucErr)
 	assert.Equal(t, "internal error: service error", ucErr.Error())
 	assert.Equal(t, usecase.InternalErrorPanic, ucErr.Code())
 	assert.Nil(t, ucErr.Response())
