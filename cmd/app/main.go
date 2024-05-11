@@ -64,6 +64,7 @@ func main() {
 
 	projectUseCase := usecase.NewProjectUseCase(projectService)
 	chapterUseCase := usecase.NewChapterUseCase(chapterService, paperService)
+	paperUseCase := usecase.NewPaperUseCase(paperService)
 
 	projectApi := api.NewProjectApi(projectUseCase)
 	router.POST("/api/projects/list", projectApi.HandleList)
@@ -75,6 +76,9 @@ func main() {
 	router.POST("/api/chapters/list", chapterApi.HandleList)
 	router.POST("/api/chapters/create", chapterApi.HandleCreate)
 	router.POST("/api/chapters/update", chapterApi.HandleUpdate)
+
+	paperApi := api.NewPaperApi(paperUseCase)
+	router.POST("/api/papers/find", paperApi.HandleFind)
 
 	err = router.Run(":8080")
 	if err != nil {
