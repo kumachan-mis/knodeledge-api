@@ -12,6 +12,11 @@ import (
 const PaperCollection = "papers"
 
 type PaperRepository interface {
+	FetchPaper(
+		userId string,
+		projectId string,
+		chapterId string,
+	) (*record.PaperEntry, *Error)
 	InsertPaper(
 		projectId string,
 		chapterId string,
@@ -25,6 +30,35 @@ type paperRepository struct {
 
 func NewPaperRepository(client firestore.Client) PaperRepository {
 	return paperRepository{client: client}
+}
+
+func (r paperRepository) FetchPaper(
+	userId string,
+	projectId string,
+	chapterId string,
+) (*record.PaperEntry, *Error) {
+	_, rErr := r.chapterValues(userId, projectId, chapterId)
+	if rErr != nil {
+		return nil, rErr
+	}
+
+	snapshot, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(PaperCollection).
+		Doc(chapterId).
+		Get(db.FirestoreContext())
+
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to fetch paper: %w", err)
+	}
+
+	var values document.PaperValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	return r.valuesToEntry(values, userId), nil
 }
 
 func (r paperRepository) InsertPaper(
