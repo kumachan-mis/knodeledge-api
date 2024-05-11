@@ -1,0 +1,13 @@
+type: object
+description: Request Body for Paper Find API
+properties:
+  user:
+    $ref: ../../../entity/user/UserOnlyIdError.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyIdError.yaml
+  chapter:
+    $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
+required:
+  - user
+  - project
+  - chapter

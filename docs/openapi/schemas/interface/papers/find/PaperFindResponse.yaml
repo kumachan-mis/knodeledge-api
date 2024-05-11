@@ -1,0 +1,7 @@
+type: object
+description: Request Body for Paper Find API
+properties:
+  paper:
+    $ref: ../../../entity/paper/Paper.yaml
+required:
+  - paper

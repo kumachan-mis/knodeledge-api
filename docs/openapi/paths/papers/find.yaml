@@ -1,0 +1,35 @@
+post:
+  tags:
+    - Papers
+  operationId: papers-find
+  summary: Find paper
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/interface/papers/find/PaperFindRequest.yaml
+  responses:
+    "200":
+      description: OK - Returns found paper
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/papers/find/PaperFindResponse.yaml
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/papers/find/PaperFindErrorResponse.yaml
+    "404":
+      description: Not Found - Paper not found or not authorized
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/papers/find/PaperFindErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

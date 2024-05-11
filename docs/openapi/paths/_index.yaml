@@ -12,3 +12,5 @@
   $ref: ./chapters/create.yaml
 /api/chapters/update:
   $ref: ./chapters/update.yaml
+/api/papers/find:
+  $ref: ./papers/find.yaml

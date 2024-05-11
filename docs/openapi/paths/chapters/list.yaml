@@ -26,7 +26,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: ../../schemas/interface/chapters/create/ChapterCreateErrorResponse.yaml
+            $ref: ../../schemas/interface/chapters/list/ChapterListErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:
