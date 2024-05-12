@@ -79,6 +79,7 @@ func main() {
 
 	paperApi := api.NewPaperApi(paperUseCase)
 	router.POST("/api/papers/find", paperApi.HandleFind)
+	router.POST("/api/papers/update", paperApi.HandleUpdate)
 
 	err = router.Run(":8080")
 	if err != nil {

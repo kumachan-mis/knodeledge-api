@@ -9,7 +9,7 @@
 
 package model
 
-// PaperWithoutAutofield - Paper object
+// PaperWithoutAutofield - Paper object without auto-generated fields
 type PaperWithoutAutofield struct {
 
 	// Paper content

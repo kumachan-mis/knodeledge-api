@@ -9,9 +9,7 @@
 
 package model
 
-// PaperWithoutAutofieldError - Error Message for PaperWithoutAutofield object
-type PaperWithoutAutofieldError struct {
-
-	// Error message for paper content
-	Content string `json:"content,omitempty"`
+// PaperUpdateResponse - Response Body for Paper Update API
+type PaperUpdateResponse struct {
+	Paper Paper `json:"paper"`
 }
