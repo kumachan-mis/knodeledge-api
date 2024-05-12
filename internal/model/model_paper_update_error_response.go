@@ -9,15 +9,15 @@
 
 package model
 
-// PaperFindErrorResponse - Error Response Body for Paper Find API
-type PaperFindErrorResponse struct {
+// PaperUpdateErrorResponse - Error Response Body for Paper Update API
+type PaperUpdateErrorResponse struct {
 
 	// Error message when request body format is invalid
 	Message string `json:"message,omitempty"`
 
-	User UserOnlyIdError `json:"user,omitempty"`
+	User UserOnlyIdError `json:"user"`
 
-	Project ProjectOnlyIdError `json:"project,omitempty"`
+	Project ProjectOnlyIdError `json:"project"`
 
-	Chapter ChapterOnlyIdError `json:"chapter,omitempty"`
+	Paper PaperError `json:"paper"`
 }

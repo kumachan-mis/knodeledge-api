@@ -1,0 +1,13 @@
+type: object
+description: Request Body for Paper Update API
+properties:
+  user:
+    $ref: ../../../entity/user/UserOnlyId.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyId.yaml
+  paper:
+    $ref: ../../../entity/paper/Paper.yaml
+required:
+  - user
+  - project
+  - paper

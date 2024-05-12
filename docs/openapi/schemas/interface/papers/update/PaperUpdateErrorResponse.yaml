@@ -1,5 +1,5 @@
 type: object
-description: Error Response Body for Paper Find API
+description: Error Response Body for Paper Update API
 properties:
   message:
     type: string
@@ -9,5 +9,9 @@ properties:
     $ref: ../../../entity/user/UserOnlyIdError.yaml
   project:
     $ref: ../../../entity/project/ProjectOnlyIdError.yaml
-  chapter:
-    $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
+  paper:
+    $ref: ../../../entity/paper/PaperError.yaml
+required:
+  - user
+  - project
+  - paper

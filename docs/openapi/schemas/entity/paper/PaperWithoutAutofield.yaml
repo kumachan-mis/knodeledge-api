@@ -1,5 +1,5 @@
 type: object
-description: Paper object
+description: Paper object without auto-generated fields
 properties:
   content:
     type: string
