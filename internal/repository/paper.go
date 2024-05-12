@@ -22,6 +22,11 @@ type PaperRepository interface {
 		chapterId string,
 		entry record.PaperWithoutAutofieldEntry,
 	) (string, *record.PaperEntry, *Error)
+	UpdatePaper(
+		projectId string,
+		paperId string,
+		entry record.PaperWithoutAutofieldEntry,
+	) (*record.PaperEntry, *Error)
 }
 
 type paperRepository struct {
@@ -98,6 +103,44 @@ func (r paperRepository) InsertPaper(
 	}
 
 	return chapterId, r.valuesToEntry(values, entry.UserId), nil
+}
+
+func (r paperRepository) UpdatePaper(
+	projectId string,
+	chapterId string,
+	entry record.PaperWithoutAutofieldEntry,
+) (*record.PaperEntry, *Error) {
+	_, rErr := r.chapterValues(entry.UserId, projectId, chapterId)
+	if rErr != nil {
+		return nil, rErr
+	}
+
+	ref := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(PaperCollection).
+		Doc(chapterId)
+
+	_, err := ref.Set(db.FirestoreContext(), map[string]any{
+		"content":   entry.Content,
+		"updatedAt": firestore.ServerTimestamp,
+	}, firestore.MergeAll)
+
+	if err != nil {
+		return nil, Errorf(WriteFailurePanic, "failed to update paper: %w", err)
+	}
+
+	snapshot, err := ref.Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to fetch updated paper: %w", err)
+	}
+
+	var values document.PaperValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	return r.valuesToEntry(values, entry.UserId), nil
 }
 
 func (r paperRepository) chapterValues(userId string, projectId string, chapterId string) (*document.ChapterValues, *Error) {
