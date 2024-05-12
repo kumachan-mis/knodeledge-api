@@ -24,7 +24,7 @@ type PaperRepository interface {
 	) (string, *record.PaperEntry, *Error)
 	UpdatePaper(
 		projectId string,
-		paperId string,
+		chapterId string,
 		entry record.PaperWithoutAutofieldEntry,
 	) (*record.PaperEntry, *Error)
 }

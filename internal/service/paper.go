@@ -20,6 +20,12 @@ type PaperService interface {
 		chapterId domain.ChapterIdObject,
 		paper domain.PaperWithoutAutofieldEntity,
 	) (*domain.PaperEntity, *Error)
+	UpdatePaper(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+		paperId domain.PaperIdObject,
+		paper domain.PaperWithoutAutofieldEntity,
+	) (*domain.PaperEntity, *Error)
 }
 
 type paperService struct {
@@ -66,6 +72,28 @@ func (s paperService) CreatePaper(
 	}
 
 	return s.entryToEntity(key, *entry)
+}
+
+func (s paperService) UpdatePaper(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+	paperId domain.PaperIdObject,
+	paper domain.PaperWithoutAutofieldEntity,
+) (*domain.PaperEntity, *Error) {
+	entryWithoutAutofield := record.PaperWithoutAutofieldEntry{
+		Content: paper.Content().Value(),
+		UserId:  userId.Value(),
+	}
+
+	entry, rErr := s.repository.UpdatePaper(projectId.Value(), paperId.Value(), entryWithoutAutofield)
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to update paper: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to update paper: %w", rErr.Unwrap())
+	}
+
+	return s.entryToEntity(paperId.Value(), *entry)
 }
 
 func (s paperService) entryToEntity(key string, entry record.PaperEntry) (*domain.PaperEntity, *Error) {
