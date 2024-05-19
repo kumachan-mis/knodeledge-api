@@ -19,12 +19,20 @@ func TestFetchPaperValidEntry(t *testing.T) {
 
 	projectId := "PROJECT_WITHOUT_DESCRIPTION"
 	chapterId := "CHAPTER_ONE"
+	content := strings.Join([]string{
+		"[** Introduction]",
+		"This is an example project of kNODEledge.",
+		"",
+		"[** Section of Chapter One]",
+		"Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One.",
+		"Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One.",
+		""}, "\n")
 
 	entry, err := r.FetchPaper(testutil.ReadOnlyUserId(), projectId, chapterId)
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "This is paper content.", entry.Content)
+	assert.Equal(t, content, entry.Content)
 	assert.Equal(t, testutil.ReadOnlyUserId(), entry.UserId)
 	assert.Equal(t, testutil.Date(), entry.CreatedAt)
 	assert.Equal(t, testutil.Date(), entry.UpdatedAt)
