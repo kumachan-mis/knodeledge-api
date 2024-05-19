@@ -42,10 +42,19 @@ func TestPaperFind(t *testing.T) {
 	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
+	content := strings.Join([]string{
+		"[** Introduction]",
+		"This is an example project of kNODEledge.",
+		"",
+		"[** Section of Chapter One]",
+		"Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One.",
+		"Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One. Section of Chapter One.",
+		""}, "\n")
+
 	assert.Equal(t, map[string]any{
 		"paper": map[string]any{
 			"id":      "CHAPTER_ONE",
-			"content": "This is paper content.",
+			"content": content,
 		},
 	}, responseBody)
 }
