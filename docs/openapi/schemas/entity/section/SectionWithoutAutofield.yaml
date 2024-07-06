@@ -1,10 +1,6 @@
 type: object
-description: Section object
+description: Section object without auto-generated fields
 properties:
-  id:
-    type: string
-    description: Auto-generated section ID
-    example: 123e4567-e89b-12d3-a456-426614174000
   name:
     type: string
     maxLength: 100
@@ -17,5 +13,4 @@ properties:
     example: |
       This is the introduction of the paper.
 required:
-  - id
   - name

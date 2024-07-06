@@ -3,5 +3,5 @@ description: Error Message for ChapterOnlyId object
 properties:
   id:
     type: string
-    description: Error message for project ID
-    example: "project id is required, but got ''"
+    description: Error message for chapter ID
+    example: "chapter id is required, but got ''"
