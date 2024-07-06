@@ -14,3 +14,4 @@ properties:
       This is the introduction of the paper.
 required:
   - name
+  - content
