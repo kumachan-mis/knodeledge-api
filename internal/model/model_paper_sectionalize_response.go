@@ -9,9 +9,7 @@
 
 package model
 
-// ChapterOnlyIdError - Error Message for ChapterOnlyId object
-type ChapterOnlyIdError struct {
-
-	// Error message for chapter ID
-	Id string `json:"id,omitempty"`
+// PaperSectionalizeResponse - Response Body for Paper Sectionalize API
+type PaperSectionalizeResponse struct {
+	Sections []Section `json:"sections"`
 }

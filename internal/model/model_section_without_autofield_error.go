@@ -9,12 +9,12 @@
 
 package model
 
-// PaperError - Error Message for Paper object
-type PaperError struct {
+// SectionWithoutAutofieldError - Error Message for SectionWithoutAutofield object
+type SectionWithoutAutofieldError struct {
 
-	// Error message for paper ID
-	Id string `json:"id,omitempty"`
+	// Error message for section name
+	Name string `json:"name,omitempty"`
 
-	// Error message for paper content
+	// Error message for section content
 	Content string `json:"content,omitempty"`
 }

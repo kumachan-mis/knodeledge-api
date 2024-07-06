@@ -9,17 +9,12 @@
 
 package model
 
-// ChapterWithSections - ChapterWithSections object
-type ChapterWithSections struct {
+// SectionWithoutContent - Section object without content field
+type SectionWithoutContent struct {
 
-	// Auto-generated chapter ID
+	// Auto-generated section ID
 	Id string `json:"id"`
 
-	// Chapter name
+	// Section name
 	Name string `json:"name"`
-
-	// Chapter number
-	Number int32 `json:"number"`
-
-	Sections []SectionWithoutContent `json:"sections"`
 }

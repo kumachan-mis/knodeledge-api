@@ -12,7 +12,7 @@ package model
 // ProjectError - Error Message for Project object
 type ProjectError struct {
 
-	// Error message for project id
+	// Error message for project ID
 	Id string `json:"id,omitempty"`
 
 	// Error message for project name

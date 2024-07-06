@@ -12,7 +12,7 @@ package model
 // ChapterError - Error Message for Chapter object
 type ChapterError struct {
 
-	// Error message for chapter id
+	// Error message for chapter ID
 	Id string `json:"id,omitempty"`
 
 	// Error message for chapter name

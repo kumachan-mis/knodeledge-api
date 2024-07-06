@@ -9,9 +9,9 @@
 
 package model
 
-// ChapterOnlyIdError - Error Message for ChapterOnlyId object
-type ChapterOnlyIdError struct {
+// PaperOnlyId - Paper object with only ID
+type PaperOnlyId struct {
 
-	// Error message for chapter ID
-	Id string `json:"id,omitempty"`
+	// Auto-generated paper ID
+	Id string `json:"id"`
 }

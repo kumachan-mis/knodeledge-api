@@ -71,7 +71,7 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			Number:   int32(entity.Number().Value()),
-			Sections: []model.Section{},
+			Sections: []model.SectionWithoutContent{},
 		}
 		i++
 	}
@@ -174,7 +174,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 			Id:       chapterEntity.Id().Value(),
 			Name:     chapterEntity.Name().Value(),
 			Number:   int32(chapterEntity.Number().Value()),
-			Sections: []model.Section{},
+			Sections: []model.SectionWithoutContent{},
 		},
 		Paper: model.Paper{
 			Id:      paperEntity.Id().Value(),
@@ -258,7 +258,7 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			Number:   int32(entity.Number().Value()),
-			Sections: []model.Section{},
+			Sections: []model.SectionWithoutContent{},
 		},
 	}, nil
 }
