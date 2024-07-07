@@ -100,20 +100,20 @@ func TestFetchProjectChaptersInvalidDocument(t *testing.T) {
 			name:      "should return error when chapter ids are invalid",
 			userId:    testutil.ErrorUserId(3),
 			projectId: "PROJECT_WITH_INVALID_CHAPTER_IDS",
-			expectedError: "failed to convert snapshot to values: document.ProjectWithChapterIdsValues.chapterIds: " +
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.chapterIds: " +
 				"firestore: cannot set type []string to string",
 		},
 		{
 			name:          "should return error when chapter ids have excessive elements",
 			userId:        testutil.ErrorUserId(4),
 			projectId:     "PROJECT_WITH_TOO_MANY_CHAPTER_IDS",
-			expectedError: "failed to convert values to entry: document.ProjectWithChapterIdsValues.chapterIds have excessive elements",
+			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have excessive elements",
 		},
 		{
 			name:          "should return error when chapter ids have deficient elements",
 			userId:        testutil.ErrorUserId(5),
 			projectId:     "PROJECT_WITH_TOO_FEW_CHAPTER_IDS",
-			expectedError: "failed to convert values to entry: document.ProjectWithChapterIdsValues.chapterIds have deficient elements",
+			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have deficient elements",
 		},
 	}
 
@@ -509,7 +509,7 @@ func TestUpdateChapterInvalidDocument(t *testing.T) {
 			userId:    testutil.ErrorUserId(3),
 			projectId: "PROJECT_WITH_INVALID_CHAPTER_IDS",
 			chapterId: "CHAPTER",
-			expectedError: "failed to convert snapshot to values: document.ProjectWithChapterIdsValues.chapterIds: " +
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.chapterIds: " +
 				"firestore: cannot set type []string to string",
 		},
 	}

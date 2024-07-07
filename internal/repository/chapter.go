@@ -210,10 +210,7 @@ func (r chapterRepository) UpdateChapter(
 	return r.valuesToEntry(values, entry.Number, entry.UserId), nil
 }
 
-func (r chapterRepository) projectValues(
-	userId string,
-	projectId string,
-) (*document.ProjectWithChapterIdsValues, *Error) {
+func (r chapterRepository) projectValues(userId string, projectId string) (*document.ProjectValues, *Error) {
 	ref := r.client.Collection(ProjectCollection).
 		Doc(projectId)
 
@@ -222,7 +219,7 @@ func (r chapterRepository) projectValues(
 		return nil, Errorf(NotFoundError, "project not found")
 	}
 
-	var projectValues document.ProjectWithChapterIdsValues
+	var projectValues document.ProjectValues
 	err = snapshot.DataTo(&projectValues)
 	if err != nil {
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
