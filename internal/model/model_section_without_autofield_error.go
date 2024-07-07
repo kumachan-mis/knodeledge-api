@@ -14,7 +14,4 @@ type SectionWithoutAutofieldError struct {
 
 	// Error message for section name
 	Name string `json:"name,omitempty"`
-
-	// Error message for section content
-	Content string `json:"content,omitempty"`
 }

@@ -10,13 +10,6 @@ properties:
     maxLength: 100
     description: Section name
     example: Overview
-  content:
-    type: string
-    maxLength: 40000
-    description: Section content
-    example: |
-      This is the introduction of the paper.
 required:
   - id
   - name
-  - content
