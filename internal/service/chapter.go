@@ -70,13 +70,13 @@ func (s chapterService) CreateChapter(
 	projectId domain.ProjectIdObject,
 	chapter domain.ChapterWithoutAutofieldEntity,
 ) (*domain.ChapterEntity, *Error) {
-	entryyWithoutAutofield := record.ChapterWithoutAutofieldEntry{
+	entryWithoutAutofield := record.ChapterWithoutAutofieldEntry{
 		Name:   chapter.Name().Value(),
 		Number: chapter.Number().Value(),
 		UserId: userId.Value(),
 	}
 
-	key, entry, rErr := s.repository.InsertChapter(projectId.Value(), entryyWithoutAutofield)
+	key, entry, rErr := s.repository.InsertChapter(projectId.Value(), entryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.InvalidArgument {
 		return nil, Errorf(InvalidArgument, "failed to create chapter: %w", rErr.Unwrap())
 	}
@@ -96,13 +96,13 @@ func (s chapterService) UpdateChapter(
 	chapterId domain.ChapterIdObject,
 	chapter domain.ChapterWithoutAutofieldEntity,
 ) (*domain.ChapterEntity, *Error) {
-	entryyWithoutAutofield := record.ChapterWithoutAutofieldEntry{
+	entryWithoutAutofield := record.ChapterWithoutAutofieldEntry{
 		Name:   chapter.Name().Value(),
 		Number: chapter.Number().Value(),
 		UserId: userId.Value(),
 	}
 
-	entry, rErr := s.repository.UpdateChapter(projectId.Value(), chapterId.Value(), entryyWithoutAutofield)
+	entry, rErr := s.repository.UpdateChapter(projectId.Value(), chapterId.Value(), entryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.InvalidArgument {
 		return nil, Errorf(InvalidArgument, "failed to update chapter: %w", rErr.Unwrap())
 	}
