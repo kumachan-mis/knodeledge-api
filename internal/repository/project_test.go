@@ -179,14 +179,14 @@ func TestFetchProjectInvalidDocument(t *testing.T) {
 		{
 			name:      "should return error when project name is invalid",
 			userId:    testutil.ErrorUserId(0),
-			projectId: "PROJECT_WITH_NAME_ERROR",
+			projectId: "PROJECT_WITH_INVALID_NAME",
 			expectedError: "failed to convert snapshot to values: document.ProjectValues.name: " +
 				"firestore: cannot set type string to int",
 		},
 		{
 			name:      "should return error when project description is invalid",
 			userId:    testutil.ErrorUserId(1),
-			projectId: "PROJECT_WITH_DESCRIPTION_ERROR",
+			projectId: "PROJECT_WITH_INVALID_DESCRIPTION",
 			expectedError: "failed to convert snapshot to values: document.ProjectValues.description: " +
 				"firestore: cannot set type string to bool",
 		},
@@ -343,14 +343,14 @@ func TestUpdateProjectInvalidDocument(t *testing.T) {
 		{
 			name:      "should return error when project name is invalid",
 			userId:    testutil.ErrorUserId(0),
-			projectId: "PROJECT_WITH_NAME_ERROR",
+			projectId: "PROJECT_WITH_INVALID_NAME",
 			expectedError: "failed to convert snapshot to values: document.ProjectValues.name: " +
 				"firestore: cannot set type string to int",
 		},
 		{
 			name:      "should return error when project description is invalid",
 			userId:    testutil.ErrorUserId(1),
-			projectId: "PROJECT_WITH_DESCRIPTION_ERROR",
+			projectId: "PROJECT_WITH_INVALID_DESCRIPTION",
 			expectedError: "failed to convert snapshot to values: document.ProjectValues.description: " +
 				"firestore: cannot set type string to bool",
 		},

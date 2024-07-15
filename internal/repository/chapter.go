@@ -100,11 +100,20 @@ func (r chapterRepository) InsertChapter(
 		return "", nil, Errorf(InvalidArgument, "chapter number is too large")
 	}
 
+	sections := make([]map[string]any, len(entry.Sections))
+	for i, sectionEntry := range entry.Sections {
+		sections[i] = map[string]any{
+			"id":   sectionEntry.Id,
+			"name": sectionEntry.Name,
+		}
+	}
+
 	ref, _, err := r.client.Collection(ProjectCollection).
 		Doc(projectId).
 		Collection(ChapterCollection).
 		Add(db.FirestoreContext(), map[string]any{
 			"name":      entry.Name,
+			"sections":  sections,
 			"createdAt": firestore.ServerTimestamp,
 			"updatedAt": firestore.ServerTimestamp,
 		})
@@ -154,12 +163,21 @@ func (r chapterRepository) UpdateChapter(
 		return nil, Errorf(InvalidArgument, "chapter number is too large")
 	}
 
+	sections := make([]map[string]any, len(entry.Sections))
+	for i, sectionEntry := range entry.Sections {
+		sections[i] = map[string]any{
+			"id":   sectionEntry.Id,
+			"name": sectionEntry.Name,
+		}
+	}
+
 	_, err := r.client.Collection(ProjectCollection).
 		Doc(projectId).
 		Collection(ChapterCollection).
 		Doc(chapterId).
 		Update(db.FirestoreContext(), []firestore.Update{
 			{Path: "name", Value: entry.Name},
+			{Path: "sections", Value: sections},
 			{Path: "updatedAt", Value: firestore.ServerTimestamp},
 		})
 	if err != nil {
@@ -240,9 +258,21 @@ func (r chapterRepository) valuesToEntry(
 	number int,
 	userId string,
 ) *record.ChapterEntry {
+	sections := make([]record.SectionEntry, len(values.Sections))
+	for i, sectionValues := range values.Sections {
+		sections[i] = record.SectionEntry{
+			Id:        sectionValues.Id,
+			Name:      sectionValues.Name,
+			UserId:    userId,
+			CreatedAt: values.CreatedAt,
+			UpdatedAt: values.UpdatedAt,
+		}
+	}
+
 	return &record.ChapterEntry{
 		Name:      values.Name,
 		Number:    number,
+		Sections:  sections,
 		UserId:    userId,
 		CreatedAt: values.CreatedAt,
 		UpdatedAt: values.UpdatedAt,

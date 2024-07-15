@@ -41,10 +41,19 @@ func TestChapterList(t *testing.T) {
 	assert.Equal(t, map[string]any{
 		"chapters": []any{
 			map[string]any{
-				"id":       "CHAPTER_ONE",
-				"name":     "Chapter One",
-				"number":   float64(1), // json.Unmarshal converts number to float64
-				"sections": []any{},
+				"id":     "CHAPTER_ONE",
+				"name":   "Chapter One",
+				"number": float64(1), // json.Unmarshal converts number to float64
+				"sections": []any{
+					map[string]any{
+						"id":   "SECTION_ONE",
+						"name": "Section One",
+					},
+					map[string]any{
+						"id":   "SECTION_TWO",
+						"name": "Section Two",
+					},
+				},
 			},
 			map[string]any{
 				"id":       "CHAPTER_TWO",

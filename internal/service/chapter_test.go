@@ -20,28 +20,63 @@ func TestListChaptersValidEntry(t *testing.T) {
 	defer ctrl.Finish()
 
 	maxLengthChapterName := testutil.RandomString(100)
+	maxLengthSectionName := testutil.RandomString(100)
 
 	r := mock_repository.NewMockChapterRepository(ctrl)
 	r.EXPECT().
 		FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
 		Return(map[string]record.ChapterEntry{
 			"1000000000000003": {
-				Name:      "Chapter 3",
-				Number:    3,
+				Name:   "Chapter 3",
+				Number: 3,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000003",
+						Name:      "Section 1",
+						UserId:    testutil.ReadOnlyUserId(),
+						CreatedAt: testutil.Date().Add(-3 * time.Hour),
+						UpdatedAt: testutil.Date().Add(-3 * time.Hour),
+					},
+				},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-3 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-3 * time.Hour),
 			},
 			"1000000000000001": {
-				Name:      "Chapter 1",
-				Number:    1,
+				Name:   "Chapter 1",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000001",
+						Name:      "Section 1",
+						UserId:    testutil.ReadOnlyUserId(),
+						CreatedAt: testutil.Date().Add(-2 * time.Hour),
+						UpdatedAt: testutil.Date().Add(-2 * time.Hour),
+					},
+					{
+						Id:        "2000000000000002",
+						Name:      "Section 2",
+						UserId:    testutil.ReadOnlyUserId(),
+						CreatedAt: testutil.Date().Add(-2 * time.Hour),
+						UpdatedAt: testutil.Date().Add(-2 * time.Hour),
+					},
+				},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-2 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-2 * time.Hour),
 			},
 			"1000000000000004": {
-				Name:      maxLengthChapterName,
-				Number:    4,
+				Name:   maxLengthChapterName,
+				Number: 4,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000004",
+						Name:      maxLengthSectionName,
+						UserId:    testutil.ReadOnlyUserId(),
+						CreatedAt: testutil.Date().Add(-4 * time.Hour),
+						UpdatedAt: testutil.Date().Add(-4 * time.Hour),
+					},
+				},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-4 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-4 * time.Hour),
@@ -49,6 +84,7 @@ func TestListChaptersValidEntry(t *testing.T) {
 			"1000000000000002": {
 				Name:      "Chapter 2",
 				Number:    2,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date().Add(-1 * time.Hour),
 				UpdatedAt: testutil.Date().Add(-1 * time.Hour),
@@ -69,30 +105,54 @@ func TestListChaptersValidEntry(t *testing.T) {
 	assert.Len(t, chapters, 4)
 
 	chapter := chapters[0]
+	sections := chapter.Sections()
 	assert.Equal(t, "1000000000000001", chapter.Id().Value())
 	assert.Equal(t, "Chapter 1", chapter.Name().Value())
 	assert.Equal(t, 1, chapter.Number().Value())
+	assert.Len(t, sections, 2)
+	assert.Equal(t, "2000000000000001", sections[0].Id().Value())
+	assert.Equal(t, "Section 1", sections[0].Name().Value())
+	assert.Equal(t, testutil.Date().Add(-2*time.Hour), sections[0].CreatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-2*time.Hour), sections[0].UpdatedAt().Value())
+	assert.Equal(t, "2000000000000002", sections[1].Id().Value())
+	assert.Equal(t, "Section 2", sections[1].Name().Value())
+	assert.Equal(t, testutil.Date().Add(-2*time.Hour), sections[1].CreatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-2*time.Hour), sections[1].UpdatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-2*time.Hour), chapter.UpdatedAt().Value())
 
 	chapter = chapters[1]
+	sections = chapter.Sections()
 	assert.Equal(t, "1000000000000002", chapter.Id().Value())
 	assert.Equal(t, "Chapter 2", chapter.Name().Value())
 	assert.Equal(t, 2, chapter.Number().Value())
+	assert.Len(t, sections, 0)
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-1*time.Hour), chapter.UpdatedAt().Value())
 
 	chapter = chapters[2]
+	sections = chapter.Sections()
 	assert.Equal(t, "1000000000000003", chapter.Id().Value())
 	assert.Equal(t, "Chapter 3", chapter.Name().Value())
 	assert.Equal(t, 3, chapter.Number().Value())
+	assert.Len(t, sections, 1)
+	assert.Equal(t, "2000000000000003", sections[0].Id().Value())
+	assert.Equal(t, "Section 1", sections[0].Name().Value())
+	assert.Equal(t, testutil.Date().Add(-3*time.Hour), sections[0].CreatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-3*time.Hour), sections[0].UpdatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-3*time.Hour), chapter.UpdatedAt().Value())
 
 	chapter = chapters[3]
+	sections = chapter.Sections()
 	assert.Equal(t, "1000000000000004", chapter.Id().Value())
 	assert.Equal(t, maxLengthChapterName, chapter.Name().Value())
 	assert.Equal(t, 4, chapter.Number().Value())
+	assert.Len(t, sections, 1)
+	assert.Equal(t, "2000000000000004", sections[0].Id().Value())
+	assert.Equal(t, maxLengthSectionName, sections[0].Name().Value())
+	assert.Equal(t, testutil.Date().Add(-4*time.Hour), sections[0].CreatedAt().Value())
+	assert.Equal(t, testutil.Date().Add(-4*time.Hour), sections[0].UpdatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-4*time.Hour), chapter.CreatedAt().Value())
 	assert.Equal(t, testutil.Date().Add(-4*time.Hour), chapter.UpdatedAt().Value())
 }
@@ -125,6 +185,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 	defer ctrl.Finish()
 
 	tooLongChapterName := testutil.RandomString(101)
+	tooLongSectionName := testutil.RandomString(101)
 
 	tt := []struct {
 		name          string
@@ -138,6 +199,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			chapter: record.ChapterEntry{
 				Name:      "Chapter 1",
 				Number:    1,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -150,6 +212,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			chapter: record.ChapterEntry{
 				Name:      "",
 				Number:    1,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -162,6 +225,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			chapter: record.ChapterEntry{
 				Name:      tooLongChapterName,
 				Number:    1,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -177,11 +241,78 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 			chapter: record.ChapterEntry{
 				Name:      "Chapter 1",
 				Number:    0,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (number): chapter number must be greater than 0, but got 0",
+		},
+		{
+			name:      "should return error when section id is empty",
+			chapterId: "1000000000000001",
+			chapter: record.ChapterEntry{
+				Name:   "Chapter 1",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "",
+						Name:      "Section 1",
+						UserId:    testutil.ReadOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (id): " +
+				"section id is required, but got ''",
+		},
+		{
+			name:      "should return error when section name is empty",
+			chapterId: "1000000000000001",
+			chapter: record.ChapterEntry{
+				Name:   "Chapter 1",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000001",
+						Name:      "",
+						UserId:    testutil.ReadOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (name): " +
+				"section name is required, but got ''",
+		},
+		{
+			name:      "should return error when section name is too long",
+			chapterId: "1000000000000001",
+			chapter: record.ChapterEntry{
+				Name:   "Chapter 1",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000001",
+						Name:      tooLongSectionName,
+						UserId:    testutil.ReadOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (name): " +
+				fmt.Sprintf("section name cannot be longer than 100 characters, but got '%v'", tooLongSectionName),
 		},
 	}
 
@@ -264,6 +395,7 @@ func TestListChaptersRepositoryError(t *testing.T) {
 
 func TestCreateChapterValidEntry(t *testing.T) {
 	maxLengthChapterName := testutil.RandomString(100)
+	maxLengthSectionName := testutil.RandomString(100)
 
 	tt := []struct {
 		name    string
@@ -274,6 +406,13 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			chapter: record.ChapterWithoutAutofieldEntry{
 				Name:   "Chapter One",
 				Number: 1,
+				Sections: []record.SectionWithoutAutofieldEntry{
+					{
+						Id:     "2000000000000001",
+						Name:   "Section 1",
+						UserId: testutil.ModifyOnlyUserId(),
+					},
+				},
 				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
@@ -282,6 +421,13 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			chapter: record.ChapterWithoutAutofieldEntry{
 				Name:   maxLengthChapterName,
 				Number: 1,
+				Sections: []record.SectionWithoutAutofieldEntry{
+					{
+						Id:     "2000000000000001",
+						Name:   maxLengthSectionName,
+						UserId: testutil.ModifyOnlyUserId(),
+					},
+				},
 				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
@@ -292,6 +438,17 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
+			sectionEntries := make([]record.SectionEntry, len(tc.chapter.Sections))
+			for i, section := range tc.chapter.Sections {
+				sectionEntries[i] = record.SectionEntry{
+					Id:        section.Id,
+					Name:      section.Name,
+					UserId:    section.UserId,
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				}
+			}
+
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
 				InsertChapter("0000000000000001", tc.chapter).
@@ -299,6 +456,7 @@ func TestCreateChapterValidEntry(t *testing.T) {
 					Name:      tc.chapter.Name,
 					Number:    tc.chapter.Number,
 					UserId:    tc.chapter.UserId,
+					Sections:  sectionEntries,
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				}, nil)
@@ -315,14 +473,32 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(tc.chapter.Number)
 			assert.Nil(t, err)
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
+			sections := make([]domain.SectionWithoutAutofieldEntity, len(tc.chapter.Sections))
+			for i, section := range tc.chapter.Sections {
+				sectionId, err := domain.NewSectionIdObject(section.Id)
+				assert.Nil(t, err)
+				sectionName, err := domain.NewSectionNameObject(section.Name)
+				assert.Nil(t, err)
+
+				sections[i] = *domain.NewSectionWithoutAutofieldEntity(*sectionId, *sectionName)
+			}
+
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, sections)
 
 			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
+			createdSections := createdChapter.Sections()
 			assert.Nil(t, sErr)
 
 			assert.Equal(t, "1000000000000001", createdChapter.Id().Value())
 			assert.Equal(t, tc.chapter.Name, createdChapter.Name().Value())
 			assert.Equal(t, tc.chapter.Number, createdChapter.Number().Value())
+			assert.Len(t, createdSections, len(tc.chapter.Sections))
+			for i, createdSection := range createdSections {
+				assert.Equal(t, tc.chapter.Sections[i].Id, createdSection.Id().Value())
+				assert.Equal(t, tc.chapter.Sections[i].Name, createdSection.Name().Value())
+				assert.Equal(t, testutil.Date(), createdSection.CreatedAt().Value())
+				assert.Equal(t, testutil.Date(), createdSection.UpdatedAt().Value())
+			}
 			assert.Equal(t, testutil.Date(), createdChapter.CreatedAt().Value())
 			assert.Equal(t, testutil.Date(), createdChapter.UpdatedAt().Value())
 		})
@@ -331,6 +507,7 @@ func TestCreateChapterValidEntry(t *testing.T) {
 
 func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 	tooLongChapterName := testutil.RandomString(101)
+	tooLongSectionName := testutil.RandomString(101)
 
 	tt := []struct {
 		name           string
@@ -343,6 +520,7 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 				Name:      "",
 				Number:    1,
 				UserId:    testutil.ModifyOnlyUserId(),
+				Sections:  []record.SectionEntry{},
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
@@ -353,6 +531,7 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 			createdChapter: record.ChapterEntry{
 				Name:      tooLongChapterName,
 				Number:    1,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -367,11 +546,75 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 			createdChapter: record.ChapterEntry{
 				Name:      "Chapter One",
 				Number:    0,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (number): chapter number must be greater than 0, but got 0",
+		},
+		{
+			name: "should return error when section id is empty",
+			createdChapter: record.ChapterEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "",
+						Name:      "Section One",
+						UserId:    testutil.ModifyOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (id): " +
+				"section id is required, but got ''",
+		},
+		{
+			name: "should return error when section name is empty",
+			createdChapter: record.ChapterEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000001",
+						Name:      "",
+						UserId:    testutil.ModifyOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (name): " +
+				"section name is required, but got ''",
+		},
+		{
+			name: "should return error when section name is too long",
+			createdChapter: record.ChapterEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000001",
+						Name:      tooLongSectionName,
+						UserId:    testutil.ModifyOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (name): " +
+				fmt.Sprintf("section name cannot be longer than 100 characters, but got '%v'", tooLongSectionName),
 		},
 	}
 
@@ -385,6 +628,13 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 				InsertChapter("0000000000000001", record.ChapterWithoutAutofieldEntry{
 					Name:   "Chapter One",
 					Number: 1,
+					Sections: []record.SectionWithoutAutofieldEntry{
+						{
+							Id:     "2000000000000001",
+							Name:   "Section One",
+							UserId: testutil.ModifyOnlyUserId(),
+						},
+					},
 					UserId: testutil.ModifyOnlyUserId(),
 				}).
 				Return("1000000000000001", &tc.createdChapter, nil)
@@ -401,7 +651,14 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
+			sectionId, err := domain.NewSectionIdObject("2000000000000001")
+			assert.Nil(t, err)
+			sectionName, err := domain.NewSectionNameObject("Section One")
+			assert.Nil(t, err)
+			section := domain.NewSectionWithoutAutofieldEntity(*sectionId, *sectionName)
+			sections := &[]domain.SectionWithoutAutofieldEntity{*section}
+
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
 
 			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
 			assert.NotNil(t, sErr)
@@ -452,9 +709,10 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
 				InsertChapter("0000000000000001", record.ChapterWithoutAutofieldEntry{
-					Name:   "Chapter One",
-					Number: 1,
-					UserId: testutil.ModifyOnlyUserId(),
+					Name:     "Chapter One",
+					Number:   1,
+					Sections: []record.SectionWithoutAutofieldEntry{},
+					UserId:   testutil.ModifyOnlyUserId(),
 				}).
 				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
@@ -469,8 +727,9 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
+			sections := &[]domain.SectionWithoutAutofieldEntity{}
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
 
 			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
 			assert.NotNil(t, sErr)
@@ -483,6 +742,7 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 
 func TestUpdateChapterValidEntry(t *testing.T) {
 	maxLengthChapterName := testutil.RandomString(100)
+	maxLengthSectionName := testutil.RandomString(100)
 
 	tt := []struct {
 		name    string
@@ -493,6 +753,13 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			chapter: record.ChapterWithoutAutofieldEntry{
 				Name:   "Chapter One",
 				Number: 1,
+				Sections: []record.SectionWithoutAutofieldEntry{
+					{
+						Id:     "2000000000000001",
+						Name:   "Section One",
+						UserId: testutil.ModifyOnlyUserId(),
+					},
+				},
 				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
@@ -501,6 +768,13 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			chapter: record.ChapterWithoutAutofieldEntry{
 				Name:   maxLengthChapterName,
 				Number: 1,
+				Sections: []record.SectionWithoutAutofieldEntry{
+					{
+						Id:     "2000000000000001",
+						Name:   maxLengthSectionName,
+						UserId: testutil.ModifyOnlyUserId(),
+					},
+				},
 				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
@@ -511,12 +785,24 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
+			sectionEntries := make([]record.SectionEntry, len(tc.chapter.Sections))
+			for i, section := range tc.chapter.Sections {
+				sectionEntries[i] = record.SectionEntry{
+					Id:        section.Id,
+					Name:      section.Name,
+					UserId:    section.UserId,
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				}
+			}
+
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
 				UpdateChapter("0000000000000001", "1000000000000001", tc.chapter).
 				Return(&record.ChapterEntry{
 					Name:      tc.chapter.Name,
 					Number:    tc.chapter.Number,
+					Sections:  sectionEntries,
 					UserId:    tc.chapter.UserId,
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
@@ -536,14 +822,31 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(tc.chapter.Number)
 			assert.Nil(t, err)
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
+			sections := make([]domain.SectionWithoutAutofieldEntity, len(tc.chapter.Sections))
+			for i, section := range tc.chapter.Sections {
+				sectionId, err := domain.NewSectionIdObject(section.Id)
+				assert.Nil(t, err)
+				sectionName, err := domain.NewSectionNameObject(section.Name)
+				assert.Nil(t, err)
+
+				sections[i] = *domain.NewSectionWithoutAutofieldEntity(*sectionId, *sectionName)
+			}
+
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, sections)
 
 			updatedChapter, sErr := s.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
+			updatedSections := updatedChapter.Sections()
 			assert.Nil(t, sErr)
 
 			assert.Equal(t, "1000000000000001", updatedChapter.Id().Value())
 			assert.Equal(t, tc.chapter.Name, updatedChapter.Name().Value())
 			assert.Equal(t, tc.chapter.Number, updatedChapter.Number().Value())
+			for i, updatedSection := range updatedSections {
+				assert.Equal(t, tc.chapter.Sections[i].Id, updatedSection.Id().Value())
+				assert.Equal(t, tc.chapter.Sections[i].Name, updatedSection.Name().Value())
+				assert.Equal(t, testutil.Date(), updatedSection.CreatedAt().Value())
+				assert.Equal(t, testutil.Date(), updatedSection.UpdatedAt().Value())
+			}
 			assert.Equal(t, testutil.Date(), updatedChapter.CreatedAt().Value())
 			assert.Equal(t, testutil.Date(), updatedChapter.UpdatedAt().Value())
 		})
@@ -552,6 +855,7 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 
 func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 	tooLongChapterName := testutil.RandomString(101)
+	tooLongSectionName := testutil.RandomString(101)
 
 	tt := []struct {
 		name           string
@@ -563,6 +867,7 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 			updatedChapter: record.ChapterEntry{
 				Name:      "",
 				Number:    1,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -574,6 +879,7 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 			updatedChapter: record.ChapterEntry{
 				Name:      tooLongChapterName,
 				Number:    1,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -588,11 +894,75 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 			updatedChapter: record.ChapterEntry{
 				Name:      "Chapter One",
 				Number:    0,
+				Sections:  []record.SectionEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (number): chapter number must be greater than 0, but got 0",
+		},
+		{
+			name: "should return error when section id is empty",
+			updatedChapter: record.ChapterEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "",
+						Name:      "Section One",
+						UserId:    testutil.ModifyOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (id): " +
+				"section id is required, but got ''",
+		},
+		{
+			name: "should return error when section name is empty",
+			updatedChapter: record.ChapterEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000001",
+						Name:      "",
+						UserId:    testutil.ModifyOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (name): " +
+				"section name is required, but got ''",
+		},
+		{
+			name: "should return error when section name is too long",
+			updatedChapter: record.ChapterEntry{
+				Name:   "Chapter One",
+				Number: 1,
+				Sections: []record.SectionEntry{
+					{
+						Id:        "2000000000000001",
+						Name:      tooLongSectionName,
+						UserId:    testutil.ModifyOnlyUserId(),
+						CreatedAt: testutil.Date(),
+						UpdatedAt: testutil.Date(),
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (section): failed to convert entry to entity (name): " +
+				fmt.Sprintf("section name cannot be longer than 100 characters, but got '%v'", tooLongSectionName),
 		},
 	}
 
@@ -606,6 +976,13 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 				UpdateChapter("0000000000000001", "1000000000000001", record.ChapterWithoutAutofieldEntry{
 					Name:   "Chapter One",
 					Number: 1,
+					Sections: []record.SectionWithoutAutofieldEntry{
+						{
+							Id:     "2000000000000001",
+							Name:   "Section One",
+							UserId: testutil.ModifyOnlyUserId(),
+						},
+					},
 					UserId: testutil.ModifyOnlyUserId(),
 				}).
 				Return(&tc.updatedChapter, nil)
@@ -624,7 +1001,14 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
+			sectionId, err := domain.NewSectionIdObject("2000000000000001")
+			assert.Nil(t, err)
+			sectionName, err := domain.NewSectionNameObject("Section One")
+			assert.Nil(t, err)
+			section := domain.NewSectionWithoutAutofieldEntity(*sectionId, *sectionName)
+			sections := &[]domain.SectionWithoutAutofieldEntity{*section}
+
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
 
 			updatedChapter, sErr := s.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
 			assert.NotNil(t, sErr)
@@ -675,9 +1059,10 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
 				UpdateChapter("0000000000000001", "1000000000000001", record.ChapterWithoutAutofieldEntry{
-					Name:   "Chapter One",
-					Number: 1,
-					UserId: testutil.ModifyOnlyUserId(),
+					Name:     "Chapter One",
+					Number:   1,
+					Sections: []record.SectionWithoutAutofieldEntry{},
+					UserId:   testutil.ModifyOnlyUserId(),
 				}).
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
@@ -694,8 +1079,9 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
+			sections := &[]domain.SectionWithoutAutofieldEntity{}
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
 
 			updatedChapter, sErr := s.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
 

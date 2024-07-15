@@ -1,19 +1,19 @@
 package domain
 
-type SectionObject struct {
+type SectionEntity struct {
 	id        SectionIdObject
 	name      SectionNameObject
 	createdAt CreatedAtObject
 	updatedAt UpdatedAtObject
 }
 
-func NewSectionObject(
+func NewSectionEntity(
 	id SectionIdObject,
 	name SectionNameObject,
 	createdAt CreatedAtObject,
 	updatedAt UpdatedAtObject,
-) *SectionObject {
-	return &SectionObject{
+) *SectionEntity {
+	return &SectionEntity{
 		id:        id,
 		name:      name,
 		createdAt: createdAt,
@@ -21,18 +21,18 @@ func NewSectionObject(
 	}
 }
 
-func (e *SectionObject) Id() *SectionIdObject {
+func (e *SectionEntity) Id() *SectionIdObject {
 	return &e.id
 }
 
-func (e *SectionObject) Name() *SectionNameObject {
+func (e *SectionEntity) Name() *SectionNameObject {
 	return &e.name
 }
 
-func (e *SectionObject) CreatedAt() *CreatedAtObject {
+func (e *SectionEntity) CreatedAt() *CreatedAtObject {
 	return &e.createdAt
 }
 
-func (e *SectionObject) UpdatedAt() *UpdatedAtObject {
+func (e *SectionEntity) UpdatedAt() *UpdatedAtObject {
 	return &e.updatedAt
 }

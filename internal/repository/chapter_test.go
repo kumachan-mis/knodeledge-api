@@ -25,12 +25,18 @@ func TestFetchProjectChaptersValidDocument(t *testing.T) {
 	chapter := chapters["CHAPTER_ONE"]
 	assert.Equal(t, "Chapter One", chapter.Name)
 	assert.Equal(t, 1, chapter.Number)
+	assert.Len(t, chapter.Sections, 2)
+	assert.Equal(t, "SECTION_ONE", chapter.Sections[0].Id)
+	assert.Equal(t, "Section One", chapter.Sections[0].Name)
+	assert.Equal(t, "SECTION_TWO", chapter.Sections[1].Id)
+	assert.Equal(t, "Section Two", chapter.Sections[1].Name)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 
 	chapter = chapters["CHAPTER_TWO"]
 	assert.Equal(t, "Chapter Two", chapter.Name)
 	assert.Equal(t, 2, chapter.Number)
+	assert.Len(t, chapter.Sections, 0)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 }
@@ -139,9 +145,10 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	projectId := "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
 
 	entry := record.ChapterWithoutAutofieldEntry{
-		Name:   "Chapter One",
-		Number: 1,
-		UserId: testutil.ModifyOnlyUserId(),
+		Name:     "Chapter One",
+		Number:   1,
+		Sections: []record.SectionWithoutAutofieldEntry{},
+		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
 	id1, createdChapter1, rErr := r.InsertChapter(projectId, entry)
@@ -152,14 +159,16 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	assert.NotEmpty(t, id1)
 	assert.Equal(t, "Chapter One", createdChapter1.Name)
 	assert.Equal(t, 1, createdChapter1.Number)
+	assert.Equal(t, []record.SectionEntry{}, createdChapter1.Sections)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), createdChapter1.UserId)
 	assert.Less(t, now.Sub(createdChapter1.CreatedAt), time.Second)
 	assert.Less(t, now.Sub(createdChapter1.UpdatedAt), time.Second)
 
 	entry = record.ChapterWithoutAutofieldEntry{
-		Name:   "Chapter Three",
-		Number: 2,
-		UserId: testutil.ModifyOnlyUserId(),
+		Name:     "Chapter Three",
+		Number:   2,
+		Sections: []record.SectionWithoutAutofieldEntry{},
+		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
 	id3, createdChapter3, rErr := r.InsertChapter(projectId, entry)
@@ -170,14 +179,16 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	assert.NotEmpty(t, id3)
 	assert.Equal(t, "Chapter Three", createdChapter3.Name)
 	assert.Equal(t, 2, createdChapter3.Number)
+	assert.Equal(t, []record.SectionEntry{}, createdChapter1.Sections)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), createdChapter3.UserId)
 	assert.Less(t, now.Sub(createdChapter3.CreatedAt), time.Second)
 	assert.Less(t, now.Sub(createdChapter3.UpdatedAt), time.Second)
 
 	entry = record.ChapterWithoutAutofieldEntry{
-		Name:   "Chapter Two",
-		Number: 2,
-		UserId: testutil.ModifyOnlyUserId(),
+		Name:     "Chapter Two",
+		Number:   2,
+		Sections: []record.SectionWithoutAutofieldEntry{},
+		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
 	id2, createdChapter2, rErr := r.InsertChapter(projectId, entry)
@@ -188,14 +199,16 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	assert.NotEmpty(t, id2)
 	assert.Equal(t, "Chapter Two", createdChapter2.Name)
 	assert.Equal(t, 2, createdChapter2.Number)
+	assert.Equal(t, []record.SectionEntry{}, createdChapter1.Sections)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), createdChapter2.UserId)
 	assert.Less(t, now.Sub(createdChapter2.CreatedAt), time.Second)
 	assert.Less(t, now.Sub(createdChapter2.UpdatedAt), time.Second)
 
 	entry = record.ChapterWithoutAutofieldEntry{
-		Name:   "Chapter Zero",
-		Number: 1,
-		UserId: testutil.ModifyOnlyUserId(),
+		Name:     "Chapter Zero",
+		Number:   1,
+		Sections: []record.SectionWithoutAutofieldEntry{},
+		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
 	id0, createdChapter0, rErr := r.InsertChapter(projectId, entry)
@@ -205,6 +218,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	assert.NotEmpty(t, id0)
 	assert.Equal(t, "Chapter Zero", createdChapter0.Name)
 	assert.Equal(t, 1, createdChapter0.Number)
+	assert.Equal(t, []record.SectionEntry{}, createdChapter1.Sections)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), createdChapter0.UserId)
 	assert.Less(t, now.Sub(createdChapter0.CreatedAt), time.Second)
 	assert.Less(t, now.Sub(createdChapter0.UpdatedAt), time.Second)
@@ -217,6 +231,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 		id0: {
 			Name:      "Chapter Zero",
 			Number:    1,
+			Sections:  []record.SectionEntry{},
 			UserId:    testutil.ModifyOnlyUserId(),
 			CreatedAt: createdChapter0.CreatedAt,
 			UpdatedAt: createdChapter0.UpdatedAt,
@@ -224,6 +239,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 		id1: {
 			Name:      "Chapter One",
 			Number:    2,
+			Sections:  []record.SectionEntry{},
 			UserId:    testutil.ModifyOnlyUserId(),
 			CreatedAt: createdChapter1.CreatedAt,
 			UpdatedAt: createdChapter1.UpdatedAt,
@@ -231,6 +247,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 		id2: {
 			Name:      "Chapter Two",
 			Number:    3,
+			Sections:  []record.SectionEntry{},
 			UserId:    testutil.ModifyOnlyUserId(),
 			CreatedAt: createdChapter2.CreatedAt,
 			UpdatedAt: createdChapter2.UpdatedAt,
@@ -238,6 +255,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 		id3: {
 			Name:      "Chapter Three",
 			Number:    4,
+			Sections:  []record.SectionEntry{},
 			UserId:    testutil.ModifyOnlyUserId(),
 			CreatedAt: createdChapter3.CreatedAt,
 			UpdatedAt: createdChapter3.UpdatedAt,
@@ -272,9 +290,10 @@ func TestInsertChapterProjectNotFound(t *testing.T) {
 			r := repository.NewChapterRepository(*client)
 
 			id, createdChapter, rErr := r.InsertChapter(tc.projectId, record.ChapterWithoutAutofieldEntry{
-				Name:   "Chapter One",
-				Number: 1,
-				UserId: tc.userId,
+				Name:     "Chapter One",
+				Number:   1,
+				Sections: []record.SectionWithoutAutofieldEntry{},
+				UserId:   tc.userId,
 			})
 
 			assert.NotNil(t, rErr)
@@ -298,9 +317,10 @@ func TestInsertChapterInvalidArgument(t *testing.T) {
 			name:      "should return error when chapter number is too large",
 			projectId: "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			entry: record.ChapterWithoutAutofieldEntry{
-				Name:   "Chapter Ninety-Nine",
-				Number: 99,
-				UserId: testutil.ModifyOnlyUserId(),
+				Name:     "Chapter Ninety-Nine",
+				Number:   99,
+				Sections: []record.SectionWithoutAutofieldEntry{},
+				UserId:   testutil.ModifyOnlyUserId(),
 			},
 			expectedError: "chapter number is too large",
 		},
@@ -332,6 +352,23 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 	entry := record.ChapterWithoutAutofieldEntry{
 		Name:   "Chapter One",
 		Number: 1,
+		Sections: []record.SectionWithoutAutofieldEntry{
+			{
+				Id:     "SECTION_ONE",
+				Name:   "Section One",
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+			{
+				Id:     "SECTION_TWO",
+				Name:   "Section Two",
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+			{
+				Id:     "SECTION_THREE",
+				Name:   "Section Three",
+				UserId: testutil.ModifyOnlyUserId(),
+			},
+		},
 		UserId: testutil.ModifyOnlyUserId(),
 	}
 
@@ -342,6 +379,13 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 
 	assert.Equal(t, "Chapter One", updatedChapter2.Name)
 	assert.Equal(t, 1, updatedChapter2.Number)
+	assert.Len(t, updatedChapter2.Sections, 3)
+	assert.Equal(t, "SECTION_ONE", updatedChapter2.Sections[0].Id)
+	assert.Equal(t, "Section One", updatedChapter2.Sections[0].Name)
+	assert.Equal(t, "SECTION_TWO", updatedChapter2.Sections[1].Id)
+	assert.Equal(t, "Section Two", updatedChapter2.Sections[1].Name)
+	assert.Equal(t, "SECTION_THREE", updatedChapter2.Sections[2].Id)
+	assert.Equal(t, "Section Three", updatedChapter2.Sections[2].Name)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), updatedChapter2.UserId)
 	assert.Equal(t, testutil.Date(), updatedChapter2.CreatedAt)
 	assert.Less(t, now.Sub(updatedChapter2.UpdatedAt), time.Second)
@@ -352,15 +396,54 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 
 	assert.Equal(t, map[string]record.ChapterEntry{
 		"CHAPTER_TWO": {
-			Name:      "Chapter One",
-			Number:    1,
+			Name:   "Chapter One",
+			Number: 1,
+			Sections: []record.SectionEntry{
+				{
+					Id:        "SECTION_ONE",
+					Name:      "Section One",
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: updatedChapter2.UpdatedAt,
+				},
+				{
+					Id:        "SECTION_TWO",
+					Name:      "Section Two",
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: updatedChapter2.UpdatedAt,
+				},
+				{
+					Id:        "SECTION_THREE",
+					Name:      "Section Three",
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: updatedChapter2.UpdatedAt,
+				},
+			},
 			UserId:    testutil.ModifyOnlyUserId(),
 			CreatedAt: testutil.Date(),
 			UpdatedAt: updatedChapter2.UpdatedAt,
 		},
 		"CHAPTER_ONE": {
-			Name:      "Chapter One",
-			Number:    2,
+			Name:   "Chapter One",
+			Number: 2,
+			Sections: []record.SectionEntry{
+				{
+					Id:        "SECTION_ONE",
+					Name:      "Section One",
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				},
+				{
+					Id:        "SECTION_TWO",
+					Name:      "Section Two",
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				},
+			},
 			UserId:    testutil.ModifyOnlyUserId(),
 			CreatedAt: testutil.Date(),
 			UpdatedAt: testutil.Date(),
@@ -368,9 +451,10 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 	}, chapters)
 
 	entry = record.ChapterWithoutAutofieldEntry{
-		Name:   "Chapter Two",
-		Number: 2,
-		UserId: testutil.ModifyOnlyUserId(),
+		Name:     "Chapter Two",
+		Number:   2,
+		Sections: []record.SectionWithoutAutofieldEntry{},
+		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
 	updatedChapter1, rErr := r.UpdateChapter(projectId, "CHAPTER_ONE", entry)
@@ -379,6 +463,7 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 
 	assert.Equal(t, "Chapter Two", updatedChapter1.Name)
 	assert.Equal(t, 2, updatedChapter1.Number)
+	assert.Equal(t, []record.SectionEntry{}, updatedChapter1.Sections)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), updatedChapter1.UserId)
 	assert.Equal(t, testutil.Date(), updatedChapter1.CreatedAt)
 	assert.Less(t, now.Sub(updatedChapter1.UpdatedAt), time.Second)
@@ -389,8 +474,31 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 
 	assert.Equal(t, map[string]record.ChapterEntry{
 		"CHAPTER_TWO": {
-			Name:      "Chapter One",
-			Number:    1,
+			Name:   "Chapter One",
+			Number: 1,
+			Sections: []record.SectionEntry{
+				{
+					Id:        "SECTION_ONE",
+					Name:      "Section One",
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: updatedChapter2.UpdatedAt,
+				},
+				{
+					Id:        "SECTION_TWO",
+					Name:      "Section Two",
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: updatedChapter2.UpdatedAt,
+				},
+				{
+					Id:        "SECTION_THREE",
+					Name:      "Section Three",
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: updatedChapter2.UpdatedAt,
+				},
+			},
 			UserId:    testutil.ModifyOnlyUserId(),
 			CreatedAt: testutil.Date(),
 			UpdatedAt: updatedChapter2.UpdatedAt,
@@ -398,6 +506,7 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 		"CHAPTER_ONE": {
 			Name:      "Chapter Two",
 			Number:    2,
+			Sections:  []record.SectionEntry{},
 			UserId:    testutil.ModifyOnlyUserId(),
 			CreatedAt: testutil.Date(),
 			UpdatedAt: updatedChapter1.UpdatedAt,
@@ -447,6 +556,18 @@ func TestUpdateChapterNotFound(t *testing.T) {
 				record.ChapterWithoutAutofieldEntry{
 					Name:   "Chapter One",
 					Number: 1,
+					Sections: []record.SectionWithoutAutofieldEntry{
+						{
+							Id:     "SECTION_ONE",
+							Name:   "Section One",
+							UserId: testutil.ModifyOnlyUserId(),
+						},
+						{
+							Id:     "SECTION_TWO",
+							Name:   "Section Two",
+							UserId: testutil.ModifyOnlyUserId(),
+						},
+					},
 					UserId: tc.userId,
 				})
 
@@ -472,9 +593,10 @@ func TestUpdateChapterInvalidArgument(t *testing.T) {
 			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			chapterId: "CHAPTER_ONE",
 			entry: record.ChapterWithoutAutofieldEntry{
-				Name:   "Chapter Ninety-Nine",
-				Number: 99,
-				UserId: testutil.ModifyOnlyUserId(),
+				Name:     "Chapter Ninety-Nine",
+				Number:   99,
+				Sections: []record.SectionWithoutAutofieldEntry{},
+				UserId:   testutil.ModifyOnlyUserId(),
 			},
 			expectedError: "chapter number is too large",
 		},
@@ -523,9 +645,10 @@ func TestUpdateChapterInvalidDocument(t *testing.T) {
 				tc.projectId,
 				tc.chapterId,
 				record.ChapterWithoutAutofieldEntry{
-					Name:   "Updated Chapter",
-					Number: 1,
-					UserId: tc.userId,
+					Name:     "Updated Chapter",
+					Number:   1,
+					Sections: []record.SectionWithoutAutofieldEntry{},
+					UserId:   tc.userId,
 				})
 
 			assert.NotNil(t, rErr)

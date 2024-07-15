@@ -6,7 +6,3 @@ type ChapterWithoutAutofieldEntry struct {
 	Sections []SectionWithoutAutofieldEntry
 	UserId   string
 }
-
-type SectionWithoutAutofieldEntry struct {
-	Name string
-}

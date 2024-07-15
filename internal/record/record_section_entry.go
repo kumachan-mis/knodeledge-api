@@ -2,10 +2,9 @@ package record
 
 import "time"
 
-type ChapterEntry struct {
+type SectionEntry struct {
+	Id        string
 	Name      string
-	Number    int
-	Sections  []SectionEntry
 	UserId    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
