@@ -519,8 +519,8 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 			createdChapter: record.ChapterEntry{
 				Name:      "",
 				Number:    1,
-				UserId:    testutil.ModifyOnlyUserId(),
 				Sections:  []record.SectionEntry{},
+				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
