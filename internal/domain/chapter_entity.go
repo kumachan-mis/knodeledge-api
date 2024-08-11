@@ -4,6 +4,7 @@ type ChapterEntity struct {
 	id        ChapterIdObject
 	name      ChapterNameObject
 	number    ChapterNumberObject
+	sections  []SectionEntity
 	createdAt CreatedAtObject
 	updatedAt UpdatedAtObject
 }
@@ -12,6 +13,7 @@ func NewChapterEntity(
 	id ChapterIdObject,
 	name ChapterNameObject,
 	number ChapterNumberObject,
+	sections []SectionEntity,
 	createdAt CreatedAtObject,
 	updatedAt UpdatedAtObject,
 
@@ -20,6 +22,7 @@ func NewChapterEntity(
 		id:        id,
 		name:      name,
 		number:    number,
+		sections:  sections,
 		createdAt: createdAt,
 		updatedAt: updatedAt,
 	}
@@ -35,6 +38,10 @@ func (e *ChapterEntity) Name() *ChapterNameObject {
 
 func (e *ChapterEntity) Number() *ChapterNumberObject {
 	return &e.number
+}
+
+func (e *ChapterEntity) Sections() []SectionEntity {
+	return e.sections
 }
 
 func (e *ChapterEntity) CreatedAt() *CreatedAtObject {

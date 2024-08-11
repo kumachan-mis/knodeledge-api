@@ -1,0 +1,7 @@
+type: object
+description: Error Message for SectionWithoutAutofield object
+properties:
+  name:
+    type: string
+    description: Error message for section name
+    example: section name is required, but got ''

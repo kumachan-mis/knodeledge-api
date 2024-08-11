@@ -1,0 +1,11 @@
+type: object
+description: Section object without auto-generated fields
+properties:
+  name:
+    type: string
+    maxLength: 100
+    description: Section name
+    example: Overview
+required:
+  - name
+  - content

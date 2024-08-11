@@ -12,7 +12,7 @@ package model
 // PaperError - Error Message for Paper object
 type PaperError struct {
 
-	// Error message for paper id
+	// Error message for paper ID
 	Id string `json:"id,omitempty"`
 
 	// Error message for paper content

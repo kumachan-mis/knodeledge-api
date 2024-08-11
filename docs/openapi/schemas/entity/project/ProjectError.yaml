@@ -3,7 +3,7 @@ description: Error Message for Project object
 properties:
   id:
     type: string
-    description: Error message for project id
+    description: Error message for project ID
     example: project id is required, but got ''
   name:
     type: string

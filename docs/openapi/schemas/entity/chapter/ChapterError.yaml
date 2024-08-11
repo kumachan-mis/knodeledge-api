@@ -3,7 +3,7 @@ description: Error Message for Chapter object
 properties:
   id:
     type: string
-    description: Error message for chapter id
+    description: Error message for chapter ID
     example: chapter id is required, but got ''
   name:
     type: string

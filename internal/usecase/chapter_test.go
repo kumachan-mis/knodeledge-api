@@ -32,7 +32,19 @@ func TestListChaptersValidEntity(t *testing.T) {
 	updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	chapter1 := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
+	sectionId, err := domain.NewSectionIdObject("2000000000000001")
+	assert.Nil(t, err)
+	sectionName, err := domain.NewSectionNameObject("Section 1")
+	assert.Nil(t, err)
+	sectionCreatedAt, err := domain.NewCreatedAtObject(testutil.Date())
+	assert.Nil(t, err)
+	sectionUpdatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
+	assert.Nil(t, err)
+
+	section1 := domain.NewSectionEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
+	sections := &[]domain.SectionEntity{*section1}
+
+	chapter1 := domain.NewChapterEntity(*id, *name, *number, *sections, *createdAt, *updatedAt)
 
 	id, err = domain.NewChapterIdObject("1000000000000002")
 	assert.Nil(t, err)
@@ -45,7 +57,19 @@ func TestListChaptersValidEntity(t *testing.T) {
 	updatedAt, err = domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	chapter2 := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
+	sectionId, err = domain.NewSectionIdObject("2000000000000002")
+	assert.Nil(t, err)
+	sectionName, err = domain.NewSectionNameObject("Section 1")
+	assert.Nil(t, err)
+	sectionCreatedAt, err = domain.NewCreatedAtObject(testutil.Date())
+	assert.Nil(t, err)
+	sectionUpdatedAt, err = domain.NewUpdatedAtObject(testutil.Date())
+	assert.Nil(t, err)
+
+	section1 = domain.NewSectionEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
+	sections = &[]domain.SectionEntity{*section1}
+
+	chapter2 := domain.NewChapterEntity(*id, *name, *number, *sections, *createdAt, *updatedAt)
 
 	s.EXPECT().
 		ListChapters(gomock.Any(), gomock.Any()).
@@ -72,13 +96,22 @@ func TestListChaptersValidEntity(t *testing.T) {
 	assert.Equal(t, "1000000000000001", chapter.Id)
 	assert.Equal(t, "Chapter 1", chapter.Name)
 	assert.Equal(t, int32(1), chapter.Number)
-	assert.Len(t, chapter.Sections, 0)
+	assert.Len(t, chapter.Sections, 1)
+
+	section := chapter.Sections[0]
+	assert.Equal(t, "2000000000000001", section.Id)
+	assert.Equal(t, "Section 1", section.Name)
 
 	chapter = res.Chapters[1]
 	assert.Equal(t, "1000000000000002", chapter.Id)
 	assert.Equal(t, "Chapter 2", chapter.Name)
 	assert.Equal(t, int32(2), chapter.Number)
-	assert.Len(t, chapter.Sections, 0)
+	assert.Len(t, chapter.Sections, 1)
+
+	section = chapter.Sections[0]
+	assert.Equal(t, "2000000000000002", section.Id)
+	assert.Equal(t, "Section 1", section.Name)
+
 }
 
 func TestListChaptersDomainValidationError(t *testing.T) {
@@ -247,12 +280,13 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
 			assert.Nil(t, err)
+			sections := &[]domain.SectionEntity{}
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 
-			chapter := domain.NewChapterEntity(*chapterId, *name, *number, *createdAt, *updatedAt)
+			chapter := domain.NewChapterEntity(*chapterId, *name, *number, *sections, *createdAt, *updatedAt)
 
 			s.EXPECT().
 				CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -261,6 +295,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 					assert.Equal(t, tc.projectId, projectId.Value())
 					assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
 					assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
+					assert.Len(t, chapter.Sections(), 0)
 				}).
 				Return(chapter, nil)
 
@@ -570,12 +605,13 @@ func TestCreateChapterPaperServiceError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
+			sections := &[]domain.SectionEntity{}
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 
-			chapter := domain.NewChapterEntity(*chapterId, *name, *number, *createdAt, *updatedAt)
+			chapter := domain.NewChapterEntity(*chapterId, *name, *number, *sections, *createdAt, *updatedAt)
 
 			s.EXPECT().
 				CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -654,12 +690,13 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
 			assert.Nil(t, err)
+			sections := &[]domain.SectionEntity{}
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 
-			chapter := domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt)
+			chapter := domain.NewChapterEntity(*id, *name, *number, *sections, *createdAt, *updatedAt)
 
 			s.EXPECT().
 				UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -669,6 +706,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 					assert.Equal(t, tc.chapterId, chapterId.Value())
 					assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
 					assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
+					assert.Len(t, chapter.Sections(), 0)
 				}).
 				Return(chapter, nil)
 

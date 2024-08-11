@@ -1,0 +1,35 @@
+post:
+  tags:
+    - Papers
+  operationId: papers-sectionalize
+  summary: Sectionalize paper
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/interface/papers/sectionalize/PaperSectionalizeRequest.yaml
+  responses:
+    "200":
+      description: OK - Returns sectionalized paper
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/papers/sectionalize/PaperSectionalizeResponse.yaml
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/papers/sectionalize/PaperSectionalizeErrorResponse.yaml
+    "404":
+      description: Not Found - Paper not found or not authorized
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/papers/sectionalize/PaperSectionalizeErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

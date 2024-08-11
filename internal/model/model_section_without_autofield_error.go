@@ -9,9 +9,9 @@
 
 package model
 
-// ChapterOnlyIdError - Error Message for ChapterOnlyId object
-type ChapterOnlyIdError struct {
+// SectionWithoutAutofieldError - Error Message for SectionWithoutAutofield object
+type SectionWithoutAutofieldError struct {
 
-	// Error message for chapter ID
-	Id string `json:"id,omitempty"`
+	// Error message for section name
+	Name string `json:"name,omitempty"`
 }

@@ -396,7 +396,7 @@ func TestProjectFindInternalError(t *testing.T) {
 			"id": testutil.ErrorUserId(0),
 		},
 		"project": map[string]any{
-			"id": "PROJECT_WITH_NAME_ERROR",
+			"id": "PROJECT_WITH_INVALID_NAME",
 		},
 	})
 	req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
@@ -908,7 +908,7 @@ func TestProjectUpdateInternalError(t *testing.T) {
 			"id": testutil.ErrorUserId(0),
 		},
 		"project": map[string]any{
-			"id":   "PROJECT_WITH_NAME_ERROR",
+			"id":   "PROJECT_WITH_INVALID_NAME",
 			"name": "Updated Project",
 		},
 	})

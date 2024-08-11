@@ -3,7 +3,7 @@ description: Error Message for Paper object
 properties:
   id:
     type: string
-    description: Error message for paper id
+    description: Error message for paper ID
     example: paper id is required, but got ''
   content:
     type: string

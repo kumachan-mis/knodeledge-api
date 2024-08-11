@@ -1,7 +1,8 @@
 package record
 
 type ChapterWithoutAutofieldEntry struct {
-	Name   string
-	Number int
-	UserId string
+	Name     string
+	Number   int
+	Sections []SectionWithoutAutofieldEntry
+	UserId   string
 }

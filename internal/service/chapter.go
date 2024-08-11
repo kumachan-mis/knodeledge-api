@@ -70,13 +70,22 @@ func (s chapterService) CreateChapter(
 	projectId domain.ProjectIdObject,
 	chapter domain.ChapterWithoutAutofieldEntity,
 ) (*domain.ChapterEntity, *Error) {
-	entryyWithoutAutofield := record.ChapterWithoutAutofieldEntry{
-		Name:   chapter.Name().Value(),
-		Number: chapter.Number().Value(),
-		UserId: userId.Value(),
+	sectionEntities := make([]record.SectionWithoutAutofieldEntry, len(chapter.Sections()))
+	for i, section := range chapter.Sections() {
+		sectionEntities[i] = record.SectionWithoutAutofieldEntry{
+			Id:     section.Id().Value(),
+			Name:   section.Name().Value(),
+			UserId: userId.Value(),
+		}
+	}
+	entryWithoutAutofield := record.ChapterWithoutAutofieldEntry{
+		Name:     chapter.Name().Value(),
+		Number:   chapter.Number().Value(),
+		Sections: sectionEntities,
+		UserId:   userId.Value(),
 	}
 
-	key, entry, rErr := s.repository.InsertChapter(projectId.Value(), entryyWithoutAutofield)
+	key, entry, rErr := s.repository.InsertChapter(projectId.Value(), entryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.InvalidArgument {
 		return nil, Errorf(InvalidArgument, "failed to create chapter: %w", rErr.Unwrap())
 	}
@@ -96,13 +105,22 @@ func (s chapterService) UpdateChapter(
 	chapterId domain.ChapterIdObject,
 	chapter domain.ChapterWithoutAutofieldEntity,
 ) (*domain.ChapterEntity, *Error) {
-	entryyWithoutAutofield := record.ChapterWithoutAutofieldEntry{
-		Name:   chapter.Name().Value(),
-		Number: chapter.Number().Value(),
-		UserId: userId.Value(),
+	sectionEntities := make([]record.SectionWithoutAutofieldEntry, len(chapter.Sections()))
+	for i, section := range chapter.Sections() {
+		sectionEntities[i] = record.SectionWithoutAutofieldEntry{
+			Id:     section.Id().Value(),
+			Name:   section.Name().Value(),
+			UserId: userId.Value(),
+		}
+	}
+	entryWithoutAutofield := record.ChapterWithoutAutofieldEntry{
+		Name:     chapter.Name().Value(),
+		Number:   chapter.Number().Value(),
+		Sections: sectionEntities,
+		UserId:   userId.Value(),
 	}
 
-	entry, rErr := s.repository.UpdateChapter(projectId.Value(), chapterId.Value(), entryyWithoutAutofield)
+	entry, rErr := s.repository.UpdateChapter(projectId.Value(), chapterId.Value(), entryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.InvalidArgument {
 		return nil, Errorf(InvalidArgument, "failed to update chapter: %w", rErr.Unwrap())
 	}
@@ -129,6 +147,15 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (number): %w", err)
 	}
+	sections := make([]domain.SectionEntity, len(entry.Sections))
+	for i, sectionEntry := range entry.Sections {
+		section, err := s.sectionEntryToEntity(sectionEntry)
+		if err != nil {
+			return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (section): %w", err.Unwrap())
+		}
+		sections[i] = *section
+	}
+
 	createdAt, err := domain.NewCreatedAtObject(entry.CreatedAt)
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (createdAt): %w", err)
@@ -138,5 +165,26 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
 	}
 
-	return domain.NewChapterEntity(*id, *name, *number, *createdAt, *updatedAt), nil
+	return domain.NewChapterEntity(*id, *name, *number, sections, *createdAt, *updatedAt), nil
+}
+
+func (s chapterService) sectionEntryToEntity(entry record.SectionEntry) (*domain.SectionEntity, *Error) {
+	id, err := domain.NewSectionIdObject(entry.Id)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (id): %w", err)
+	}
+	name, err := domain.NewSectionNameObject(entry.Name)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (name): %w", err)
+	}
+	createdAt, err := domain.NewCreatedAtObject(entry.CreatedAt)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (createdAt): %w", err)
+	}
+	updatedAt, err := domain.NewUpdatedAtObject(entry.UpdatedAt)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
+	}
+
+	return domain.NewSectionEntity(*id, *name, *createdAt, *updatedAt), nil
 }
