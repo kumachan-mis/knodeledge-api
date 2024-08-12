@@ -367,8 +367,8 @@ func TestFindProjectRepositoryError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     repository.NotFoundError,
-			errorMessage:  "failed to get project",
-			expectedError: "not found: failed to find project: failed to get project",
+			errorMessage:  "failed to fetch project",
+			expectedError: "not found: failed to find project: failed to fetch project",
 			expectedCode:  service.NotFoundError,
 		},
 		{

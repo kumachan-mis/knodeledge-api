@@ -51,21 +51,21 @@ func TestFetchPaperProjectOrChapterNotFound(t *testing.T) {
 			userId:        testutil.ReadOnlyUserId(),
 			projectId:     "UNKNOWN_PROJECT",
 			chapterId:     "CHAPTER_ONE",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return not found when user is not author of the project",
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "PROJECT_WITH_DESCRIPTION",
 			chapterId:     "CHAPTER_ONE",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return error when chapter not found",
 			userId:        testutil.ReadOnlyUserId(),
 			projectId:     "PROJECT_WITH_DESCRIPTION",
 			chapterId:     "UNKNOWN_CHAPTER",
-			expectedError: "chapter not found",
+			expectedError: "failed to fetch chapter",
 		},
 	}
 
@@ -162,21 +162,21 @@ func TestInsertPaperProjectOrChapterNotFound(t *testing.T) {
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "UNKNOWN_PROJECT",
 			chapterId:     "CHAPTER_ONE",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return not found when user is not author of the project",
 			userId:        testutil.ReadOnlyUserId(),
 			projectId:     "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			chapterId:     "CHAPTER_ONE",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return error when chapter not found",
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			chapterId:     "UNKNOWN_CHAPTER",
-			expectedError: "chapter not found",
+			expectedError: "failed to fetch chapter",
 		},
 	}
 
@@ -242,21 +242,21 @@ func TestUpdatePaperProjectOrChapterNotFound(t *testing.T) {
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "UNKNOWN_PROJECT",
 			chapterId:     "CHAPTER_ONE",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return not found when user is not author of the project",
 			userId:        testutil.ReadOnlyUserId(),
 			projectId:     "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			chapterId:     "CHAPTER_ONE",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return error when chapter not found",
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			chapterId:     "UNKNOWN_CHAPTER",
-			expectedError: "chapter not found",
+			expectedError: "failed to fetch chapter",
 		},
 	}
 

@@ -24,7 +24,7 @@ func TestListChaptersValidEntry(t *testing.T) {
 
 	r := mock_repository.NewMockChapterRepository(ctrl)
 	r.EXPECT().
-		FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
+		FetchChapters(testutil.ReadOnlyUserId(), "0000000000000001").
 		Return(map[string]record.ChapterEntry{
 			"1000000000000003": {
 				Name:   "Chapter 3",
@@ -163,7 +163,7 @@ func TestListChaptersNoEntry(t *testing.T) {
 
 	r := mock_repository.NewMockChapterRepository(ctrl)
 	r.EXPECT().
-		FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
+		FetchChapters(testutil.ReadOnlyUserId(), "0000000000000001").
 		Return(map[string]record.ChapterEntry{}, nil)
 
 	s := service.NewChapterService(r)
@@ -320,7 +320,7 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
-				FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
+				FetchChapters(testutil.ReadOnlyUserId(), "0000000000000001").
 				Return(map[string]record.ChapterEntry{
 					tc.chapterId: tc.chapter,
 				}, nil)
@@ -353,8 +353,8 @@ func TestListChaptersRepositoryError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     repository.NotFoundError,
-			errorMessage:  "project not found",
-			expectedError: "failed to list chapters: project not found",
+			errorMessage:  "failed to fetch project",
+			expectedError: "failed to list chapters: failed to fetch project",
 			expectedCode:  service.NotFoundError,
 		},
 		{
@@ -373,7 +373,7 @@ func TestListChaptersRepositoryError(t *testing.T) {
 
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
-				FetchProjectChapters(testutil.ReadOnlyUserId(), "0000000000000001").
+				FetchChapters(testutil.ReadOnlyUserId(), "0000000000000001").
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
 			s := service.NewChapterService(r)
@@ -688,8 +688,8 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     repository.NotFoundError,
-			errorMessage:  "project not found",
-			expectedError: "failed to create chapter: project not found",
+			errorMessage:  "failed to fetch project",
+			expectedError: "failed to create chapter: failed to fetch project",
 			expectedCode:  service.NotFoundError,
 		},
 		{

@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFetchProjectChaptersValidDocument(t *testing.T) {
+func TestFetchChaptersValidDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
-	chapters, rErr := r.FetchProjectChapters(testutil.ReadOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION")
+	chapters, rErr := r.FetchChapters(testutil.ReadOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION")
 
 	assert.Nil(t, rErr)
 
@@ -41,18 +41,18 @@ func TestFetchProjectChaptersValidDocument(t *testing.T) {
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 }
 
-func TestFetchProjectChaptersNoDocument(t *testing.T) {
+func TestFetchChaptersNoDocument(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
-	chapters, rErr := r.FetchProjectChapters(testutil.ReadOnlyUserId(), "PROJECT_WITH_DESCRIPTION")
+	chapters, rErr := r.FetchChapters(testutil.ReadOnlyUserId(), "PROJECT_WITH_DESCRIPTION")
 
 	assert.Nil(t, rErr)
 
 	assert.Empty(t, chapters)
 }
 
-func TestFetchProjectChaptersProjectNotFound(t *testing.T) {
+func TestFetchChaptersProjectNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -63,13 +63,13 @@ func TestFetchProjectChaptersProjectNotFound(t *testing.T) {
 			name:          "should return error when project is not found",
 			userId:        testutil.ReadOnlyUserId(),
 			projectId:     "UNKNOWN_PROJECT",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
-			name:          "should return error whenwhen user is not author of the project",
+			name:          "should return error when user is not author of the project",
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 	}
 
@@ -78,7 +78,7 @@ func TestFetchProjectChaptersProjectNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewChapterRepository(*client)
 
-			chapters, rErr := r.FetchProjectChapters(tc.userId, tc.projectId)
+			chapters, rErr := r.FetchChapters(tc.userId, tc.projectId)
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.NotFoundError, rErr.Code())
@@ -88,7 +88,7 @@ func TestFetchProjectChaptersProjectNotFound(t *testing.T) {
 	}
 }
 
-func TestFetchProjectChaptersInvalidDocument(t *testing.T) {
+func TestFetchChaptersInvalidDocument(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -128,7 +128,152 @@ func TestFetchProjectChaptersInvalidDocument(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewChapterRepository(*client)
 
-			chapters, rErr := r.FetchProjectChapters(tc.userId, tc.projectId)
+			chapters, rErr := r.FetchChapters(tc.userId, tc.projectId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %v", tc.expectedError), rErr.Error())
+			assert.Nil(t, chapters)
+		})
+	}
+}
+
+func TestFetchChapterValidDocument(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewChapterRepository(*client)
+
+	chapter, rErr := r.FetchChapter(testutil.ReadOnlyUserId(), "PROJECT_WITHOUT_DESCRIPTION", "CHAPTER_ONE")
+
+	assert.Nil(t, rErr)
+
+	assert.Equal(t, "Chapter One", chapter.Name)
+	assert.Equal(t, 1, chapter.Number)
+	assert.Len(t, chapter.Sections, 2)
+	assert.Equal(t, "SECTION_ONE", chapter.Sections[0].Id)
+	assert.Equal(t, "Section One", chapter.Sections[0].Name)
+	assert.Equal(t, "SECTION_TWO", chapter.Sections[1].Id)
+	assert.Equal(t, "Section Two", chapter.Sections[1].Name)
+	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
+	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
+}
+
+func TestFetchChapterNoDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when chapter is not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "UNKNOWN_CHAPTER",
+			expectedError: "failed to fetch chapter",
+		},
+		{
+			name:          "should return error when chapter ids have excessive elements",
+			userId:        testutil.ErrorUserId(4),
+			projectId:     "PROJECT_WITH_TOO_MANY_CHAPTER_IDS",
+			chapterId:     "UNKNOWN_CHAPTER",
+			expectedError: "failed to fetch chapter",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewChapterRepository(*client)
+
+			chapters, rErr := r.FetchChapter(tc.userId, tc.projectId, tc.chapterId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %v", tc.expectedError), rErr.Error())
+			assert.Nil(t, chapters)
+		})
+	}
+}
+
+func TestFetchChapterProjectNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project is not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			chapterId:     "UNKNOWN_CHAPTER",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return error when user is not author of the project",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "CHAPTER_ONE",
+			expectedError: "failed to fetch project",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewChapterRepository(*client)
+
+			chapters, rErr := r.FetchChapter(tc.userId, tc.projectId, tc.chapterId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %v", tc.expectedError), rErr.Error())
+			assert.Nil(t, chapters)
+		})
+	}
+}
+
+func TestFetchChapterInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when chapter name is invalid",
+			userId:    testutil.ErrorUserId(2),
+			projectId: "PROJECT_WITH_INVALID_CHAPTER_NAME",
+			chapterId: "CHAPTER_WITH_INVALID_NAME",
+			expectedError: "failed to convert snapshot to values: document.ChapterValues.name: " +
+				"firestore: cannot set type string to bool",
+		},
+		{
+			name:      "should return error when chapter ids are invalid",
+			userId:    testutil.ErrorUserId(3),
+			projectId: "PROJECT_WITH_INVALID_CHAPTER_IDS",
+			chapterId: "CHAPTER",
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.chapterIds: " +
+				"firestore: cannot set type []string to string",
+		},
+		{
+			name:          "should return error when chapter ids have deficient elements",
+			userId:        testutil.ErrorUserId(5),
+			projectId:     "PROJECT_WITH_TOO_FEW_CHAPTER_IDS",
+			chapterId:     "CHAPTER_UNKNOWN",
+			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have deficient elements",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewChapterRepository(*client)
+
+			chapters, rErr := r.FetchChapter(tc.userId, tc.projectId, tc.chapterId)
 
 			assert.NotNil(t, rErr)
 			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
@@ -223,7 +368,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	assert.Less(t, now.Sub(createdChapter0.CreatedAt), time.Second)
 	assert.Less(t, now.Sub(createdChapter0.UpdatedAt), time.Second)
 
-	chapters, rErr := r.FetchProjectChapters(testutil.ModifyOnlyUserId(), projectId)
+	chapters, rErr := r.FetchChapters(testutil.ModifyOnlyUserId(), projectId)
 
 	assert.Nil(t, rErr)
 
@@ -274,13 +419,13 @@ func TestInsertChapterProjectNotFound(t *testing.T) {
 			name:          "should return error when project is not found",
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "UNKNOWN_PROJECT",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return not found when user is not author of the project",
 			userId:        testutil.ReadOnlyUserId(),
 			projectId:     "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 	}
 
@@ -390,7 +535,7 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 	assert.Equal(t, testutil.Date(), updatedChapter2.CreatedAt)
 	assert.Less(t, now.Sub(updatedChapter2.UpdatedAt), time.Second)
 
-	chapters, err := r.FetchProjectChapters(testutil.ModifyOnlyUserId(), projectId)
+	chapters, err := r.FetchChapters(testutil.ModifyOnlyUserId(), projectId)
 
 	assert.Nil(t, err)
 
@@ -468,7 +613,7 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 	assert.Equal(t, testutil.Date(), updatedChapter1.CreatedAt)
 	assert.Less(t, now.Sub(updatedChapter1.UpdatedAt), time.Second)
 
-	chapters, err = r.FetchProjectChapters(testutil.ModifyOnlyUserId(), projectId)
+	chapters, err = r.FetchChapters(testutil.ModifyOnlyUserId(), projectId)
 
 	assert.Nil(t, err)
 
@@ -527,14 +672,14 @@ func TestUpdateChapterNotFound(t *testing.T) {
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "UNKNOWN_PROJECT",
 			chapterId:     "CHAPTER_ONE",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return not found when user is not author of the project",
 			userId:        testutil.ReadOnlyUserId(),
 			projectId:     "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			chapterId:     "CHAPTER_ONE",
-			expectedError: "project not found",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return error when chapter is not found",

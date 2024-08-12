@@ -40,7 +40,7 @@ func (s chapterService) ListChapters(
 	userId domain.UserIdObject,
 	projectId domain.ProjectIdObject,
 ) ([]domain.ChapterEntity, *Error) {
-	entries, rErr := s.repository.FetchProjectChapters(userId.Value(), projectId.Value())
+	entries, rErr := s.repository.FetchChapters(userId.Value(), projectId.Value())
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return nil, Errorf(NotFoundError, "failed to list chapters: %w", rErr.Unwrap())
 	}
