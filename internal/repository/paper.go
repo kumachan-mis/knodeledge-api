@@ -30,11 +30,13 @@ type PaperRepository interface {
 }
 
 type paperRepository struct {
-	client firestore.Client
+	client            firestore.Client
+	chapterRepository ChapterRepository
 }
 
 func NewPaperRepository(client firestore.Client) PaperRepository {
-	return paperRepository{client: client}
+	chapterRepository := NewChapterRepository(client)
+	return paperRepository{client: client, chapterRepository: chapterRepository}
 }
 
 func (r paperRepository) FetchPaper(
@@ -42,7 +44,7 @@ func (r paperRepository) FetchPaper(
 	projectId string,
 	chapterId string,
 ) (*record.PaperEntry, *Error) {
-	_, rErr := r.chapterValues(userId, projectId, chapterId)
+	_, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
 	if rErr != nil {
 		return nil, rErr
 	}
@@ -71,7 +73,7 @@ func (r paperRepository) InsertPaper(
 	chapterId string,
 	entry record.PaperWithoutAutofieldEntry,
 ) (string, *record.PaperEntry, *Error) {
-	_, rErr := r.chapterValues(entry.UserId, projectId, chapterId)
+	_, rErr := r.chapterRepository.FetchChapter(entry.UserId, projectId, chapterId)
 	if rErr != nil {
 		return "", nil, rErr
 	}
@@ -110,7 +112,7 @@ func (r paperRepository) UpdatePaper(
 	chapterId string,
 	entry record.PaperWithoutAutofieldEntry,
 ) (*record.PaperEntry, *Error) {
-	_, rErr := r.chapterValues(entry.UserId, projectId, chapterId)
+	_, rErr := r.chapterRepository.FetchChapter(entry.UserId, projectId, chapterId)
 	if rErr != nil {
 		return nil, rErr
 	}
@@ -141,42 +143,6 @@ func (r paperRepository) UpdatePaper(
 	}
 
 	return r.valuesToEntry(values, entry.UserId), nil
-}
-
-func (r paperRepository) chapterValues(userId string, projectId string, chapterId string) (*document.ChapterValues, *Error) {
-	projectSnapshot, err := r.client.Collection(ProjectCollection).
-		Doc(projectId).
-		Get(db.FirestoreContext())
-	if err != nil {
-		return nil, Errorf(NotFoundError, "project not found")
-	}
-
-	var projectValues document.ProjectValues
-	err = projectSnapshot.DataTo(&projectValues)
-	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
-	}
-
-	if projectValues.UserId != userId {
-		return nil, Errorf(NotFoundError, "project not found")
-	}
-
-	chapterSnapshot, err := r.client.Collection(ProjectCollection).
-		Doc(projectId).
-		Collection(ChapterCollection).
-		Doc(chapterId).
-		Get(db.FirestoreContext())
-	if err != nil {
-		return nil, Errorf(NotFoundError, "chapter not found")
-	}
-
-	var chapterValues document.ChapterValues
-	err = chapterSnapshot.DataTo(&chapterValues)
-	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
-	}
-
-	return &chapterValues, nil
 }
 
 func (r paperRepository) valuesToEntry(

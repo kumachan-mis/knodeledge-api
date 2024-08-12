@@ -144,13 +144,13 @@ func TestFetchProjectNotFound(t *testing.T) {
 			name:          "should return error when project is not found",
 			userId:        testutil.ReadOnlyUserId(),
 			projectId:     "UNKNOWN_PROJECT",
-			expectedError: "failed to get project",
+			expectedError: "failed to fetch project",
 		},
 		{
 			name:          "should return error when user is not author of the project",
 			userId:        testutil.ModifyOnlyUserId(),
 			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
-			expectedError: "failed to get project",
+			expectedError: "failed to fetch project",
 		},
 	}
 

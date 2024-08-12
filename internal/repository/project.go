@@ -71,7 +71,7 @@ func (r projectRepository) FetchProject(
 		Doc(projectId).
 		Get(db.FirestoreContext())
 	if err != nil {
-		return nil, Errorf(NotFoundError, "failed to get project")
+		return nil, Errorf(NotFoundError, "failed to fetch project")
 	}
 
 	var values document.ProjectValues
@@ -81,7 +81,7 @@ func (r projectRepository) FetchProject(
 	}
 
 	if values.UserId != userId {
-		return nil, Errorf(NotFoundError, "failed to get project")
+		return nil, Errorf(NotFoundError, "failed to fetch project")
 	}
 
 	return r.valuesToEntry(values), nil
@@ -104,7 +104,7 @@ func (r projectRepository) InsertProject(
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return "", nil, Errorf(ReadFailurePanic, "failed to get inserted project: %w", err)
+		return "", nil, Errorf(ReadFailurePanic, "failed to fetch inserted project: %w", err)
 	}
 
 	var values document.ProjectValues
@@ -149,7 +149,7 @@ func (r projectRepository) UpdateProject(
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to get updated project: %w", err)
+		return nil, Errorf(ReadFailurePanic, "failed to fetch updated project: %w", err)
 	}
 
 	var values document.ProjectValues

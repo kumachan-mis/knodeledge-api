@@ -178,8 +178,8 @@ func TestListChaptersServiceError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     service.NotFoundError,
-			errorMessage:  "project not found",
-			expectedError: "not found: project not found",
+			errorMessage:  "failed to fetch project",
+			expectedError: "not found: failed to fetch project",
 			expectedCode:  usecase.NotFoundError,
 		},
 		{
@@ -520,8 +520,8 @@ func TestCreateChapterChapterServiceError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     service.NotFoundError,
-			errorMessage:  "project not found",
-			expectedError: "not found: project not found",
+			errorMessage:  "failed to fetch project",
+			expectedError: "not found: failed to fetch project",
 			expectedCode:  usecase.NotFoundError,
 		},
 		{
@@ -579,8 +579,8 @@ func TestCreateChapterPaperServiceError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     service.NotFoundError,
-			errorMessage:  "project not found",
-			expectedError: "not found: project not found",
+			errorMessage:  "failed to fetch project",
+			expectedError: "not found: failed to fetch project",
 			expectedCode:  usecase.NotFoundError,
 		},
 		{

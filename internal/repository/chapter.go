@@ -15,10 +15,15 @@ import (
 const ChapterCollection = "chapters"
 
 type ChapterRepository interface {
-	FetchProjectChapters(
+	FetchChapters(
 		userId string,
 		projectId string,
 	) (map[string]record.ChapterEntry, *Error)
+	FetchChapter(
+		userId string,
+		projectId string,
+		chapterId string,
+	) (*record.ChapterEntry, *Error)
 	InsertChapter(
 		projectId string,
 		entry record.ChapterWithoutAutofieldEntry,
@@ -38,7 +43,7 @@ func NewChapterRepository(client firestore.Client) ChapterRepository {
 	return chapterRepository{client: client}
 }
 
-func (r chapterRepository) FetchProjectChapters(
+func (r chapterRepository) FetchChapters(
 	userId string,
 	projectId string,
 ) (map[string]record.ChapterEntry, *Error) {
@@ -85,6 +90,46 @@ func (r chapterRepository) FetchProjectChapters(
 		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
 	}
 	return entries, nil
+}
+
+func (r chapterRepository) FetchChapter(
+	userId string,
+	projectId string,
+	chapterId string,
+) (*record.ChapterEntry, *Error) {
+	projectValues, rErr := r.projectValues(userId, projectId)
+	if rErr != nil {
+		return nil, rErr
+	}
+
+	chapterNumbers := make(map[string]int)
+	for i, chapterId := range projectValues.ChapterIds {
+		chapterNumbers[chapterId] = i + 1
+	}
+
+	snapshot, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Get(db.FirestoreContext())
+
+	if err != nil {
+		return nil, Errorf(NotFoundError, "failed to fetch chapter")
+	}
+
+	var values document.ChapterValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	number, ok := chapterNumbers[snapshot.Ref.ID]
+	if !ok {
+		err = fmt.Errorf("%v.chapterIds have deficient elements", reflect.TypeOf(*projectValues))
+		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
+	}
+
+	return r.valuesToEntry(values, number, userId), nil
 }
 
 func (r chapterRepository) InsertChapter(
@@ -137,7 +182,7 @@ func (r chapterRepository) InsertChapter(
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return "", nil, Errorf(WriteFailurePanic, "failed to get inserted chapter: %w", err)
+		return "", nil, Errorf(WriteFailurePanic, "failed to fetch inserted chapter: %w", err)
 	}
 
 	var values document.ChapterValues
@@ -216,7 +261,7 @@ func (r chapterRepository) UpdateChapter(
 		Doc(chapterId).
 		Get(db.FirestoreContext())
 	if err != nil {
-		return nil, Errorf(ReadFailurePanic, "failed to get updated chapter: %w", err)
+		return nil, Errorf(ReadFailurePanic, "failed to fetch updated chapter: %w", err)
 	}
 
 	var values document.ChapterValues
@@ -234,7 +279,7 @@ func (r chapterRepository) projectValues(userId string, projectId string) (*docu
 
 	snapshot, err := ref.Get(db.FirestoreContext())
 	if err != nil {
-		return nil, Errorf(NotFoundError, "project not found")
+		return nil, Errorf(NotFoundError, "failed to fetch project")
 	}
 
 	var projectValues document.ProjectValues
@@ -244,7 +289,7 @@ func (r chapterRepository) projectValues(userId string, projectId string) (*docu
 	}
 
 	if projectValues.UserId != userId {
-		return nil, Errorf(NotFoundError, "project not found")
+		return nil, Errorf(NotFoundError, "failed to fetch project")
 	}
 
 	if projectValues.ChapterIds == nil {

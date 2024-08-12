@@ -300,8 +300,8 @@ func TestCreatePaperRepositoryError(t *testing.T) {
 		{
 			name:          "should return error when repository returns not found error",
 			errorCode:     repository.NotFoundError,
-			errorMessage:  "project not found",
-			expectedError: "failed to create paper: project not found",
+			errorMessage:  "failed to fetch project",
+			expectedError: "failed to create paper: failed to fetch project",
 			expectedCode:  service.NotFoundError,
 		},
 		{
