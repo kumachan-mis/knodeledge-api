@@ -60,10 +60,14 @@ func (s paperService) CreatePaper(
 ) (*domain.PaperEntity, *Error) {
 	entryWithoutAutofield := record.PaperWithoutAutofieldEntry{
 		Content: paper.Content().Value(),
-		UserId:  userId.Value(),
 	}
 
-	key, entry, rErr := s.repository.InsertPaper(projectId.Value(), chapterId.Value(), entryWithoutAutofield)
+	key, entry, rErr := s.repository.InsertPaper(
+		userId.Value(),
+		projectId.Value(),
+		chapterId.Value(),
+		entryWithoutAutofield,
+	)
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return nil, Errorf(NotFoundError, "failed to create paper: %w", rErr.Unwrap())
 	}
@@ -82,10 +86,14 @@ func (s paperService) UpdatePaper(
 ) (*domain.PaperEntity, *Error) {
 	entryWithoutAutofield := record.PaperWithoutAutofieldEntry{
 		Content: paper.Content().Value(),
-		UserId:  userId.Value(),
 	}
 
-	entry, rErr := s.repository.UpdatePaper(projectId.Value(), paperId.Value(), entryWithoutAutofield)
+	entry, rErr := s.repository.UpdatePaper(
+		userId.Value(),
+		projectId.Value(),
+		paperId.Value(),
+		entryWithoutAutofield,
+	)
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return nil, Errorf(NotFoundError, "failed to update paper: %w", rErr.Unwrap())
 	}

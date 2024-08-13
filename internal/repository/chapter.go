@@ -25,10 +25,12 @@ type ChapterRepository interface {
 		chapterId string,
 	) (*record.ChapterEntry, *Error)
 	InsertChapter(
+		userId string,
 		projectId string,
 		entry record.ChapterWithoutAutofieldEntry,
 	) (string, *record.ChapterEntry, *Error)
 	UpdateChapter(
+		userId string,
 		projectId string,
 		chapterId string,
 		entry record.ChapterWithoutAutofieldEntry,
@@ -133,10 +135,11 @@ func (r chapterRepository) FetchChapter(
 }
 
 func (r chapterRepository) InsertChapter(
+	userId string,
 	projectId string,
 	entry record.ChapterWithoutAutofieldEntry,
 ) (string, *record.ChapterEntry, *Error) {
-	projectValues, rErr := r.projectValues(entry.UserId, projectId)
+	projectValues, rErr := r.projectValues(userId, projectId)
 	if rErr != nil {
 		return "", nil, rErr
 	}
@@ -191,15 +194,16 @@ func (r chapterRepository) InsertChapter(
 		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return ref.ID, r.valuesToEntry(values, entry.Number, entry.UserId), nil
+	return ref.ID, r.valuesToEntry(values, entry.Number, userId), nil
 }
 
 func (r chapterRepository) UpdateChapter(
+	userId string,
 	projectId string,
 	chapterId string,
 	entry record.ChapterWithoutAutofieldEntry,
 ) (*record.ChapterEntry, *Error) {
-	projectValues, rErr := r.projectValues(entry.UserId, projectId)
+	projectValues, rErr := r.projectValues(userId, projectId)
 	if rErr != nil {
 		return nil, rErr
 	}
@@ -270,7 +274,7 @@ func (r chapterRepository) UpdateChapter(
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return r.valuesToEntry(values, entry.Number, entry.UserId), nil
+	return r.valuesToEntry(values, entry.Number, userId), nil
 }
 
 func (r chapterRepository) projectValues(userId string, projectId string) (*document.ProjectValues, *Error) {

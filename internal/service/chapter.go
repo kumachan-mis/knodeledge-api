@@ -73,19 +73,17 @@ func (s chapterService) CreateChapter(
 	sectionEntities := make([]record.SectionWithoutAutofieldEntry, len(chapter.Sections()))
 	for i, section := range chapter.Sections() {
 		sectionEntities[i] = record.SectionWithoutAutofieldEntry{
-			Id:     section.Id().Value(),
-			Name:   section.Name().Value(),
-			UserId: userId.Value(),
+			Id:   section.Id().Value(),
+			Name: section.Name().Value(),
 		}
 	}
 	entryWithoutAutofield := record.ChapterWithoutAutofieldEntry{
 		Name:     chapter.Name().Value(),
 		Number:   chapter.Number().Value(),
 		Sections: sectionEntities,
-		UserId:   userId.Value(),
 	}
 
-	key, entry, rErr := s.repository.InsertChapter(projectId.Value(), entryWithoutAutofield)
+	key, entry, rErr := s.repository.InsertChapter(userId.Value(), projectId.Value(), entryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.InvalidArgument {
 		return nil, Errorf(InvalidArgument, "failed to create chapter: %w", rErr.Unwrap())
 	}
@@ -108,19 +106,22 @@ func (s chapterService) UpdateChapter(
 	sectionEntities := make([]record.SectionWithoutAutofieldEntry, len(chapter.Sections()))
 	for i, section := range chapter.Sections() {
 		sectionEntities[i] = record.SectionWithoutAutofieldEntry{
-			Id:     section.Id().Value(),
-			Name:   section.Name().Value(),
-			UserId: userId.Value(),
+			Id:   section.Id().Value(),
+			Name: section.Name().Value(),
 		}
 	}
 	entryWithoutAutofield := record.ChapterWithoutAutofieldEntry{
 		Name:     chapter.Name().Value(),
 		Number:   chapter.Number().Value(),
 		Sections: sectionEntities,
-		UserId:   userId.Value(),
 	}
 
-	entry, rErr := s.repository.UpdateChapter(projectId.Value(), chapterId.Value(), entryWithoutAutofield)
+	entry, rErr := s.repository.UpdateChapter(
+		userId.Value(),
+		projectId.Value(),
+		chapterId.Value(),
+		entryWithoutAutofield,
+	)
 	if rErr != nil && rErr.Code() == repository.InvalidArgument {
 		return nil, Errorf(InvalidArgument, "failed to update chapter: %w", rErr.Unwrap())
 	}

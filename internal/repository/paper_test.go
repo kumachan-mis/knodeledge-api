@@ -123,6 +123,7 @@ func TestInsertPaperValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewPaperRepository(*client)
 
+	userId := testutil.ModifyOnlyUserId()
 	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
 	chapterId := "CHAPTER_ONE"
 	content := strings.Join([]string{
@@ -134,9 +135,8 @@ func TestInsertPaperValidEntry(t *testing.T) {
 		"",
 	}, "\n")
 
-	id, entry, err := r.InsertPaper(projectId, chapterId, record.PaperWithoutAutofieldEntry{
+	id, entry, err := r.InsertPaper(userId, projectId, chapterId, record.PaperWithoutAutofieldEntry{
 		Content: content,
-		UserId:  testutil.ModifyOnlyUserId(),
 	})
 	now := time.Now()
 
@@ -185,9 +185,8 @@ func TestInsertPaperProjectOrChapterNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewPaperRepository(*client)
 
-			id, createdPaper, rErr := r.InsertPaper(tc.projectId, tc.chapterId, record.PaperWithoutAutofieldEntry{
+			id, createdPaper, rErr := r.InsertPaper(tc.userId, tc.projectId, tc.chapterId, record.PaperWithoutAutofieldEntry{
 				Content: "content",
-				UserId:  tc.userId,
 			})
 
 			assert.NotNil(t, rErr)
@@ -204,6 +203,7 @@ func TestUpdatePaterValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewPaperRepository(*client)
 
+	userId := testutil.ModifyOnlyUserId()
 	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
 	chapterId := "CHAPTER_ONE"
 	content := strings.Join([]string{
@@ -215,9 +215,8 @@ func TestUpdatePaterValidEntry(t *testing.T) {
 		"",
 	}, "\n")
 
-	entry, err := r.UpdatePaper(projectId, chapterId, record.PaperWithoutAutofieldEntry{
+	entry, err := r.UpdatePaper(userId, projectId, chapterId, record.PaperWithoutAutofieldEntry{
 		Content: content,
-		UserId:  testutil.ModifyOnlyUserId(),
 	})
 	now := time.Now()
 
@@ -265,9 +264,8 @@ func TestUpdatePaperProjectOrChapterNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewPaperRepository(*client)
 
-			entry, rErr := r.UpdatePaper(tc.projectId, tc.chapterId, record.PaperWithoutAutofieldEntry{
+			entry, rErr := r.UpdatePaper(tc.userId, tc.projectId, tc.chapterId, record.PaperWithoutAutofieldEntry{
 				Content: "content",
-				UserId:  tc.userId,
 			})
 
 			assert.NotNil(t, rErr)

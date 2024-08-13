@@ -20,9 +20,11 @@ type ProjectRepository interface {
 		projectId string,
 	) (*record.ProjectEntry, *Error)
 	InsertProject(
+		userId string,
 		entry record.ProjectWithoutAutofieldEntry,
 	) (string, *record.ProjectEntry, *Error)
 	UpdateProject(
+		userId string,
 		projectId string,
 		entry record.ProjectWithoutAutofieldEntry,
 	) (*record.ProjectEntry, *Error)
@@ -88,13 +90,14 @@ func (r projectRepository) FetchProject(
 }
 
 func (r projectRepository) InsertProject(
+	userId string,
 	entry record.ProjectWithoutAutofieldEntry,
 ) (string, *record.ProjectEntry, *Error) {
 	ref, _, err := r.client.Collection(ProjectCollection).
 		Add(db.FirestoreContext(), map[string]any{
 			"name":        entry.Name,
 			"description": entry.Description,
-			"userId":      entry.UserId,
+			"userId":      userId,
 			"createdAt":   firestore.ServerTimestamp,
 			"updatedAt":   firestore.ServerTimestamp,
 		})
@@ -117,6 +120,7 @@ func (r projectRepository) InsertProject(
 }
 
 func (r projectRepository) UpdateProject(
+	userId string,
 	projectId string,
 	entry record.ProjectWithoutAutofieldEntry,
 ) (*record.ProjectEntry, *Error) {
@@ -134,7 +138,7 @@ func (r projectRepository) UpdateProject(
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	if valuesToBeUpdated.UserId != entry.UserId {
+	if valuesToBeUpdated.UserId != userId {
 		return nil, Errorf(NotFoundError, "failed to update project")
 	}
 
