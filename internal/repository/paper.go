@@ -18,11 +18,13 @@ type PaperRepository interface {
 		chapterId string,
 	) (*record.PaperEntry, *Error)
 	InsertPaper(
+		userId string,
 		projectId string,
 		chapterId string,
 		entry record.PaperWithoutAutofieldEntry,
 	) (string, *record.PaperEntry, *Error)
 	UpdatePaper(
+		userId string,
 		projectId string,
 		chapterId string,
 		entry record.PaperWithoutAutofieldEntry,
@@ -69,11 +71,12 @@ func (r paperRepository) FetchPaper(
 }
 
 func (r paperRepository) InsertPaper(
+	userId string,
 	projectId string,
 	chapterId string,
 	entry record.PaperWithoutAutofieldEntry,
 ) (string, *record.PaperEntry, *Error) {
-	_, rErr := r.chapterRepository.FetchChapter(entry.UserId, projectId, chapterId)
+	_, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
 	if rErr != nil {
 		return "", nil, rErr
 	}
@@ -104,15 +107,16 @@ func (r paperRepository) InsertPaper(
 		return "", nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return chapterId, r.valuesToEntry(values, entry.UserId), nil
+	return chapterId, r.valuesToEntry(values, userId), nil
 }
 
 func (r paperRepository) UpdatePaper(
+	userId string,
 	projectId string,
 	chapterId string,
 	entry record.PaperWithoutAutofieldEntry,
 ) (*record.PaperEntry, *Error) {
-	_, rErr := r.chapterRepository.FetchChapter(entry.UserId, projectId, chapterId)
+	_, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
 	if rErr != nil {
 		return nil, rErr
 	}
@@ -142,7 +146,7 @@ func (r paperRepository) UpdatePaper(
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return r.valuesToEntry(values, entry.UserId), nil
+	return r.valuesToEntry(values, userId), nil
 }
 
 func (r paperRepository) valuesToEntry(

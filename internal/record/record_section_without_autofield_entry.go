@@ -1,7 +1,6 @@
 package record
 
 type SectionWithoutAutofieldEntry struct {
-	Id     string
-	Name   string
-	UserId string
+	Id   string
+	Name string
 }

@@ -408,12 +408,10 @@ func TestCreateChapterValidEntry(t *testing.T) {
 				Number: 1,
 				Sections: []record.SectionWithoutAutofieldEntry{
 					{
-						Id:     "2000000000000001",
-						Name:   "Section 1",
-						UserId: testutil.ModifyOnlyUserId(),
+						Id:   "2000000000000001",
+						Name: "Section 1",
 					},
 				},
-				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
@@ -423,12 +421,10 @@ func TestCreateChapterValidEntry(t *testing.T) {
 				Number: 1,
 				Sections: []record.SectionWithoutAutofieldEntry{
 					{
-						Id:     "2000000000000001",
-						Name:   maxLengthSectionName,
-						UserId: testutil.ModifyOnlyUserId(),
+						Id:   "2000000000000001",
+						Name: maxLengthSectionName,
 					},
 				},
-				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
 	}
@@ -443,7 +439,6 @@ func TestCreateChapterValidEntry(t *testing.T) {
 				sectionEntries[i] = record.SectionEntry{
 					Id:        section.Id,
 					Name:      section.Name,
-					UserId:    section.UserId,
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				}
@@ -451,11 +446,10 @@ func TestCreateChapterValidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
-				InsertChapter("0000000000000001", tc.chapter).
+				InsertChapter(testutil.ModifyOnlyUserId(), "0000000000000001", tc.chapter).
 				Return("1000000000000001", &record.ChapterEntry{
 					Name:      tc.chapter.Name,
 					Number:    tc.chapter.Number,
-					UserId:    tc.chapter.UserId,
 					Sections:  sectionEntries,
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
@@ -463,7 +457,7 @@ func TestCreateChapterValidEntry(t *testing.T) {
 
 			s := service.NewChapterService(r)
 
-			userId, err := domain.NewUserIdObject(tc.chapter.UserId)
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
 			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
@@ -625,17 +619,15 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
-				InsertChapter("0000000000000001", record.ChapterWithoutAutofieldEntry{
+				InsertChapter(testutil.ModifyOnlyUserId(), "0000000000000001", record.ChapterWithoutAutofieldEntry{
 					Name:   "Chapter One",
 					Number: 1,
 					Sections: []record.SectionWithoutAutofieldEntry{
 						{
-							Id:     "2000000000000001",
-							Name:   "Section One",
-							UserId: testutil.ModifyOnlyUserId(),
+							Id:   "2000000000000001",
+							Name: "Section One",
 						},
 					},
-					UserId: testutil.ModifyOnlyUserId(),
 				}).
 				Return("1000000000000001", &tc.createdChapter, nil)
 
@@ -708,11 +700,10 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
-				InsertChapter("0000000000000001", record.ChapterWithoutAutofieldEntry{
+				InsertChapter(testutil.ModifyOnlyUserId(), "0000000000000001", record.ChapterWithoutAutofieldEntry{
 					Name:     "Chapter One",
 					Number:   1,
 					Sections: []record.SectionWithoutAutofieldEntry{},
-					UserId:   testutil.ModifyOnlyUserId(),
 				}).
 				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
@@ -755,12 +746,10 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 				Number: 1,
 				Sections: []record.SectionWithoutAutofieldEntry{
 					{
-						Id:     "2000000000000001",
-						Name:   "Section One",
-						UserId: testutil.ModifyOnlyUserId(),
+						Id:   "2000000000000001",
+						Name: "Section One",
 					},
 				},
-				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
@@ -770,12 +759,10 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 				Number: 1,
 				Sections: []record.SectionWithoutAutofieldEntry{
 					{
-						Id:     "2000000000000001",
-						Name:   maxLengthSectionName,
-						UserId: testutil.ModifyOnlyUserId(),
+						Id:   "2000000000000001",
+						Name: maxLengthSectionName,
 					},
 				},
-				UserId: testutil.ModifyOnlyUserId(),
 			},
 		},
 	}
@@ -790,7 +777,7 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 				sectionEntries[i] = record.SectionEntry{
 					Id:        section.Id,
 					Name:      section.Name,
-					UserId:    section.UserId,
+					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				}
@@ -798,19 +785,18 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
-				UpdateChapter("0000000000000001", "1000000000000001", tc.chapter).
+				UpdateChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", tc.chapter).
 				Return(&record.ChapterEntry{
 					Name:      tc.chapter.Name,
 					Number:    tc.chapter.Number,
 					Sections:  sectionEntries,
-					UserId:    tc.chapter.UserId,
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				}, nil)
 
 			s := service.NewChapterService(r)
 
-			userId, err := domain.NewUserIdObject(tc.chapter.UserId)
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
 			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
@@ -973,18 +959,21 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
-				UpdateChapter("0000000000000001", "1000000000000001", record.ChapterWithoutAutofieldEntry{
-					Name:   "Chapter One",
-					Number: 1,
-					Sections: []record.SectionWithoutAutofieldEntry{
-						{
-							Id:     "2000000000000001",
-							Name:   "Section One",
-							UserId: testutil.ModifyOnlyUserId(),
+				UpdateChapter(
+					testutil.ModifyOnlyUserId(),
+					"0000000000000001",
+					"1000000000000001",
+					record.ChapterWithoutAutofieldEntry{
+						Name:   "Chapter One",
+						Number: 1,
+						Sections: []record.SectionWithoutAutofieldEntry{
+							{
+								Id:   "2000000000000001",
+								Name: "Section One",
+							},
 						},
 					},
-					UserId: testutil.ModifyOnlyUserId(),
-				}).
+				).
 				Return(&tc.updatedChapter, nil)
 
 			s := service.NewChapterService(r)
@@ -1058,12 +1047,16 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
-				UpdateChapter("0000000000000001", "1000000000000001", record.ChapterWithoutAutofieldEntry{
-					Name:     "Chapter One",
-					Number:   1,
-					Sections: []record.SectionWithoutAutofieldEntry{},
-					UserId:   testutil.ModifyOnlyUserId(),
-				}).
+				UpdateChapter(
+					testutil.ModifyOnlyUserId(),
+					"0000000000000001",
+					"1000000000000001",
+					record.ChapterWithoutAutofieldEntry{
+						Name:     "Chapter One",
+						Number:   1,
+						Sections: []record.SectionWithoutAutofieldEntry{},
+					},
+				).
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
 			s := service.NewChapterService(r)

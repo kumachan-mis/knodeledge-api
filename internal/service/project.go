@@ -91,10 +91,9 @@ func (s projectService) CreateProject(
 	entryWithoutAutofield := record.ProjectWithoutAutofieldEntry{
 		Name:        project.Name().Value(),
 		Description: project.Description().Value(),
-		UserId:      userId.Value(),
 	}
 
-	key, entry, rErr := s.repository.InsertProject(entryWithoutAutofield)
+	key, entry, rErr := s.repository.InsertProject(userId.Value(), entryWithoutAutofield)
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to insert project: %w", rErr.Unwrap())
 	}
@@ -110,10 +109,9 @@ func (s projectService) UpdateProject(
 	entryWithoutAutofield := record.ProjectWithoutAutofieldEntry{
 		Name:        project.Name().Value(),
 		Description: project.Description().Value(),
-		UserId:      userId.Value(),
 	}
 
-	entry, rErr := s.repository.UpdateProject(projectId.Value(), entryWithoutAutofield)
+	entry, rErr := s.repository.UpdateProject(userId.Value(), projectId.Value(), entryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return nil, Errorf(NotFoundError, "failed to update project: %w", rErr.Unwrap())
 	}

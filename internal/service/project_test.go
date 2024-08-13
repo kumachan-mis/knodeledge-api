@@ -422,7 +422,6 @@ func TestCreateProjectValidEntry(t *testing.T) {
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:        "New Project",
 				Description: "This is new project",
-				UserId:      testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
@@ -431,7 +430,6 @@ func TestCreateProjectValidEntry(t *testing.T) {
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:        maxLengthProjectName,
 				Description: maxLengthProjectDescription,
-				UserId:      testutil.ModifyOnlyUserId(),
 			},
 		},
 	}
@@ -443,11 +441,11 @@ func TestCreateProjectValidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				InsertProject(tc.project).
+				InsertProject(testutil.ModifyOnlyUserId(), tc.project).
 				Return(tc.projectId, &record.ProjectEntry{
 					Name:        tc.project.Name,
 					Description: tc.project.Description,
-					UserId:      tc.project.UserId,
+					UserId:      testutil.ModifyOnlyUserId(),
 					CreatedAt:   testutil.Date(),
 					UpdatedAt:   testutil.Date(),
 				}, nil)
@@ -535,10 +533,9 @@ func TestCreateProjectInvalidCreatedEntry(t *testing.T) {
 
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				InsertProject(record.ProjectWithoutAutofieldEntry{
+				InsertProject(testutil.ModifyOnlyUserId(), record.ProjectWithoutAutofieldEntry{
 					Name:        "New Project",
 					Description: "This is new project",
-					UserId:      testutil.ModifyOnlyUserId(),
 				}).
 				Return("0000000000000001", &tc.createdProject, nil)
 
@@ -569,7 +566,7 @@ func TestCreateProjectRepositoryError(t *testing.T) {
 
 	r := mock_repository.NewMockProjectRepository(ctrl)
 	r.EXPECT().
-		InsertProject(gomock.Any()).
+		InsertProject(testutil.ModifyOnlyUserId(), gomock.Any()).
 		Return("", nil, repository.Errorf(repository.WriteFailurePanic, "repository error"))
 
 	s := service.NewProjectService(r)
@@ -606,7 +603,6 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:        "Updated Project",
 				Description: "This is updated project",
-				UserId:      testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
@@ -615,7 +611,6 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 			project: record.ProjectWithoutAutofieldEntry{
 				Name:        maxLengthProjectName,
 				Description: maxLengthProjectDescription,
-				UserId:      testutil.ModifyOnlyUserId(),
 			},
 		},
 	}
@@ -627,11 +622,10 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				UpdateProject(tc.projectId, tc.project).
+				UpdateProject(testutil.ModifyOnlyUserId(), tc.projectId, tc.project).
 				Return(&record.ProjectEntry{
 					Name:        tc.project.Name,
 					Description: tc.project.Description,
-					UserId:      tc.project.UserId,
 					CreatedAt:   testutil.Date(),
 					UpdatedAt:   testutil.Date(),
 				}, nil)
@@ -722,11 +716,14 @@ func TestUpdateProjectInvalidUpdatedEntry(t *testing.T) {
 
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
-					Name:        "Updated Project",
-					Description: "This is updated project",
-					UserId:      testutil.ModifyOnlyUserId(),
-				}).
+				UpdateProject(
+					testutil.ModifyOnlyUserId(),
+					"0000000000000001",
+					record.ProjectWithoutAutofieldEntry{
+						Name:        "Updated Project",
+						Description: "This is updated project",
+					},
+				).
 				Return(&tc.updatedProject, nil)
 
 			s := service.NewProjectService(r)
@@ -784,11 +781,14 @@ func TestUpdateProjectRepositoryError(t *testing.T) {
 
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
-				UpdateProject("0000000000000001", record.ProjectWithoutAutofieldEntry{
-					Name:        "Updated Project",
-					Description: "This is updated project",
-					UserId:      testutil.ModifyOnlyUserId(),
-				}).
+				UpdateProject(
+					testutil.ModifyOnlyUserId(),
+					"0000000000000001",
+					record.ProjectWithoutAutofieldEntry{
+						Name:        "Updated Project",
+						Description: "This is updated project",
+					},
+				).
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
 			s := service.NewProjectService(r)

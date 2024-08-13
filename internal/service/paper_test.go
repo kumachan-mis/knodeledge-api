@@ -182,7 +182,6 @@ func TestCreatePaperValidEntry(t *testing.T) {
 			name: "should return paper with valid entry",
 			paper: record.PaperWithoutAutofieldEntry{
 				Content: "valid content",
-				UserId:  testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
@@ -190,7 +189,6 @@ func TestCreatePaperValidEntry(t *testing.T) {
 			name: "should return paper with max-length valid entry",
 			paper: record.PaperWithoutAutofieldEntry{
 				Content: maxLengthPaperContent,
-				UserId:  testutil.ModifyOnlyUserId(),
 			},
 		},
 	}
@@ -202,17 +200,16 @@ func TestCreatePaperValidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				InsertPaper("0000000000000001", "1000000000000001", tc.paper).
+				InsertPaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", tc.paper).
 				Return("1000000000000001", &record.PaperEntry{
 					Content:   tc.paper.Content,
-					UserId:    tc.paper.UserId,
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				}, nil)
 
 			s := service.NewPaperService(r)
 
-			userId, err := domain.NewUserIdObject(tc.paper.UserId)
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
 			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
@@ -263,7 +260,7 @@ func TestCreatePaperInvalidCreatedEntry(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				InsertPaper("0000000000000001", "1000000000000001", gomock.Any()).
+				InsertPaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", gomock.Any()).
 				Return("1000000000000001", &tc.createdPaper, nil)
 
 			s := service.NewPaperService(r)
@@ -320,7 +317,7 @@ func TestCreatePaperRepositoryError(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				InsertPaper("0000000000000001", "1000000000000001", gomock.Any()).
+				InsertPaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", gomock.Any()).
 				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
 			s := service.NewPaperService(r)
@@ -357,7 +354,6 @@ func TestUpdatePaperValidEntry(t *testing.T) {
 			name: "should return paper with valid entry",
 			paper: record.PaperWithoutAutofieldEntry{
 				Content: "valid content",
-				UserId:  testutil.ModifyOnlyUserId(),
 			},
 		},
 		{
@@ -365,7 +361,6 @@ func TestUpdatePaperValidEntry(t *testing.T) {
 			name: "should return paper with max-length valid entry",
 			paper: record.PaperWithoutAutofieldEntry{
 				Content: maxLengthPaperContent,
-				UserId:  testutil.ModifyOnlyUserId(),
 			},
 		},
 	}
@@ -377,17 +372,16 @@ func TestUpdatePaperValidEntry(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				UpdatePaper("0000000000000001", "1000000000000001", tc.paper).
+				UpdatePaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", tc.paper).
 				Return(&record.PaperEntry{
 					Content:   tc.paper.Content,
-					UserId:    tc.paper.UserId,
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				}, nil)
 
 			s := service.NewPaperService(r)
 
-			userId, err := domain.NewUserIdObject(tc.paper.UserId)
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
 			projectId, err := domain.NewProjectIdObject("0000000000000001")
 			assert.Nil(t, err)
@@ -438,7 +432,7 @@ func TestUpdatePaperInvalidUpdatedEntry(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				UpdatePaper("0000000000000001", "1000000000000001", gomock.Any()).
+				UpdatePaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", gomock.Any()).
 				Return(&tc.updatedPaper, nil)
 
 			s := service.NewPaperService(r)
@@ -495,7 +489,7 @@ func TestUpdatePaperRepositoryError(t *testing.T) {
 
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
-				UpdatePaper("0000000000000001", "1000000000000001", gomock.Any()).
+				UpdatePaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", gomock.Any()).
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
 			s := service.NewPaperService(r)

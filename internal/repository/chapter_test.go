@@ -287,16 +287,16 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
+	userId := testutil.ModifyOnlyUserId()
 	projectId := "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
 
 	entry := record.ChapterWithoutAutofieldEntry{
 		Name:     "Chapter One",
 		Number:   1,
 		Sections: []record.SectionWithoutAutofieldEntry{},
-		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
-	id1, createdChapter1, rErr := r.InsertChapter(projectId, entry)
+	id1, createdChapter1, rErr := r.InsertChapter(userId, projectId, entry)
 	now := time.Now()
 
 	assert.Nil(t, rErr)
@@ -313,10 +313,9 @@ func TestInsertChapterValidEntry(t *testing.T) {
 		Name:     "Chapter Three",
 		Number:   2,
 		Sections: []record.SectionWithoutAutofieldEntry{},
-		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
-	id3, createdChapter3, rErr := r.InsertChapter(projectId, entry)
+	id3, createdChapter3, rErr := r.InsertChapter(userId, projectId, entry)
 	now = time.Now()
 
 	assert.Nil(t, rErr)
@@ -333,10 +332,9 @@ func TestInsertChapterValidEntry(t *testing.T) {
 		Name:     "Chapter Two",
 		Number:   2,
 		Sections: []record.SectionWithoutAutofieldEntry{},
-		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
-	id2, createdChapter2, rErr := r.InsertChapter(projectId, entry)
+	id2, createdChapter2, rErr := r.InsertChapter(userId, projectId, entry)
 	now = time.Now()
 
 	assert.Nil(t, rErr)
@@ -353,10 +351,9 @@ func TestInsertChapterValidEntry(t *testing.T) {
 		Name:     "Chapter Zero",
 		Number:   1,
 		Sections: []record.SectionWithoutAutofieldEntry{},
-		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
-	id0, createdChapter0, rErr := r.InsertChapter(projectId, entry)
+	id0, createdChapter0, rErr := r.InsertChapter(userId, projectId, entry)
 
 	assert.Nil(t, rErr)
 
@@ -434,11 +431,10 @@ func TestInsertChapterProjectNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewChapterRepository(*client)
 
-			id, createdChapter, rErr := r.InsertChapter(tc.projectId, record.ChapterWithoutAutofieldEntry{
+			id, createdChapter, rErr := r.InsertChapter(tc.userId, tc.projectId, record.ChapterWithoutAutofieldEntry{
 				Name:     "Chapter One",
 				Number:   1,
 				Sections: []record.SectionWithoutAutofieldEntry{},
-				UserId:   tc.userId,
 			})
 
 			assert.NotNil(t, rErr)
@@ -454,18 +450,19 @@ func TestInsertChapterProjectNotFound(t *testing.T) {
 func TestInsertChapterInvalidArgument(t *testing.T) {
 	tt := []struct {
 		name          string
+		userId        string
 		projectId     string
 		entry         record.ChapterWithoutAutofieldEntry
 		expectedError string
 	}{
 		{
 			name:      "should return error when chapter number is too large",
+			userId:    testutil.ModifyOnlyUserId(),
 			projectId: "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			entry: record.ChapterWithoutAutofieldEntry{
 				Name:     "Chapter Ninety-Nine",
 				Number:   99,
 				Sections: []record.SectionWithoutAutofieldEntry{},
-				UserId:   testutil.ModifyOnlyUserId(),
 			},
 			expectedError: "chapter number is too large",
 		},
@@ -476,7 +473,7 @@ func TestInsertChapterInvalidArgument(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewChapterRepository(*client)
 
-			id, createdChapter, rErr := r.InsertChapter(tc.projectId, tc.entry)
+			id, createdChapter, rErr := r.InsertChapter(tc.userId, tc.projectId, tc.entry)
 
 			assert.NotNil(t, rErr)
 
@@ -492,6 +489,7 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
 
+	userId := testutil.ModifyOnlyUserId()
 	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
 
 	entry := record.ChapterWithoutAutofieldEntry{
@@ -499,25 +497,21 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 		Number: 1,
 		Sections: []record.SectionWithoutAutofieldEntry{
 			{
-				Id:     "SECTION_ONE",
-				Name:   "Section One",
-				UserId: testutil.ModifyOnlyUserId(),
+				Id:   "SECTION_ONE",
+				Name: "Section One",
 			},
 			{
-				Id:     "SECTION_TWO",
-				Name:   "Section Two",
-				UserId: testutil.ModifyOnlyUserId(),
+				Id:   "SECTION_TWO",
+				Name: "Section Two",
 			},
 			{
-				Id:     "SECTION_THREE",
-				Name:   "Section Three",
-				UserId: testutil.ModifyOnlyUserId(),
+				Id:   "SECTION_THREE",
+				Name: "Section Three",
 			},
 		},
-		UserId: testutil.ModifyOnlyUserId(),
 	}
 
-	updatedChapter2, rErr := r.UpdateChapter(projectId, "CHAPTER_TWO", entry)
+	updatedChapter2, rErr := r.UpdateChapter(userId, projectId, "CHAPTER_TWO", entry)
 	now := time.Now()
 
 	assert.Nil(t, rErr)
@@ -599,10 +593,9 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 		Name:     "Chapter Two",
 		Number:   2,
 		Sections: []record.SectionWithoutAutofieldEntry{},
-		UserId:   testutil.ModifyOnlyUserId(),
 	}
 
-	updatedChapter1, rErr := r.UpdateChapter(projectId, "CHAPTER_ONE", entry)
+	updatedChapter1, rErr := r.UpdateChapter(userId, projectId, "CHAPTER_ONE", entry)
 
 	assert.Nil(t, rErr)
 
@@ -696,6 +689,7 @@ func TestUpdateChapterNotFound(t *testing.T) {
 			r := repository.NewChapterRepository(*client)
 
 			updatedChapter, rErr := r.UpdateChapter(
+				tc.userId,
 				tc.projectId,
 				tc.chapterId,
 				record.ChapterWithoutAutofieldEntry{
@@ -703,17 +697,14 @@ func TestUpdateChapterNotFound(t *testing.T) {
 					Number: 1,
 					Sections: []record.SectionWithoutAutofieldEntry{
 						{
-							Id:     "SECTION_ONE",
-							Name:   "Section One",
-							UserId: testutil.ModifyOnlyUserId(),
+							Id:   "SECTION_ONE",
+							Name: "Section One",
 						},
 						{
-							Id:     "SECTION_TWO",
-							Name:   "Section Two",
-							UserId: testutil.ModifyOnlyUserId(),
+							Id:   "SECTION_TWO",
+							Name: "Section Two",
 						},
 					},
-					UserId: tc.userId,
 				})
 
 			assert.NotNil(t, rErr)
@@ -728,6 +719,7 @@ func TestUpdateChapterNotFound(t *testing.T) {
 func TestUpdateChapterInvalidArgument(t *testing.T) {
 	tt := []struct {
 		name          string
+		userId        string
 		projectId     string
 		chapterId     string
 		entry         record.ChapterWithoutAutofieldEntry
@@ -735,13 +727,13 @@ func TestUpdateChapterInvalidArgument(t *testing.T) {
 	}{
 		{
 			name:      "should return error when chapter number is too large",
+			userId:    testutil.ModifyOnlyUserId(),
 			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
 			chapterId: "CHAPTER_ONE",
 			entry: record.ChapterWithoutAutofieldEntry{
 				Name:     "Chapter Ninety-Nine",
 				Number:   99,
 				Sections: []record.SectionWithoutAutofieldEntry{},
-				UserId:   testutil.ModifyOnlyUserId(),
 			},
 			expectedError: "chapter number is too large",
 		},
@@ -752,7 +744,7 @@ func TestUpdateChapterInvalidArgument(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewChapterRepository(*client)
 
-			updatedChapter, rErr := r.UpdateChapter(tc.projectId, tc.chapterId, tc.entry)
+			updatedChapter, rErr := r.UpdateChapter(tc.userId, tc.projectId, tc.chapterId, tc.entry)
 
 			assert.NotNil(t, rErr)
 
@@ -787,13 +779,13 @@ func TestUpdateChapterInvalidDocument(t *testing.T) {
 			r := repository.NewChapterRepository(*client)
 
 			updatedChapter, rErr := r.UpdateChapter(
+				tc.userId,
 				tc.projectId,
 				tc.chapterId,
 				record.ChapterWithoutAutofieldEntry{
 					Name:     "Updated Chapter",
 					Number:   1,
 					Sections: []record.SectionWithoutAutofieldEntry{},
-					UserId:   tc.userId,
 				})
 
 			assert.NotNil(t, rErr)
