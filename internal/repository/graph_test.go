@@ -13,6 +13,91 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGrapthExistsValidEntry(t *testing.T) {
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		chapterId string
+		expected  bool
+	}{
+		{
+			name:      "should return true when graph exists",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId: "CHAPTER_ONE",
+			expected:  true,
+		},
+		{
+			name:      "should return false when graph not exists",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId: "CHAPTER_TWO",
+			expected:  false,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewGraphRepository(*client)
+
+			exists, rErr := r.GrapthExists(tc.userId, tc.projectId, tc.chapterId)
+
+			assert.Nil(t, rErr)
+
+			assert.Equal(t, tc.expected, exists)
+		})
+	}
+}
+
+func TestGrapthExistsProjectOrChapterNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project not found",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			chapterId:     "CHAPTER_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return not found when user is not author of the project",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			chapterId:     "CHAPTER_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return error when chapter not found",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			chapterId:     "UNKNOWN_CHAPTER",
+			expectedError: "failed to fetch chapter",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewGraphRepository(*client)
+
+			exists, rErr := r.GrapthExists(tc.userId, tc.projectId, tc.chapterId)
+
+			assert.NotNil(t, rErr)
+
+			assert.False(t, exists)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
+		})
+	}
+}
+
 func TestInsertGraphsValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewGraphRepository(*client)

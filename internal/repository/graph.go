@@ -12,6 +12,11 @@ import (
 const GraphCollection = "graphs"
 
 type GraphRepository interface {
+	GrapthExists(
+		userId string,
+		projectId string,
+		chapterId string,
+	) (bool, *Error)
 	InsertGraphs(
 		userId string,
 		projectId string,
@@ -28,6 +33,32 @@ type graphRepository struct {
 func NewGraphRepository(client firestore.Client) GraphRepository {
 	chapterRepository := NewChapterRepository(client)
 	return graphRepository{client: client, chapterRepository: chapterRepository}
+}
+
+func (r graphRepository) GrapthExists(
+	userId string,
+	projectId string,
+	chapterId string,
+) (bool, *Error) {
+	_, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
+	if rErr != nil {
+		return false, rErr
+	}
+
+	snapshots, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Collection(GraphCollection).
+		Limit(1).
+		Documents(db.FirestoreContext()).
+		GetAll()
+
+	if err != nil {
+		return false, Errorf(ReadFailurePanic, "failed to fetch graphs: %v", err)
+	}
+
+	return len(snapshots) > 0, nil
 }
 
 func (r graphRepository) InsertGraphs(
