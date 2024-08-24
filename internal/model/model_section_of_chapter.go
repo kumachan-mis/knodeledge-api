@@ -9,12 +9,12 @@
 
 package model
 
-// SectionWithoutAutofield - Section object without auto-generated fields
-type SectionWithoutAutofield struct {
+// SectionOfChapter - Section object in a Chapter object
+type SectionOfChapter struct {
+
+	// Auto-generated section ID
+	Id string `json:"id"`
 
 	// Section name
 	Name string `json:"name"`
-
-	// Section content
-	Content string `json:"content"`
 }

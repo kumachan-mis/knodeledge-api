@@ -17,4 +17,7 @@ type Section struct {
 
 	// Section name
 	Name string `json:"name"`
+
+	// Section content
+	Content string `json:"content"`
 }
