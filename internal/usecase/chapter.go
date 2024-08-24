@@ -91,7 +91,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterName, chapterNameErr := domain.NewChapterNameObject(req.Chapter.Name)
 	chapterNumber, chapterNumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
-	chapterSections := &[]domain.SectionWithoutAutofieldEntity{}
+	chapterSections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 	paperContent, paperContentErr := domain.NewPaperContentObject(req.Paper.Content)
 
 	userIdMsg := ""
@@ -197,7 +197,7 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
 	chapterName, chapterNameErr := domain.NewChapterNameObject(req.Chapter.Name)
 	chapterNumber, chapterNumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
-	chapterSections := &[]domain.SectionWithoutAutofieldEntity{}
+	chapterSections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 
 	userIdMsg := ""
 	if userIdErr != nil {

@@ -3,6 +3,7 @@ package domain
 type SectionEntity struct {
 	id        SectionIdObject
 	name      SectionNameObject
+	content   SectionContentObject
 	createdAt CreatedAtObject
 	updatedAt UpdatedAtObject
 }
@@ -10,12 +11,14 @@ type SectionEntity struct {
 func NewSectionEntity(
 	id SectionIdObject,
 	name SectionNameObject,
+	content SectionContentObject,
 	createdAt CreatedAtObject,
 	updatedAt UpdatedAtObject,
 ) *SectionEntity {
 	return &SectionEntity{
 		id:        id,
 		name:      name,
+		content:   content,
 		createdAt: createdAt,
 		updatedAt: updatedAt,
 	}
@@ -27,6 +30,10 @@ func (e *SectionEntity) Id() *SectionIdObject {
 
 func (e *SectionEntity) Name() *SectionNameObject {
 	return &e.name
+}
+
+func (e *SectionEntity) Content() *SectionContentObject {
+	return &e.content
 }
 
 func (e *SectionEntity) CreatedAt() *CreatedAtObject {

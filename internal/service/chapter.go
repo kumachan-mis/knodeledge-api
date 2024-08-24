@@ -148,7 +148,7 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (number): %w", err)
 	}
-	sections := make([]domain.SectionEntity, len(entry.Sections))
+	sections := make([]domain.SectionOfChapterEntity, len(entry.Sections))
 	for i, sectionEntry := range entry.Sections {
 		section, err := s.sectionEntryToEntity(sectionEntry)
 		if err != nil {
@@ -169,7 +169,7 @@ func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*d
 	return domain.NewChapterEntity(*id, *name, *number, sections, *createdAt, *updatedAt), nil
 }
 
-func (s chapterService) sectionEntryToEntity(entry record.SectionEntry) (*domain.SectionEntity, *Error) {
+func (s chapterService) sectionEntryToEntity(entry record.SectionEntry) (*domain.SectionOfChapterEntity, *Error) {
 	id, err := domain.NewSectionIdObject(entry.Id)
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (id): %w", err)
@@ -187,5 +187,5 @@ func (s chapterService) sectionEntryToEntity(entry record.SectionEntry) (*domain
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
 	}
 
-	return domain.NewSectionEntity(*id, *name, *createdAt, *updatedAt), nil
+	return domain.NewSectionOfChapterEntity(*id, *name, *createdAt, *updatedAt), nil
 }

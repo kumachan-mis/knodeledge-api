@@ -41,8 +41,8 @@ func TestListChaptersValidEntity(t *testing.T) {
 	sectionUpdatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	section1 := domain.NewSectionEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
-	sections := &[]domain.SectionEntity{*section1}
+	section1 := domain.NewSectionOfChapterEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
+	sections := &[]domain.SectionOfChapterEntity{*section1}
 
 	chapter1 := domain.NewChapterEntity(*id, *name, *number, *sections, *createdAt, *updatedAt)
 
@@ -66,8 +66,8 @@ func TestListChaptersValidEntity(t *testing.T) {
 	sectionUpdatedAt, err = domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	section1 = domain.NewSectionEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
-	sections = &[]domain.SectionEntity{*section1}
+	section1 = domain.NewSectionOfChapterEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
+	sections = &[]domain.SectionOfChapterEntity{*section1}
 
 	chapter2 := domain.NewChapterEntity(*id, *name, *number, *sections, *createdAt, *updatedAt)
 
@@ -280,7 +280,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
 			assert.Nil(t, err)
-			sections := &[]domain.SectionEntity{}
+			sections := &[]domain.SectionOfChapterEntity{}
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
@@ -605,7 +605,7 @@ func TestCreateChapterPaperServiceError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
-			sections := &[]domain.SectionEntity{}
+			sections := &[]domain.SectionOfChapterEntity{}
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
@@ -690,7 +690,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
 			assert.Nil(t, err)
-			sections := &[]domain.SectionEntity{}
+			sections := &[]domain.SectionOfChapterEntity{}
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())

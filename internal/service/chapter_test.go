@@ -467,14 +467,14 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(tc.chapter.Number)
 			assert.Nil(t, err)
 
-			sections := make([]domain.SectionWithoutAutofieldEntity, len(tc.chapter.Sections))
+			sections := make([]domain.SectionOfChapterWithoutAutofieldEntity, len(tc.chapter.Sections))
 			for i, section := range tc.chapter.Sections {
 				sectionId, err := domain.NewSectionIdObject(section.Id)
 				assert.Nil(t, err)
 				sectionName, err := domain.NewSectionNameObject(section.Name)
 				assert.Nil(t, err)
 
-				sections[i] = *domain.NewSectionWithoutAutofieldEntity(*sectionId, *sectionName)
+				sections[i] = *domain.NewSectionOfChapterWithoutAutofieldEntity(*sectionId, *sectionName)
 			}
 
 			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, sections)
@@ -647,8 +647,8 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 			assert.Nil(t, err)
 			sectionName, err := domain.NewSectionNameObject("Section One")
 			assert.Nil(t, err)
-			section := domain.NewSectionWithoutAutofieldEntity(*sectionId, *sectionName)
-			sections := &[]domain.SectionWithoutAutofieldEntity{*section}
+			section := domain.NewSectionOfChapterWithoutAutofieldEntity(*sectionId, *sectionName)
+			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{*section}
 
 			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
 
@@ -718,7 +718,7 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
-			sections := &[]domain.SectionWithoutAutofieldEntity{}
+			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 
 			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
 
@@ -808,14 +808,14 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(tc.chapter.Number)
 			assert.Nil(t, err)
 
-			sections := make([]domain.SectionWithoutAutofieldEntity, len(tc.chapter.Sections))
+			sections := make([]domain.SectionOfChapterWithoutAutofieldEntity, len(tc.chapter.Sections))
 			for i, section := range tc.chapter.Sections {
 				sectionId, err := domain.NewSectionIdObject(section.Id)
 				assert.Nil(t, err)
 				sectionName, err := domain.NewSectionNameObject(section.Name)
 				assert.Nil(t, err)
 
-				sections[i] = *domain.NewSectionWithoutAutofieldEntity(*sectionId, *sectionName)
+				sections[i] = *domain.NewSectionOfChapterWithoutAutofieldEntity(*sectionId, *sectionName)
 			}
 
 			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, sections)
@@ -994,8 +994,8 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 			assert.Nil(t, err)
 			sectionName, err := domain.NewSectionNameObject("Section One")
 			assert.Nil(t, err)
-			section := domain.NewSectionWithoutAutofieldEntity(*sectionId, *sectionName)
-			sections := &[]domain.SectionWithoutAutofieldEntity{*section}
+			section := domain.NewSectionOfChapterWithoutAutofieldEntity(*sectionId, *sectionName)
+			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{*section}
 
 			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
 
@@ -1072,7 +1072,7 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
-			sections := &[]domain.SectionWithoutAutofieldEntity{}
+			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 
 			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
 
