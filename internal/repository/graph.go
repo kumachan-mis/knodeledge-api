@@ -12,7 +12,7 @@ import (
 const GraphCollection = "graphs"
 
 type GraphRepository interface {
-	GrapthExists(
+	GraphExists(
 		userId string,
 		projectId string,
 		chapterId string,
@@ -35,7 +35,7 @@ func NewGraphRepository(client firestore.Client) GraphRepository {
 	return graphRepository{client: client, chapterRepository: chapterRepository}
 }
 
-func (r graphRepository) GrapthExists(
+func (r graphRepository) GraphExists(
 	userId string,
 	projectId string,
 	chapterId string,

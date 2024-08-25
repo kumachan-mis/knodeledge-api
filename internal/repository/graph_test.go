@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGrapthExistsValidEntry(t *testing.T) {
+func TestGraphExistsValidEntry(t *testing.T) {
 	tt := []struct {
 		name      string
 		userId    string
@@ -42,7 +42,7 @@ func TestGrapthExistsValidEntry(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewGraphRepository(*client)
 
-			exists, rErr := r.GrapthExists(tc.userId, tc.projectId, tc.chapterId)
+			exists, rErr := r.GraphExists(tc.userId, tc.projectId, tc.chapterId)
 
 			assert.Nil(t, rErr)
 
@@ -51,7 +51,7 @@ func TestGrapthExistsValidEntry(t *testing.T) {
 	}
 }
 
-func TestGrapthExistsProjectOrChapterNotFound(t *testing.T) {
+func TestGraphExistsProjectOrChapterNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -87,7 +87,7 @@ func TestGrapthExistsProjectOrChapterNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewGraphRepository(*client)
 
-			exists, rErr := r.GrapthExists(tc.userId, tc.projectId, tc.chapterId)
+			exists, rErr := r.GraphExists(tc.userId, tc.projectId, tc.chapterId)
 
 			assert.NotNil(t, rErr)
 
