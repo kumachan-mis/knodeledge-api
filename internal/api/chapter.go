@@ -85,7 +85,6 @@ func (api chapterApi) HandleCreate(c *gin.Context) {
 			User:    resErr.User,
 			Project: resErr.Project,
 			Chapter: resErr.Chapter,
-			Paper:   resErr.Paper,
 		})
 		return
 	}

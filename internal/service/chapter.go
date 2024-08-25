@@ -29,11 +29,15 @@ type ChapterService interface {
 }
 
 type chapterService struct {
-	repository repository.ChapterRepository
+	repository      repository.ChapterRepository
+	paperRepository repository.PaperRepository
 }
 
-func NewChapterService(repository repository.ChapterRepository) ChapterService {
-	return chapterService{repository: repository}
+func NewChapterService(
+	repository repository.ChapterRepository,
+	paperRepository repository.PaperRepository,
+) ChapterService {
+	return chapterService{repository: repository, paperRepository: paperRepository}
 }
 
 func (s chapterService) ListChapters(
@@ -92,6 +96,18 @@ func (s chapterService) CreateChapter(
 	}
 	if rErr != nil {
 		return nil, Errorf(RepositoryFailurePanic, "failed to create chapter: %w", rErr.Unwrap())
+	}
+
+	paperEntryWithoutAutofield := record.PaperWithoutAutofieldEntry{
+		Content: "",
+	}
+
+	_, _, rErr = s.paperRepository.InsertPaper(userId.Value(), projectId.Value(), key, paperEntryWithoutAutofield)
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to create initial paper: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to create initial paper: %w", rErr.Unwrap())
 	}
 
 	return s.entryToEntity(key, *entry)

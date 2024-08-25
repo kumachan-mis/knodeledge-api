@@ -20,6 +20,4 @@ type ChapterCreateErrorResponse struct {
 	Project ProjectOnlyIdError `json:"project,omitempty"`
 
 	Chapter ChapterWithoutAutofieldError `json:"chapter,omitempty"`
-
-	Paper PaperWithoutAutofieldError `json:"paper,omitempty"`
 }

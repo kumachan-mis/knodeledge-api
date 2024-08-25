@@ -79,9 +79,7 @@ func TestListChaptersValidEntity(t *testing.T) {
 		}).
 		Return([]domain.ChapterEntity{*chapter1, *chapter2}, nil)
 
-	paperService := mock_service.NewMockPaperService(ctrl)
-
-	uc := usecase.NewChapterUseCase(s, paperService)
+	uc := usecase.NewChapterUseCase(s)
 
 	res, ucErr := uc.ListChapters(model.ChapterListRequest{
 		User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
@@ -148,9 +146,7 @@ func TestListChaptersDomainValidationError(t *testing.T) {
 
 			s := mock_service.NewMockChapterService(ctrl)
 
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			uc := usecase.NewChapterUseCase(s, paperService)
+			uc := usecase.NewChapterUseCase(s)
 
 			res, ucErr := uc.ListChapters(model.ChapterListRequest{
 				User:    model.UserOnlyId{Id: tc.userId},
@@ -202,9 +198,7 @@ func TestListChaptersServiceError(t *testing.T) {
 				ListChapters(gomock.Any(), gomock.Any()).
 				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
 
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			uc := usecase.NewChapterUseCase(s, paperService)
+			uc := usecase.NewChapterUseCase(s)
 
 			res, ucErr := uc.ListChapters(model.ChapterListRequest{
 				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
@@ -220,14 +214,12 @@ func TestListChaptersServiceError(t *testing.T) {
 
 func TestCreateChapterValidEntity(t *testing.T) {
 	maxLengthChapterName := testutil.RandomString(100)
-	maxLengthPaperContent := testutil.RandomString(40000)
 
 	tt := []struct {
 		name      string
 		userId    string
 		projectId string
 		chapter   model.ChapterWithoutAutofield
-		paper     model.PaperWithoutAutofield
 	}{
 		{
 			name:      "should create chapter",
@@ -236,9 +228,6 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			chapter: model.ChapterWithoutAutofield{
 				Name:   "Chapter 1",
 				Number: int32(1),
-			},
-			paper: model.PaperWithoutAutofield{
-				Content: "## Untitled Section",
 			},
 		},
 		{
@@ -249,9 +238,6 @@ func TestCreateChapterValidEntity(t *testing.T) {
 				Name:   maxLengthChapterName,
 				Number: int32(1),
 			},
-			paper: model.PaperWithoutAutofield{
-				Content: "## Untitled Section",
-			},
 		},
 		{
 			name:      "should create chapter with max length paper content",
@@ -260,9 +246,6 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			chapter: model.ChapterWithoutAutofield{
 				Name:   "Chapter 1",
 				Number: int32(1),
-			},
-			paper: model.PaperWithoutAutofield{
-				Content: maxLengthPaperContent,
 			},
 		},
 	}
@@ -299,41 +282,12 @@ func TestCreateChapterValidEntity(t *testing.T) {
 				}).
 				Return(chapter, nil)
 
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			paperId, err := domain.NewPaperIdObject("1000000000000001")
-			assert.Nil(t, err)
-			content, err := domain.NewPaperContentObject(tc.paper.Content)
-			assert.Nil(t, err)
-			createdAt, err = domain.NewCreatedAtObject(testutil.Date())
-			assert.Nil(t, err)
-			updatedAt, err = domain.NewUpdatedAtObject(testutil.Date())
-			assert.Nil(t, err)
-
-			paper := domain.NewPaperEntity(*paperId, *content, *createdAt, *updatedAt)
-
-			paperService.EXPECT().
-				CreatePaper(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Do(func(
-					userId domain.UserIdObject,
-					projectId domain.ProjectIdObject,
-					chapterId domain.ChapterIdObject,
-					paper domain.PaperWithoutAutofieldEntity,
-				) {
-					assert.Equal(t, tc.userId, userId.Value())
-					assert.Equal(t, tc.projectId, projectId.Value())
-					assert.Equal(t, "1000000000000001", chapterId.Value())
-					assert.Equal(t, tc.paper.Content, paper.Content().Value())
-				}).
-				Return(paper, nil)
-
-			uc := usecase.NewChapterUseCase(s, paperService)
+			uc := usecase.NewChapterUseCase(s)
 
 			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: model.ProjectOnlyId{Id: tc.projectId},
 				Chapter: tc.chapter,
-				Paper:   tc.paper,
 			})
 
 			assert.Nil(t, ucErr)
@@ -348,14 +302,12 @@ func TestCreateChapterValidEntity(t *testing.T) {
 
 func TestCreateChapterDomainValidationError(t *testing.T) {
 	tooLongChapterName := testutil.RandomString(101)
-	tooLongPaperContent := testutil.RandomString(40001)
 
 	tt := []struct {
 		name      string
 		userId    string
 		projectId string
 		chapter   model.ChapterWithoutAutofield
-		paper     model.PaperWithoutAutofield
 		expected  model.ChapterCreateErrorResponse
 	}{
 		{
@@ -366,14 +318,10 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
-			paper: model.PaperWithoutAutofield{
-				Content: "## Untitled Section",
-			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterWithoutAutofieldError{Name: "", Number: ""},
-				Paper:   model.PaperWithoutAutofieldError{Content: ""},
 			},
 		},
 		{
@@ -384,14 +332,10 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
-			paper: model.PaperWithoutAutofield{
-				Content: "## Untitled Section",
-			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
 				Chapter: model.ChapterWithoutAutofieldError{Name: "", Number: ""},
-				Paper:   model.PaperWithoutAutofieldError{Content: ""},
 			},
 		},
 		{
@@ -402,14 +346,10 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   "",
 				Number: int32(1),
 			},
-			paper: model.PaperWithoutAutofield{
-				Content: "## Untitled Section",
-			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterWithoutAutofieldError{Name: "chapter name is required, but got ''"},
-				Paper:   model.PaperWithoutAutofieldError{Content: ""},
 			},
 		},
 		{
@@ -420,9 +360,6 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   tooLongChapterName,
 				Number: int32(1),
 			},
-			paper: model.PaperWithoutAutofield{
-				Content: "## Untitled Section",
-			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
@@ -430,7 +367,6 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%v'",
 						tooLongChapterName),
 				},
-				Paper: model.PaperWithoutAutofieldError{Content: ""},
 			},
 		},
 		{
@@ -441,35 +377,10 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 				Name:   "Chapter 1",
 				Number: int32(0),
 			},
-			paper: model.PaperWithoutAutofield{
-				Content: "## Untitled Section",
-			},
 			expected: model.ChapterCreateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterWithoutAutofieldError{Number: "chapter number must be greater than 0, but got 0"},
-				Paper:   model.PaperWithoutAutofieldError{Content: ""},
-			},
-		},
-		{
-			name:      "should return error when paper content is too long",
-			userId:    testutil.ReadOnlyUserId(),
-			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
-				Name:   "Chapter 1",
-				Number: int32(1),
-			},
-			paper: model.PaperWithoutAutofield{
-				Content: tooLongPaperContent,
-			},
-			expected: model.ChapterCreateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterWithoutAutofieldError{Name: "", Number: ""},
-				Paper: model.PaperWithoutAutofieldError{
-					Content: fmt.Sprintf("paper content must be less than or equal to 40000 bytes, but got %v bytes",
-						len(tooLongPaperContent)),
-				},
 			},
 		},
 	}
@@ -481,15 +392,12 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 
 			s := mock_service.NewMockChapterService(ctrl)
 
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			uc := usecase.NewChapterUseCase(s, paperService)
+			uc := usecase.NewChapterUseCase(s)
 
 			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: model.ProjectOnlyId{Id: tc.projectId},
 				Chapter: tc.chapter,
-				Paper:   tc.paper,
 			})
 
 			expectedJson, _ := json.Marshal(tc.expected)
@@ -544,86 +452,7 @@ func TestCreateChapterChapterServiceError(t *testing.T) {
 				CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
 
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			uc := usecase.NewChapterUseCase(s, paperService)
-
-			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
-				User: model.UserOnlyId{
-					Id: testutil.ReadOnlyUserId(),
-				},
-				Project: model.ProjectOnlyId{
-					Id: "0000000000000001",
-				},
-				Chapter: model.ChapterWithoutAutofield{
-					Name:   "Chapter 1",
-					Number: int32(1),
-				},
-			})
-
-			assert.Equal(t, tc.expectedError, ucErr.Error())
-			assert.Equal(t, tc.expectedCode, ucErr.Code())
-			assert.Nil(t, res)
-		})
-	}
-}
-
-func TestCreateChapterPaperServiceError(t *testing.T) {
-	tt := []struct {
-		name          string
-		errorCode     service.ErrorCode
-		errorMessage  string
-		expectedError string
-		expectedCode  usecase.ErrorCode
-	}{
-		{
-			name:          "should return error when repository returns not found error",
-			errorCode:     service.NotFoundError,
-			errorMessage:  "failed to fetch project",
-			expectedError: "not found: failed to fetch project",
-			expectedCode:  usecase.NotFoundError,
-		},
-		{
-			name:          "should return error when repository returns failure panic",
-			errorCode:     service.RepositoryFailurePanic,
-			errorMessage:  "service error",
-			expectedError: "internal error: service error",
-			expectedCode:  usecase.InternalErrorPanic,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			s := mock_service.NewMockChapterService(ctrl)
-
-			chapterId, err := domain.NewChapterIdObject("1000000000000001")
-			assert.Nil(t, err)
-			name, err := domain.NewChapterNameObject("Chapter 1")
-			assert.Nil(t, err)
-			number, err := domain.NewChapterNumberObject(1)
-			assert.Nil(t, err)
-			sections := &[]domain.SectionEntity{}
-			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
-			assert.Nil(t, err)
-			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
-			assert.Nil(t, err)
-
-			chapter := domain.NewChapterEntity(*chapterId, *name, *number, *sections, *createdAt, *updatedAt)
-
-			s.EXPECT().
-				CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(chapter, nil)
-
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			paperService.EXPECT().
-				CreatePaper(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
-
-			uc := usecase.NewChapterUseCase(s, paperService)
+			uc := usecase.NewChapterUseCase(s)
 
 			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
 				User: model.UserOnlyId{
@@ -710,9 +539,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 				}).
 				Return(chapter, nil)
 
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			uc := usecase.NewChapterUseCase(s, paperService)
+			uc := usecase.NewChapterUseCase(s)
 
 			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
 				User:    model.UserOnlyId{Id: tc.userId},
@@ -855,9 +682,7 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 
 			s := mock_service.NewMockChapterService(ctrl)
 
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			uc := usecase.NewChapterUseCase(s, paperService)
+			uc := usecase.NewChapterUseCase(s)
 
 			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
 				User:    model.UserOnlyId{Id: tc.userId},
@@ -917,9 +742,7 @@ func TestUpdateChapterServiceError(t *testing.T) {
 				UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
 
-			paperService := mock_service.NewMockPaperService(ctrl)
-
-			uc := usecase.NewChapterUseCase(s, paperService)
+			uc := usecase.NewChapterUseCase(s)
 
 			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
 				User: model.UserOnlyId{

@@ -16,6 +16,4 @@ type ChapterCreateRequest struct {
 	Project ProjectOnlyId `json:"project"`
 
 	Chapter ChapterWithoutAutofield `json:"chapter"`
-
-	Paper PaperWithoutAutofield `json:"paper,omitempty"`
 }
