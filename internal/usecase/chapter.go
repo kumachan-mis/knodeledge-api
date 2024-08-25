@@ -90,7 +90,6 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterName, chapterNameErr := domain.NewChapterNameObject(req.Chapter.Name)
 	chapterNumber, chapterNumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
-	chapterSections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 
 	userIdMsg := ""
 	if userIdErr != nil {
@@ -128,7 +127,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 		)
 	}
 
-	chapter := domain.NewChapterWithoutAutofieldEntity(*chapterName, *chapterNumber, *chapterSections)
+	chapter := domain.NewChapterWithoutAutofieldEntity(*chapterName, *chapterNumber)
 
 	chapterEntity, sErr := uc.service.CreateChapter(*userId, *projectId, *chapter)
 	if sErr != nil && sErr.Code() == service.InvalidArgument {
@@ -167,7 +166,6 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
 	chapterName, chapterNameErr := domain.NewChapterNameObject(req.Chapter.Name)
 	chapterNumber, chapterNumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
-	chapterSections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 
 	userIdMsg := ""
 	if userIdErr != nil {
@@ -209,7 +207,7 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 		)
 	}
 
-	chapter := domain.NewChapterWithoutAutofieldEntity(*chapterName, *chapterNumber, *chapterSections)
+	chapter := domain.NewChapterWithoutAutofieldEntity(*chapterName, *chapterNumber)
 
 	entity, sErr := uc.service.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
 	if sErr != nil && sErr.Code() == service.InvalidArgument {

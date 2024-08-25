@@ -1,20 +1,17 @@
 package domain
 
 type ChapterWithoutAutofieldEntity struct {
-	name     ChapterNameObject
-	number   ChapterNumberObject
-	sections []SectionOfChapterWithoutAutofieldEntity
+	name   ChapterNameObject
+	number ChapterNumberObject
 }
 
 func NewChapterWithoutAutofieldEntity(
 	name ChapterNameObject,
 	number ChapterNumberObject,
-	sections []SectionOfChapterWithoutAutofieldEntity,
 ) *ChapterWithoutAutofieldEntity {
 	return &ChapterWithoutAutofieldEntity{
-		name:     name,
-		number:   number,
-		sections: sections,
+		name:   name,
+		number: number,
 	}
 }
 
@@ -24,8 +21,4 @@ func (e *ChapterWithoutAutofieldEntity) Name() *ChapterNameObject {
 
 func (e *ChapterWithoutAutofieldEntity) Number() *ChapterNumberObject {
 	return &e.number
-}
-
-func (e *ChapterWithoutAutofieldEntity) Sections() []SectionOfChapterWithoutAutofieldEntity {
-	return e.sections
 }

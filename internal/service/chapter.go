@@ -74,17 +74,9 @@ func (s chapterService) CreateChapter(
 	projectId domain.ProjectIdObject,
 	chapter domain.ChapterWithoutAutofieldEntity,
 ) (*domain.ChapterEntity, *Error) {
-	sectionEntities := make([]record.SectionWithoutAutofieldEntry, len(chapter.Sections()))
-	for i, section := range chapter.Sections() {
-		sectionEntities[i] = record.SectionWithoutAutofieldEntry{
-			Id:   section.Id().Value(),
-			Name: section.Name().Value(),
-		}
-	}
 	entryWithoutAutofield := record.ChapterWithoutAutofieldEntry{
-		Name:     chapter.Name().Value(),
-		Number:   chapter.Number().Value(),
-		Sections: sectionEntities,
+		Name:   chapter.Name().Value(),
+		Number: chapter.Number().Value(),
 	}
 
 	key, entry, rErr := s.repository.InsertChapter(userId.Value(), projectId.Value(), entryWithoutAutofield)
@@ -119,17 +111,9 @@ func (s chapterService) UpdateChapter(
 	chapterId domain.ChapterIdObject,
 	chapter domain.ChapterWithoutAutofieldEntity,
 ) (*domain.ChapterEntity, *Error) {
-	sectionEntities := make([]record.SectionWithoutAutofieldEntry, len(chapter.Sections()))
-	for i, section := range chapter.Sections() {
-		sectionEntities[i] = record.SectionWithoutAutofieldEntry{
-			Id:   section.Id().Value(),
-			Name: section.Name().Value(),
-		}
-	}
 	entryWithoutAutofield := record.ChapterWithoutAutofieldEntry{
-		Name:     chapter.Name().Value(),
-		Number:   chapter.Number().Value(),
-		Sections: sectionEntities,
+		Name:   chapter.Name().Value(),
+		Number: chapter.Number().Value(),
 	}
 
 	entry, rErr := s.repository.UpdateChapter(

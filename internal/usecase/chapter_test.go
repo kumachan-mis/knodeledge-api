@@ -278,7 +278,6 @@ func TestCreateChapterValidEntity(t *testing.T) {
 					assert.Equal(t, tc.projectId, projectId.Value())
 					assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
 					assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
-					assert.Len(t, chapter.Sections(), 0)
 				}).
 				Return(chapter, nil)
 
@@ -535,7 +534,6 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 					assert.Equal(t, tc.chapterId, chapterId.Value())
 					assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
 					assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
-					assert.Len(t, chapter.Sections(), 0)
 				}).
 				Return(chapter, nil)
 

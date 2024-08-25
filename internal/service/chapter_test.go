@@ -403,7 +403,6 @@ func TestListChaptersRepositoryError(t *testing.T) {
 
 func TestCreateChapterValidEntry(t *testing.T) {
 	maxLengthChapterName := testutil.RandomString(100)
-	maxLengthSectionName := testutil.RandomString(100)
 
 	tt := []struct {
 		name    string
@@ -414,12 +413,6 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			chapter: record.ChapterWithoutAutofieldEntry{
 				Name:   "Chapter One",
 				Number: 1,
-				Sections: []record.SectionWithoutAutofieldEntry{
-					{
-						Id:   "2000000000000001",
-						Name: "Section 1",
-					},
-				},
 			},
 		},
 		{
@@ -427,12 +420,6 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			chapter: record.ChapterWithoutAutofieldEntry{
 				Name:   maxLengthChapterName,
 				Number: 1,
-				Sections: []record.SectionWithoutAutofieldEntry{
-					{
-						Id:   "2000000000000001",
-						Name: maxLengthSectionName,
-					},
-				},
 			},
 		},
 	}
@@ -442,23 +429,13 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			sectionEntries := make([]record.SectionEntry, len(tc.chapter.Sections))
-			for i, section := range tc.chapter.Sections {
-				sectionEntries[i] = record.SectionEntry{
-					Id:        section.Id,
-					Name:      section.Name,
-					CreatedAt: testutil.Date(),
-					UpdatedAt: testutil.Date(),
-				}
-			}
-
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
 				InsertChapter(testutil.ModifyOnlyUserId(), "0000000000000001", tc.chapter).
 				Return("1000000000000001", &record.ChapterEntry{
 					Name:      tc.chapter.Name,
 					Number:    tc.chapter.Number,
-					Sections:  sectionEntries,
+					Sections:  []record.SectionEntry{},
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				}, nil)
@@ -486,32 +463,15 @@ func TestCreateChapterValidEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(tc.chapter.Number)
 			assert.Nil(t, err)
 
-			sections := make([]domain.SectionOfChapterWithoutAutofieldEntity, len(tc.chapter.Sections))
-			for i, section := range tc.chapter.Sections {
-				sectionId, err := domain.NewSectionIdObject(section.Id)
-				assert.Nil(t, err)
-				sectionName, err := domain.NewSectionNameObject(section.Name)
-				assert.Nil(t, err)
-
-				sections[i] = *domain.NewSectionOfChapterWithoutAutofieldEntity(*sectionId, *sectionName)
-			}
-
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, sections)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
 
 			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
-			createdSections := createdChapter.Sections()
 			assert.Nil(t, sErr)
 
 			assert.Equal(t, "1000000000000001", createdChapter.Id().Value())
 			assert.Equal(t, tc.chapter.Name, createdChapter.Name().Value())
 			assert.Equal(t, tc.chapter.Number, createdChapter.Number().Value())
-			assert.Len(t, createdSections, len(tc.chapter.Sections))
-			for i, createdSection := range createdSections {
-				assert.Equal(t, tc.chapter.Sections[i].Id, createdSection.Id().Value())
-				assert.Equal(t, tc.chapter.Sections[i].Name, createdSection.Name().Value())
-				assert.Equal(t, testutil.Date(), createdSection.CreatedAt().Value())
-				assert.Equal(t, testutil.Date(), createdSection.UpdatedAt().Value())
-			}
+			assert.Len(t, createdChapter.Sections(), 0)
 			assert.Equal(t, testutil.Date(), createdChapter.CreatedAt().Value())
 			assert.Equal(t, testutil.Date(), createdChapter.UpdatedAt().Value())
 		})
@@ -641,12 +601,6 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 				InsertChapter(testutil.ModifyOnlyUserId(), "0000000000000001", record.ChapterWithoutAutofieldEntry{
 					Name:   "Chapter One",
 					Number: 1,
-					Sections: []record.SectionWithoutAutofieldEntry{
-						{
-							Id:   "2000000000000001",
-							Name: "Section One",
-						},
-					},
 				}).
 				Return("1000000000000001", &tc.createdChapter, nil)
 
@@ -673,14 +627,7 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
 
-			sectionId, err := domain.NewSectionIdObject("2000000000000001")
-			assert.Nil(t, err)
-			sectionName, err := domain.NewSectionNameObject("Section One")
-			assert.Nil(t, err)
-			section := domain.NewSectionOfChapterWithoutAutofieldEntity(*sectionId, *sectionName)
-			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{*section}
-
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
 
 			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
 			assert.NotNil(t, sErr)
@@ -731,9 +678,8 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
 				InsertChapter(testutil.ModifyOnlyUserId(), "0000000000000001", record.ChapterWithoutAutofieldEntry{
-					Name:     "Chapter One",
-					Number:   1,
-					Sections: []record.SectionWithoutAutofieldEntry{},
+					Name:   "Chapter One",
+					Number: 1,
 				}).
 				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
@@ -750,9 +696,8 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
-			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
 
 			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
 			assert.NotNil(t, sErr)
@@ -795,9 +740,8 @@ func TestCreateChapterPaperRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
 				InsertChapter(testutil.ModifyOnlyUserId(), "0000000000000001", record.ChapterWithoutAutofieldEntry{
-					Name:     "Chapter One",
-					Number:   1,
-					Sections: []record.SectionWithoutAutofieldEntry{},
+					Name:   "Chapter One",
+					Number: 1,
 				}).
 				Return("1000000000000001", &record.ChapterEntry{
 					Name:     "Chapter One",
@@ -823,9 +767,8 @@ func TestCreateChapterPaperRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
-			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
 
 			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
 			assert.NotNil(t, sErr)
@@ -841,19 +784,20 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 	maxLengthSectionName := testutil.RandomString(100)
 
 	tt := []struct {
-		name    string
-		chapter record.ChapterWithoutAutofieldEntry
+		name     string
+		chapter  record.ChapterWithoutAutofieldEntry
+		sections []record.SectionWithoutAutofieldEntry
 	}{
 		{
 			name: "should return chapter with valid entry",
 			chapter: record.ChapterWithoutAutofieldEntry{
 				Name:   "Chapter One",
 				Number: 1,
-				Sections: []record.SectionWithoutAutofieldEntry{
-					{
-						Id:   "2000000000000001",
-						Name: "Section One",
-					},
+			},
+			sections: []record.SectionWithoutAutofieldEntry{
+				{
+					Id:   "2000000000000001",
+					Name: "Section One",
 				},
 			},
 		},
@@ -862,11 +806,11 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			chapter: record.ChapterWithoutAutofieldEntry{
 				Name:   maxLengthChapterName,
 				Number: 1,
-				Sections: []record.SectionWithoutAutofieldEntry{
-					{
-						Id:   "2000000000000001",
-						Name: maxLengthSectionName,
-					},
+			},
+			sections: []record.SectionWithoutAutofieldEntry{
+				{
+					Id:   "2000000000000001",
+					Name: maxLengthSectionName,
 				},
 			},
 		},
@@ -877,8 +821,8 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			sectionEntries := make([]record.SectionEntry, len(tc.chapter.Sections))
-			for i, section := range tc.chapter.Sections {
+			sectionEntries := make([]record.SectionEntry, len(tc.sections))
+			for i, section := range tc.sections {
 				sectionEntries[i] = record.SectionEntry{
 					Id:        section.Id,
 					Name:      section.Name,
@@ -915,8 +859,8 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(tc.chapter.Number)
 			assert.Nil(t, err)
 
-			sections := make([]domain.SectionOfChapterWithoutAutofieldEntity, len(tc.chapter.Sections))
-			for i, section := range tc.chapter.Sections {
+			sections := make([]domain.SectionOfChapterWithoutAutofieldEntity, len(tc.sections))
+			for i, section := range tc.sections {
 				sectionId, err := domain.NewSectionIdObject(section.Id)
 				assert.Nil(t, err)
 				sectionName, err := domain.NewSectionNameObject(section.Name)
@@ -925,7 +869,7 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 				sections[i] = *domain.NewSectionOfChapterWithoutAutofieldEntity(*sectionId, *sectionName)
 			}
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, sections)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
 
 			updatedChapter, sErr := s.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
 			updatedSections := updatedChapter.Sections()
@@ -934,9 +878,10 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			assert.Equal(t, "1000000000000001", updatedChapter.Id().Value())
 			assert.Equal(t, tc.chapter.Name, updatedChapter.Name().Value())
 			assert.Equal(t, tc.chapter.Number, updatedChapter.Number().Value())
+			assert.Len(t, updatedSections, len(tc.sections))
 			for i, updatedSection := range updatedSections {
-				assert.Equal(t, tc.chapter.Sections[i].Id, updatedSection.Id().Value())
-				assert.Equal(t, tc.chapter.Sections[i].Name, updatedSection.Name().Value())
+				assert.Equal(t, tc.sections[i].Id, updatedSection.Id().Value())
+				assert.Equal(t, tc.sections[i].Name, updatedSection.Name().Value())
 				assert.Equal(t, testutil.Date(), updatedSection.CreatedAt().Value())
 				assert.Equal(t, testutil.Date(), updatedSection.UpdatedAt().Value())
 			}
@@ -1073,12 +1018,6 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 					record.ChapterWithoutAutofieldEntry{
 						Name:   "Chapter One",
 						Number: 1,
-						Sections: []record.SectionWithoutAutofieldEntry{
-							{
-								Id:   "2000000000000001",
-								Name: "Section One",
-							},
-						},
 					},
 				).
 				Return(&tc.updatedChapter, nil)
@@ -1099,14 +1038,7 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
 
-			sectionId, err := domain.NewSectionIdObject("2000000000000001")
-			assert.Nil(t, err)
-			sectionName, err := domain.NewSectionNameObject("Section One")
-			assert.Nil(t, err)
-			section := domain.NewSectionOfChapterWithoutAutofieldEntity(*sectionId, *sectionName)
-			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{*section}
-
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
 
 			updatedChapter, sErr := s.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
 			assert.NotNil(t, sErr)
@@ -1161,9 +1093,8 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 					"0000000000000001",
 					"1000000000000001",
 					record.ChapterWithoutAutofieldEntry{
-						Name:     "Chapter One",
-						Number:   1,
-						Sections: []record.SectionWithoutAutofieldEntry{},
+						Name:   "Chapter One",
+						Number: 1,
 					},
 				).
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
@@ -1183,9 +1114,8 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(1)
 			assert.Nil(t, err)
-			sections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
 
-			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number)
 
 			updatedChapter, sErr := s.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
 
