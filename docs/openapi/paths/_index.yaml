@@ -16,5 +16,5 @@
   $ref: ./papers/find.yaml
 /api/papers/update:
   $ref: ./papers/update.yaml
-/api/papers/sectionalize:
-  $ref: ./papers/sectionalize.yaml
+/api/graphs/sectionalize:
+  $ref: ./graphs/sectionalize.yaml

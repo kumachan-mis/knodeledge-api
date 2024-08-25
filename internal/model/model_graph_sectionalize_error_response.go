@@ -9,13 +9,13 @@
 
 package model
 
-// PaperSectionalizeErrorResponse - Error Response Body for Paper Sectionalize API
-type PaperSectionalizeErrorResponse struct {
+// GraphSectionalizeErrorResponse - Error Response Body for Graph Sectionalize API
+type GraphSectionalizeErrorResponse struct {
 	User UserOnlyIdError `json:"user,omitempty"`
 
 	Project ProjectOnlyIdError `json:"project,omitempty"`
 
-	Paper PaperOnlyIdError `json:"paper,omitempty"`
+	Chapter ChapterOnlyIdError `json:"chapter,omitempty"`
 
 	Sections []SectionWithoutAutofieldError `json:"sections,omitempty"`
 }

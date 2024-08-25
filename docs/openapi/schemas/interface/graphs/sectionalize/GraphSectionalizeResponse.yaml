@@ -1,0 +1,9 @@
+type: object
+description: Response Body for Graph Sectionalize API
+properties:
+  graphs:
+    type: array
+    items:
+      $ref: ../../../entity/graph/Graph.yaml
+required:
+  - graphs

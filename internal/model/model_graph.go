@@ -9,9 +9,15 @@
 
 package model
 
-// PaperOnlyIdError - Error Message for PaperOnlyId object
-type PaperOnlyIdError struct {
+// Graph - Graph object
+type Graph struct {
 
-	// Error message for paper ID
-	Id string `json:"id,omitempty"`
+	// Auto-generated section ID
+	Id string `json:"id"`
+
+	// Graph name
+	Name string `json:"name"`
+
+	// Graph paragraph
+	Paragraph string `json:"paragraph"`
 }

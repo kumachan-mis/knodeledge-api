@@ -1,7 +1,0 @@
-type: object
-description: Error Message for PaperOnlyId object
-properties:
-  id:
-    type: string
-    description: Error message for paper ID
-    example: "paper id is required, but got ''"

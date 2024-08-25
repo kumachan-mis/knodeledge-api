@@ -9,9 +9,12 @@
 
 package model
 
-// PaperOnlyId - Paper object with only ID
-type PaperOnlyId struct {
+// SectionWithoutContent - Section object in a Chapter object
+type SectionWithoutContent struct {
 
-	// Auto-generated paper ID
+	// Auto-generated section ID
 	Id string `json:"id"`
+
+	// Section name
+	Name string `json:"name"`
 }

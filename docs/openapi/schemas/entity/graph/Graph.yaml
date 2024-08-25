@@ -1,5 +1,5 @@
 type: object
-description: Section object
+description: Graph object
 properties:
   id:
     type: string
@@ -8,16 +8,16 @@ properties:
   name:
     type: string
     maxLength: 100
-    description: Section name
+    description: Graph name
     example: Overview
-  content:
+  paragraph:
     type: string
     maxLength: 40000
-    description: Section content
+    description: Graph paragraph
     example: |
       ## Introduction
       This is the introduction of the paper.
 required:
   - id
   - name
-  - content
+  - paragraph

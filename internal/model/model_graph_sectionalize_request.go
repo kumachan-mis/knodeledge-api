@@ -9,13 +9,13 @@
 
 package model
 
-// PaperSectionalizeRequest - Request Body for Paper Sectionalize API
-type PaperSectionalizeRequest struct {
+// GraphSectionalizeRequest - Request Body for Graph Sectionalize API
+type GraphSectionalizeRequest struct {
 	User UserOnlyId `json:"user"`
 
 	Project ProjectOnlyId `json:"project"`
 
-	Paper PaperOnlyId `json:"paper"`
+	Chapter ChapterOnlyId `json:"chapter"`
 
 	Sections []SectionWithoutAutofield `json:"sections"`
 }
