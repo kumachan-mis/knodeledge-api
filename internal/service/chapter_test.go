@@ -91,7 +91,9 @@ func TestListChaptersValidEntry(t *testing.T) {
 			},
 		}, nil)
 
-	s := service.NewChapterService(r)
+	pr := mock_repository.NewMockPaperRepository(ctrl)
+
+	s := service.NewChapterService(r, pr)
 
 	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 	assert.Nil(t, err)
@@ -166,7 +168,9 @@ func TestListChaptersNoEntry(t *testing.T) {
 		FetchChapters(testutil.ReadOnlyUserId(), "0000000000000001").
 		Return(map[string]record.ChapterEntry{}, nil)
 
-	s := service.NewChapterService(r)
+	pr := mock_repository.NewMockPaperRepository(ctrl)
+
+	s := service.NewChapterService(r, pr)
 
 	userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 	assert.Nil(t, err)
@@ -325,7 +329,9 @@ func TestListChaptersInvalidEntry(t *testing.T) {
 					tc.chapterId: tc.chapter,
 				}, nil)
 
-			s := service.NewChapterService(r)
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+
+			s := service.NewChapterService(r, pr)
 
 			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 			assert.Nil(t, err)
@@ -376,7 +382,9 @@ func TestListChaptersRepositoryError(t *testing.T) {
 				FetchChapters(testutil.ReadOnlyUserId(), "0000000000000001").
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
-			s := service.NewChapterService(r)
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+
+			s := service.NewChapterService(r, pr)
 
 			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
 			assert.Nil(t, err)
@@ -455,7 +463,18 @@ func TestCreateChapterValidEntry(t *testing.T) {
 					UpdatedAt: testutil.Date(),
 				}, nil)
 
-			s := service.NewChapterService(r)
+			paper := record.PaperWithoutAutofieldEntry{Content: ""}
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+			pr.EXPECT().
+				InsertPaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", paper).
+				Return("1000000000000001", &record.PaperEntry{
+					Content:   paper.Content,
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				}, nil)
+
+			s := service.NewChapterService(r, pr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
@@ -631,7 +650,18 @@ func TestCreateChapterInvalidCreatedEntry(t *testing.T) {
 				}).
 				Return("1000000000000001", &tc.createdChapter, nil)
 
-			s := service.NewChapterService(r)
+			paper := record.PaperWithoutAutofieldEntry{Content: ""}
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+			pr.EXPECT().
+				InsertPaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", paper).
+				Return("1000000000000001", &record.PaperEntry{
+					Content:   paper.Content,
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				}, nil)
+
+			s := service.NewChapterService(r, pr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
@@ -707,7 +737,82 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 				}).
 				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
-			s := service.NewChapterService(r)
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+
+			s := service.NewChapterService(r, pr)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+
+			name, err := domain.NewChapterNameObject("Chapter One")
+			assert.Nil(t, err)
+			number, err := domain.NewChapterNumberObject(1)
+			assert.Nil(t, err)
+			sections := &[]domain.SectionWithoutAutofieldEntity{}
+
+			chapter := domain.NewChapterWithoutAutofieldEntity(*name, *number, *sections)
+
+			createdChapter, sErr := s.CreateChapter(*userId, *projectId, *chapter)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Nil(t, createdChapter)
+		})
+	}
+}
+
+func TestCreateChapterPaperRepositoryError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "failed to fetch project",
+			expectedError: "failed to create initial paper: failed to fetch project",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns write failure error",
+			errorCode:     repository.WriteFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to create initial paper: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockChapterRepository(ctrl)
+			r.EXPECT().
+				InsertChapter(testutil.ModifyOnlyUserId(), "0000000000000001", record.ChapterWithoutAutofieldEntry{
+					Name:     "Chapter One",
+					Number:   1,
+					Sections: []record.SectionWithoutAutofieldEntry{},
+				}).
+				Return("1000000000000001", &record.ChapterEntry{
+					Name:     "Chapter One",
+					Number:   1,
+					Sections: []record.SectionEntry{},
+					UserId:   testutil.ModifyOnlyUserId(),
+				}, nil)
+
+			paper := record.PaperWithoutAutofieldEntry{Content: ""}
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+			pr.EXPECT().
+				InsertPaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", paper).
+				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+
+			s := service.NewChapterService(r, pr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
@@ -794,7 +899,9 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 					UpdatedAt: testutil.Date(),
 				}, nil)
 
-			s := service.NewChapterService(r)
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+
+			s := service.NewChapterService(r, pr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
@@ -976,7 +1083,9 @@ func TestUpdateChapterInvalidUpdatedEntry(t *testing.T) {
 				).
 				Return(&tc.updatedChapter, nil)
 
-			s := service.NewChapterService(r)
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+
+			s := service.NewChapterService(r, pr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)
@@ -1059,7 +1168,9 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 				).
 				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
 
-			s := service.NewChapterService(r)
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+
+			s := service.NewChapterService(r, pr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.Nil(t, err)

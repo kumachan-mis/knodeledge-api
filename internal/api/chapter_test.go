@@ -1041,7 +1041,8 @@ func setupChapterRouter() *gin.Engine {
 
 	client := db.FirestoreClient()
 	r := repository.NewChapterRepository(*client)
-	s := service.NewChapterService(r)
+	pr := repository.NewPaperRepository(*client)
+	s := service.NewChapterService(r, pr)
 
 	uc := usecase.NewChapterUseCase(s)
 	api := api.NewChapterApi(uc)
