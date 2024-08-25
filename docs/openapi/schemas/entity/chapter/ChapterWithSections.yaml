@@ -18,7 +18,7 @@ properties:
   sections:
     type: array
     items:
-      $ref: ../section/SectionWithoutContent.yaml
+      $ref: ../section/SectionOfChapter.yaml
 required:
   - id
   - name

@@ -65,9 +65,9 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 
 	chapters := make([]model.ChapterWithSections, len(entities))
 	for i, entity := range entities {
-		sections := make([]model.SectionWithoutContent, len(entity.Sections()))
+		sections := make([]model.SectionOfChapter, len(entity.Sections()))
 		for j, section := range entity.Sections() {
-			sections[j] = model.SectionWithoutContent{
+			sections[j] = model.SectionOfChapter{
 				Id:   section.Id().Value(),
 				Name: section.Name().Value(),
 			}
@@ -154,7 +154,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 			Id:       chapterEntity.Id().Value(),
 			Name:     chapterEntity.Name().Value(),
 			Number:   int32(chapterEntity.Number().Value()),
-			Sections: []model.SectionWithoutContent{},
+			Sections: []model.SectionOfChapter{},
 		},
 	}, nil
 }
@@ -234,7 +234,7 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			Number:   int32(entity.Number().Value()),
-			Sections: []model.SectionWithoutContent{},
+			Sections: []model.SectionOfChapter{},
 		},
 	}, nil
 }

@@ -9,8 +9,8 @@
 
 package model
 
-// SectionWithoutContent - Section object in a Chapter object
-type SectionWithoutContent struct {
+// SectionOfChapter - Section object in a Chapter object
+type SectionOfChapter struct {
 
 	// Auto-generated section ID
 	Id string `json:"id"`
