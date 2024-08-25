@@ -3,8 +3,5 @@ description: Response Body for Chapter Create API
 properties:
   chapter:
     $ref: ../../../entity/chapter/ChapterWithSections.yaml
-  paper:
-    $ref: ../../../entity/paper/Paper.yaml
 required:
   - chapter
-  - paper

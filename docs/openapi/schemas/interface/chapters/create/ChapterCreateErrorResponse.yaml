@@ -11,5 +11,3 @@ properties:
     $ref: ../../../entity/project/ProjectOnlyIdError.yaml
   chapter:
     $ref: ../../../entity/chapter/ChapterWithoutAutofieldError.yaml
-  paper:
-    $ref: ../../../entity/paper/PaperWithoutAutofieldError.yaml

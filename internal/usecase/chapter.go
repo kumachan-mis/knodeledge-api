@@ -18,12 +18,11 @@ type ChapterUseCase interface {
 }
 
 type chapterUseCase struct {
-	service      service.ChapterService
-	paperService service.PaperService
+	service service.ChapterService
 }
 
-func NewChapterUseCase(service service.ChapterService, paperService service.PaperService) ChapterUseCase {
-	return chapterUseCase{service: service, paperService: paperService}
+func NewChapterUseCase(service service.ChapterService) ChapterUseCase {
+	return chapterUseCase{service: service}
 }
 
 func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
@@ -92,7 +91,6 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	chapterName, chapterNameErr := domain.NewChapterNameObject(req.Chapter.Name)
 	chapterNumber, chapterNumberErr := domain.NewChapterNumberObject(int(req.Chapter.Number))
 	chapterSections := &[]domain.SectionOfChapterWithoutAutofieldEntity{}
-	paperContent, paperContentErr := domain.NewPaperContentObject(req.Paper.Content)
 
 	userIdMsg := ""
 	if userIdErr != nil {
@@ -110,13 +108,9 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	if chapterNumberErr != nil {
 		chapterNumberMsg = chapterNumberErr.Error()
 	}
-	paperContentMsg := ""
-	if paperContentErr != nil {
-		paperContentMsg = paperContentErr.Error()
-	}
 
 	if userIdErr != nil || projectIdErr != nil ||
-		chapterNameErr != nil || chapterNumberErr != nil || paperContentErr != nil {
+		chapterNameErr != nil || chapterNumberErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.ChapterCreateErrorResponse{
@@ -129,9 +123,6 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 				Chapter: model.ChapterWithoutAutofieldError{
 					Name:   chapterNameMsg,
 					Number: chapterNumberMsg,
-				},
-				Paper: model.PaperWithoutAutofieldError{
-					Content: paperContentMsg,
 				},
 			},
 		)
@@ -159,33 +150,12 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 		)
 	}
 
-	chapterId := chapterEntity.Id()
-	paper := domain.NewPaperWithoutAutofieldEntity(*paperContent)
-
-	paperEntity, sErr := uc.paperService.CreatePaper(*userId, *projectId, *chapterId, *paper)
-	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
-			NotFoundError,
-			sErr.Unwrap().Error(),
-		)
-	}
-	if sErr != nil {
-		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
-			InternalErrorPanic,
-			sErr.Unwrap().Error(),
-		)
-	}
-
 	return &model.ChapterCreateResponse{
 		Chapter: model.ChapterWithSections{
 			Id:       chapterEntity.Id().Value(),
 			Name:     chapterEntity.Name().Value(),
 			Number:   int32(chapterEntity.Number().Value()),
 			Sections: []model.SectionOfChapter{},
-		},
-		Paper: model.Paper{
-			Id:      paperEntity.Id().Value(),
-			Content: paperEntity.Content().Value(),
 		},
 	}, nil
 }

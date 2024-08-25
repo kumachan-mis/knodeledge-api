@@ -59,11 +59,11 @@ func main() {
 	paperRepository := repository.NewPaperRepository(*client)
 
 	projectService := service.NewProjectService(projectRepository)
-	chapterService := service.NewChapterService(chapterRepository)
+	chapterService := service.NewChapterService(chapterRepository, paperRepository)
 	paperService := service.NewPaperService(paperRepository)
 
 	projectUseCase := usecase.NewProjectUseCase(projectService)
-	chapterUseCase := usecase.NewChapterUseCase(chapterService, paperService)
+	chapterUseCase := usecase.NewChapterUseCase(chapterService)
 	paperUseCase := usecase.NewPaperUseCase(paperService)
 
 	projectApi := api.NewProjectApi(projectUseCase)
