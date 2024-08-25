@@ -116,9 +116,11 @@ func TestInsertGraphsValidEntry(t *testing.T) {
 	}, "\n")
 	entries := []record.GraphWithoutAutofieldEntry{
 		{
+			Name:      "Introduction",
 			Paragraph: paragraph1,
 		},
 		{
+			Name:      "What is note apps?",
 			Paragraph: paragraph2,
 		},
 	}
@@ -134,6 +136,7 @@ func TestInsertGraphsValidEntry(t *testing.T) {
 	id := ids[0]
 	createdEntry := createdEntries[0]
 	assert.NotEmpty(t, id)
+	assert.Equal(t, "Introduction", createdEntry.Name)
 	assert.Equal(t, paragraph1, createdEntry.Paragraph)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), createdEntry.UserId)
 	assert.Less(t, now.Sub(createdEntry.CreatedAt), time.Second)
@@ -142,6 +145,7 @@ func TestInsertGraphsValidEntry(t *testing.T) {
 	id = ids[1]
 	createdEntry = createdEntries[1]
 	assert.NotEmpty(t, id)
+	assert.Equal(t, "What is note apps?", createdEntry.Name)
 	assert.Equal(t, paragraph2, createdEntry.Paragraph)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), createdEntry.UserId)
 	assert.Less(t, now.Sub(createdEntry.CreatedAt), time.Second)
@@ -186,6 +190,7 @@ func TestInsertGraphProjectOrChapterNotFound(t *testing.T) {
 
 			id, createdPaper, rErr := r.InsertGraphs(tc.userId, tc.projectId, tc.chapterId, []record.GraphWithoutAutofieldEntry{
 				{
+					Name:      "Section Name",
 					Paragraph: "paragraph",
 				},
 			})

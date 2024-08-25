@@ -114,15 +114,20 @@ func (r graphRepository) InsertGraphs(
 			return nil, nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %v", err)
 		}
 
-		res[i] = *r.valuesToEntry(values, userId)
+		res[i] = *r.valuesToEntry(values, entries[i].Name, userId)
 	}
 
 	return ids, res, nil
 }
 
-func (r graphRepository) valuesToEntry(values document.GraphValues, userId string) *record.GraphEntry {
+func (r graphRepository) valuesToEntry(
+	values document.GraphValues,
+	name string,
+	userId string,
+) *record.GraphEntry {
 	return &record.GraphEntry{
 		Paragraph: values.Paragraph,
+		Name:      name,
 		UserId:    userId,
 		CreatedAt: values.CreatedAt,
 		UpdatedAt: values.UpdatedAt,
