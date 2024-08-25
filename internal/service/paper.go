@@ -14,12 +14,6 @@ type PaperService interface {
 		projectId domain.ProjectIdObject,
 		chapterId domain.ChapterIdObject,
 	) (*domain.PaperEntity, *Error)
-	CreatePaper(
-		userId domain.UserIdObject,
-		projectId domain.ProjectIdObject,
-		chapterId domain.ChapterIdObject,
-		paper domain.PaperWithoutAutofieldEntity,
-	) (*domain.PaperEntity, *Error)
 	UpdatePaper(
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
@@ -50,32 +44,6 @@ func (s paperService) FindPaper(
 	}
 
 	return s.entryToEntity(chapterId.Value(), *entry)
-}
-
-func (s paperService) CreatePaper(
-	userId domain.UserIdObject,
-	projectId domain.ProjectIdObject,
-	chapterId domain.ChapterIdObject,
-	paper domain.PaperWithoutAutofieldEntity,
-) (*domain.PaperEntity, *Error) {
-	entryWithoutAutofield := record.PaperWithoutAutofieldEntry{
-		Content: paper.Content().Value(),
-	}
-
-	key, entry, rErr := s.repository.InsertPaper(
-		userId.Value(),
-		projectId.Value(),
-		chapterId.Value(),
-		entryWithoutAutofield,
-	)
-	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return nil, Errorf(NotFoundError, "failed to create paper: %w", rErr.Unwrap())
-	}
-	if rErr != nil {
-		return nil, Errorf(RepositoryFailurePanic, "failed to insert paper: %w", rErr.Unwrap())
-	}
-
-	return s.entryToEntity(key, *entry)
 }
 
 func (s paperService) UpdatePaper(
