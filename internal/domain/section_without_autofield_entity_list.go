@@ -11,7 +11,7 @@ func NewSectionWithoutAutofieldEntityList(
 	sections []SectionWithoutAutofieldEntity,
 ) (*SectionWithoutAutofieldEntityList, error) {
 	if len(sections) == 0 {
-		return nil, fmt.Errorf("sections are required, but got '%v'", sections)
+		return nil, fmt.Errorf("sections are required, but got empty list")
 	}
 	if len(sections) > 20 {
 		return nil, fmt.Errorf("sections must be less than or equal to 20, but got '%v'", len(sections))

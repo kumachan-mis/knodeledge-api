@@ -17,5 +17,5 @@ type GraphSectionalizeErrorResponse struct {
 
 	Chapter ChapterOnlyIdError `json:"chapter,omitempty"`
 
-	Sections []SectionWithoutAutofieldError `json:"sections,omitempty"`
+	Sections SectionWithoutAutofieldListError `json:"sections,omitempty"`
 }

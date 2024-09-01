@@ -8,6 +8,4 @@ properties:
   chapter:
     $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
   sections:
-    type: array
-    items:
-      $ref: ../../../entity/section/SectionWithoutAutofieldError.yaml
+    $ref: ../../../entity/section/SectionWithoutAutofieldListError.yaml
