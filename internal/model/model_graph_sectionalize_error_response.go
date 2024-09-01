@@ -11,6 +11,10 @@ package model
 
 // GraphSectionalizeErrorResponse - Error Response Body for Graph Sectionalize API
 type GraphSectionalizeErrorResponse struct {
+
+	// Error message when request body format is invalid
+	Message string `json:"message,omitempty"`
+
 	User UserOnlyIdError `json:"user,omitempty"`
 
 	Project ProjectOnlyIdError `json:"project,omitempty"`

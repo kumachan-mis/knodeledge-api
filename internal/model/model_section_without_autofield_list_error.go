@@ -9,6 +9,7 @@
 
 package model
 
+// SectionWithoutAutofieldListError - Error Message for SectionWithoutAutofield list
 type SectionWithoutAutofieldListError struct {
 
 	// Error message for overall of sections
