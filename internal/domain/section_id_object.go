@@ -16,3 +16,7 @@ func NewSectionIdObject(sectionId string) (*SectionIdObject, error) {
 func (o *SectionIdObject) Value() string {
 	return o.value
 }
+
+func (o *SectionIdObject) Len() int {
+	return len(o.value)
+}

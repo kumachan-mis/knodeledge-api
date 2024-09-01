@@ -11,6 +11,7 @@ properties:
     type: array
     items:
       $ref: ../../../entity/section/SectionWithoutAutofield.yaml
+    maxItems: 20
 required:
   - user
   - project
