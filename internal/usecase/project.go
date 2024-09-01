@@ -46,14 +46,12 @@ func (uc projectUseCase) ListProjects(req model.ProjectListRequest) (
 	}
 
 	projects := make([]model.Project, len(entities))
-	i := 0
-	for _, entity := range entities {
+	for i, entity := range entities {
 		projects[i] = model.Project{
 			Id:          entity.Id().Value(),
 			Name:        entity.Name().Value(),
 			Description: entity.Description().Value(),
 		}
-		i++
 	}
 	return &model.ProjectListResponse{Projects: projects}, nil
 }
