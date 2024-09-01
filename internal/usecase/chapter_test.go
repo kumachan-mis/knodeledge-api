@@ -239,15 +239,6 @@ func TestCreateChapterValidEntity(t *testing.T) {
 				Number: int32(1),
 			},
 		},
-		{
-			name:      "should create chapter with max length paper content",
-			userId:    testutil.ReadOnlyUserId(),
-			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
-				Name:   "Chapter 1",
-				Number: int32(1),
-			},
-		},
 	}
 
 	for _, tc := range tt {
@@ -484,7 +475,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 		chapter   model.ChapterWithoutAutofield
 	}{
 		{
-			name:      "shold update chapter",
+			name:      "should update chapter",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
