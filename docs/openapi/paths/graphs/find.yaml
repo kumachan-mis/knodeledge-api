@@ -1,32 +1,32 @@
 post:
   tags:
-    - Chapters
-  operationId: chapters-update
-  summary: Update chapter
+    - Graphs
+  operationId: graphs-find
+  summary: Find graph
   requestBody:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/interface/chapters/update/ChapterUpdateRequest.yaml
+          $ref: ../../schemas/interface/graphs/find/GraphFindRequest.yaml
   responses:
     "200":
-      description: OK - Returns updated chapter
+      description: OK - Returns found graph
       content:
         application/json:
           schema:
-            $ref: ../../schemas/interface/chapters/update/ChapterUpdateResponse.yaml
+            $ref: ../../schemas/interface/graphs/find/GraphFindResponse.yaml
     "400":
       description: Bad Request - Invalid request
       content:
         application/json:
           schema:
-            $ref: ../../schemas/interface/chapters/update/ChapterUpdateErrorResponse.yaml
+            $ref: ../../schemas/interface/graphs/find/GraphFindErrorResponse.yaml
     "404":
-      description: Not Found - Chapter not found or not authorized
+      description: Not Found - Graph not found or not authorized
       content:
         application/json:
           schema:
-            $ref: ../../schemas/interface/chapters/update/ChapterUpdateErrorResponse.yaml
+            $ref: ../../schemas/interface/graphs/find/GraphFindErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:

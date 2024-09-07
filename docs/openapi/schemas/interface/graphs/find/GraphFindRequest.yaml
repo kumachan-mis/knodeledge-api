@@ -1,0 +1,16 @@
+type: object
+description: Request Body for Graph Find API
+properties:
+  user:
+    $ref: ../../../entity/user/UserOnlyId.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyId.yaml
+  chapter:
+    $ref: ../../../entity/chapter/ChapterOnlyId.yaml
+  graph:
+    $ref: ../../../entity/graph/GraphOnlyId.yaml
+required:
+  - user
+  - project
+  - chapter
+  - graph

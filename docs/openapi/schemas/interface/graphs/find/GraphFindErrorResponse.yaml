@@ -1,5 +1,5 @@
 type: object
-description: Error Response Body for Paper Update API
+description: Error Response Body for Graph Find API
 properties:
   message:
     type: string
@@ -9,5 +9,7 @@ properties:
     $ref: ../../../entity/user/UserOnlyIdError.yaml
   project:
     $ref: ../../../entity/project/ProjectOnlyIdError.yaml
-  paper:
-    $ref: ../../../entity/paper/PaperError.yaml
+  chapter:
+    $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
+  graph:
+    $ref: ../../../entity/graph/GraphOnlyIdError.yaml
