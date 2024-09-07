@@ -1,0 +1,9 @@
+type: object
+description: Graph object with only ID
+properties:
+  id:
+    type: string
+    description: Auto-generated graph ID
+    example: 123e4567-e89b-12d3-a456-426614174000
+required:
+  - id

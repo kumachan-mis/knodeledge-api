@@ -1,0 +1,15 @@
+type: object
+description: Error Message for Graph object
+properties:
+  id:
+    type: string
+    description: Error message for graph ID
+    example: "graph id is required, but got ''"
+  name:
+    type: string
+    description: Error message for graph name
+    example: graph name is required, but got ''
+  paragraph:
+    type: string
+    description: Error message for graph paragraph
+    example: graph paragraph must be less than or equal to 40000 bytes

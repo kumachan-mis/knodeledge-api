@@ -1,0 +1,7 @@
+type: object
+description: Response Body for Graph Update API
+properties:
+  graph:
+    $ref: ../../../entity/graph/Graph.yaml
+required:
+  - graph
