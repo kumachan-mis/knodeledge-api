@@ -1,0 +1,23 @@
+type: object
+description: Graph object
+properties:
+  id:
+    type: string
+    description: Auto-generated section ID
+    example: 123e4567-e89b-12d3-a456-426614174000
+  name:
+    type: string
+    maxLength: 100
+    description: Graph name
+    example: Overview
+  paragraph:
+    type: string
+    maxLength: 40000
+    description: Graph paragraph
+    example: |
+      ## Introduction
+      This is the introduction of the paper.
+required:
+  - id
+  - name
+  - paragraph

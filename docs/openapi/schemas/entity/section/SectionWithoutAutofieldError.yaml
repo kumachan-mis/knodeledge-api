@@ -5,3 +5,7 @@ properties:
     type: string
     description: Error message for section name
     example: section name is required, but got ''
+  content:
+    type: string
+    description: Error message for section content
+    example: section content is required, but got ''

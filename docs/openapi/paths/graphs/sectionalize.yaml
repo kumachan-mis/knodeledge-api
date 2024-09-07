@@ -1,0 +1,35 @@
+post:
+  tags:
+    - Graphs
+  operationId: graphs-sectionalize
+  summary: Sectionalize into graphs
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/interface/graphs/sectionalize/GraphSectionalizeRequest.yaml
+  responses:
+    "200":
+      description: OK - Returns graphs from sections
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/graphs/sectionalize/GraphSectionalizeResponse.yaml
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/graphs/sectionalize/GraphSectionalizeErrorResponse.yaml
+    "404":
+      description: Not Found - Graph not found or not authorized
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/graphs/sectionalize/GraphSectionalizeErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

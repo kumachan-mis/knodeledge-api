@@ -9,9 +9,15 @@
 
 package model
 
-// PaperOnlyId - Paper object with only ID
-type PaperOnlyId struct {
+// Graph - Graph object
+type Graph struct {
 
-	// Auto-generated paper ID
+	// Auto-generated section ID
 	Id string `json:"id"`
+
+	// Graph name
+	Name string `json:"name"`
+
+	// Graph paragraph
+	Paragraph string `json:"paragraph"`
 }

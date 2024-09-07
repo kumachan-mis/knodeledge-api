@@ -1,18 +1,19 @@
 type: object
-description: Request Body for Paper Sectionalize API
+description: Request Body for Graph Sectionalize API
 properties:
   user:
     $ref: ../../../entity/user/UserOnlyId.yaml
   project:
     $ref: ../../../entity/project/ProjectOnlyId.yaml
-  paper:
-    $ref: ../../../entity/paper/PaperOnlyId.yaml
+  chapter:
+    $ref: ../../../entity/chapter/ChapterOnlyId.yaml
   sections:
     type: array
     items:
       $ref: ../../../entity/section/SectionWithoutAutofield.yaml
+    maxItems: 20
 required:
   - user
   - project
-  - paper
+  - chapter
   - sections

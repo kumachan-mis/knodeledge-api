@@ -57,14 +57,17 @@ func main() {
 	projectRepository := repository.NewProjectRepository(*client)
 	chapterRepository := repository.NewChapterRepository(*client)
 	paperRepository := repository.NewPaperRepository(*client)
+	graphRepository := repository.NewGraphRepository(*client)
 
 	projectService := service.NewProjectService(projectRepository)
 	chapterService := service.NewChapterService(chapterRepository, paperRepository)
 	paperService := service.NewPaperService(paperRepository)
+	graphService := service.NewGraphService(graphRepository, chapterRepository)
 
 	projectUseCase := usecase.NewProjectUseCase(projectService)
 	chapterUseCase := usecase.NewChapterUseCase(chapterService)
 	paperUseCase := usecase.NewPaperUseCase(paperService)
+	graphUseCase := usecase.NewGraphUseCase(graphService)
 
 	projectApi := api.NewProjectApi(projectUseCase)
 	router.POST("/api/projects/list", projectApi.HandleList)
@@ -80,6 +83,9 @@ func main() {
 	paperApi := api.NewPaperApi(paperUseCase)
 	router.POST("/api/papers/find", paperApi.HandleFind)
 	router.POST("/api/papers/update", paperApi.HandleUpdate)
+
+	graphApi := api.NewGraphApi(graphUseCase)
+	router.POST("/api/graphs/sectionalize", graphApi.HandleSectionalize)
 
 	err = router.Run(":8080")
 	if err != nil {

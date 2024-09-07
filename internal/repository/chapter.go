@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"reflect"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
@@ -35,6 +36,12 @@ type ChapterRepository interface {
 		chapterId string,
 		entry record.ChapterWithoutAutofieldEntry,
 	) (*record.ChapterEntry, *Error)
+	UpdateChapterSections(
+		userId string,
+		projectId string,
+		chapterId string,
+		entries []record.SectionWithoutAutofieldEntry,
+	) ([]record.SectionEntry, *Error)
 }
 
 type chapterRepository struct {
@@ -148,20 +155,12 @@ func (r chapterRepository) InsertChapter(
 		return "", nil, Errorf(InvalidArgument, "chapter number is too large")
 	}
 
-	sections := make([]map[string]any, len(entry.Sections))
-	for i, sectionEntry := range entry.Sections {
-		sections[i] = map[string]any{
-			"id":   sectionEntry.Id,
-			"name": sectionEntry.Name,
-		}
-	}
-
 	ref, _, err := r.client.Collection(ProjectCollection).
 		Doc(projectId).
 		Collection(ChapterCollection).
 		Add(db.FirestoreContext(), map[string]any{
 			"name":      entry.Name,
-			"sections":  sections,
+			"sections":  []map[string]any{},
 			"createdAt": firestore.ServerTimestamp,
 			"updatedAt": firestore.ServerTimestamp,
 		})
@@ -212,21 +211,12 @@ func (r chapterRepository) UpdateChapter(
 		return nil, Errorf(InvalidArgument, "chapter number is too large")
 	}
 
-	sections := make([]map[string]any, len(entry.Sections))
-	for i, sectionEntry := range entry.Sections {
-		sections[i] = map[string]any{
-			"id":   sectionEntry.Id,
-			"name": sectionEntry.Name,
-		}
-	}
-
 	_, err := r.client.Collection(ProjectCollection).
 		Doc(projectId).
 		Collection(ChapterCollection).
 		Doc(chapterId).
 		Update(db.FirestoreContext(), []firestore.Update{
 			{Path: "name", Value: entry.Name},
-			{Path: "sections", Value: sections},
 			{Path: "updatedAt", Value: firestore.ServerTimestamp},
 		})
 	if err != nil {
@@ -277,6 +267,60 @@ func (r chapterRepository) UpdateChapter(
 	return r.valuesToEntry(values, entry.Number, userId), nil
 }
 
+func (r chapterRepository) UpdateChapterSections(
+	userId string,
+	projectId string,
+	chapterId string,
+	entries []record.SectionWithoutAutofieldEntry,
+) ([]record.SectionEntry, *Error) {
+	_, rErr := r.projectValues(userId, projectId)
+	if rErr != nil {
+		return nil, rErr
+	}
+
+	sections := make([]map[string]any, len(entries))
+	for i, sectionEntry := range entries {
+		sections[i] = map[string]any{
+			"id":   sectionEntry.Id,
+			"name": sectionEntry.Name,
+		}
+	}
+
+	_, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Update(db.FirestoreContext(), []firestore.Update{
+			{Path: "sections", Value: sections},
+			{Path: "updatedAt", Value: firestore.ServerTimestamp},
+		})
+	if err != nil {
+		return nil, Errorf(NotFoundError, "failed to update sections of chapter")
+	}
+
+	snapshot, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to fetch updated chapter")
+	}
+
+	var values document.ChapterValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	sectionEntries := make([]record.SectionEntry, len(values.Sections))
+	for i, sectionValues := range values.Sections {
+		sectionEntries[i] = *r.sectionValuesToEntry(sectionValues, userId, values.CreatedAt, values.UpdatedAt)
+	}
+
+	return sectionEntries, nil
+}
+
 func (r chapterRepository) projectValues(userId string, projectId string) (*document.ProjectValues, *Error) {
 	ref := r.client.Collection(ProjectCollection).
 		Doc(projectId)
@@ -325,5 +369,20 @@ func (r chapterRepository) valuesToEntry(
 		UserId:    userId,
 		CreatedAt: values.CreatedAt,
 		UpdatedAt: values.UpdatedAt,
+	}
+}
+
+func (r chapterRepository) sectionValuesToEntry(
+	values document.SectionValues,
+	userId string,
+	createdAt time.Time,
+	updatedAt time.Time,
+) *record.SectionEntry {
+	return &record.SectionEntry{
+		Id:        values.Id,
+		Name:      values.Name,
+		UserId:    userId,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
 	}
 }

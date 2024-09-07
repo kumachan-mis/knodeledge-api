@@ -41,8 +41,8 @@ func TestListChaptersValidEntity(t *testing.T) {
 	sectionUpdatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	section1 := domain.NewSectionEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
-	sections := &[]domain.SectionEntity{*section1}
+	section1 := domain.NewSectionOfChapterEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
+	sections := &[]domain.SectionOfChapterEntity{*section1}
 
 	chapter1 := domain.NewChapterEntity(*id, *name, *number, *sections, *createdAt, *updatedAt)
 
@@ -66,8 +66,8 @@ func TestListChaptersValidEntity(t *testing.T) {
 	sectionUpdatedAt, err = domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	section1 = domain.NewSectionEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
-	sections = &[]domain.SectionEntity{*section1}
+	section1 = domain.NewSectionOfChapterEntity(*sectionId, *sectionName, *sectionCreatedAt, *sectionUpdatedAt)
+	sections = &[]domain.SectionOfChapterEntity{*section1}
 
 	chapter2 := domain.NewChapterEntity(*id, *name, *number, *sections, *createdAt, *updatedAt)
 
@@ -239,15 +239,6 @@ func TestCreateChapterValidEntity(t *testing.T) {
 				Number: int32(1),
 			},
 		},
-		{
-			name:      "should create chapter with max length paper content",
-			userId:    testutil.ReadOnlyUserId(),
-			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
-				Name:   "Chapter 1",
-				Number: int32(1),
-			},
-		},
 	}
 
 	for _, tc := range tt {
@@ -263,7 +254,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
 			assert.Nil(t, err)
-			sections := &[]domain.SectionEntity{}
+			sections := &[]domain.SectionOfChapterEntity{}
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
@@ -278,7 +269,6 @@ func TestCreateChapterValidEntity(t *testing.T) {
 					assert.Equal(t, tc.projectId, projectId.Value())
 					assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
 					assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
-					assert.Len(t, chapter.Sections(), 0)
 				}).
 				Return(chapter, nil)
 
@@ -485,7 +475,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 		chapter   model.ChapterWithoutAutofield
 	}{
 		{
-			name:      "shold update chapter",
+			name:      "should update chapter",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
@@ -519,7 +509,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 			assert.Nil(t, err)
 			number, err := domain.NewChapterNumberObject(int(tc.chapter.Number))
 			assert.Nil(t, err)
-			sections := &[]domain.SectionEntity{}
+			sections := &[]domain.SectionOfChapterEntity{}
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
@@ -535,7 +525,6 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 					assert.Equal(t, tc.chapterId, chapterId.Value())
 					assert.Equal(t, tc.chapter.Name, chapter.Name().Value())
 					assert.Equal(t, int(tc.chapter.Number), chapter.Number().Value())
-					assert.Len(t, chapter.Sections(), 0)
 				}).
 				Return(chapter, nil)
 

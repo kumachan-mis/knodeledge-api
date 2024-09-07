@@ -1,24 +1,24 @@
 package domain
 
 type SectionWithoutAutofieldEntity struct {
-	id   SectionIdObject
-	name SectionNameObject
+	name    SectionNameObject
+	content SectionContentObject
 }
 
 func NewSectionWithoutAutofieldEntity(
-	id SectionIdObject,
 	name SectionNameObject,
+	content SectionContentObject,
 ) *SectionWithoutAutofieldEntity {
 	return &SectionWithoutAutofieldEntity{
-		id:   id,
-		name: name,
+		name:    name,
+		content: content,
 	}
-}
-
-func (e *SectionWithoutAutofieldEntity) Id() *SectionIdObject {
-	return &e.id
 }
 
 func (e *SectionWithoutAutofieldEntity) Name() *SectionNameObject {
 	return &e.name
+}
+
+func (e *SectionWithoutAutofieldEntity) Content() *SectionContentObject {
+	return &e.content
 }

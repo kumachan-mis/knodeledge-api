@@ -1,9 +1,0 @@
-type: object
-description: Response Body for Paper Sectionalize API
-properties:
-  sections:
-    type: array
-    items:
-      $ref: ../../../entity/section/Section.yaml
-required:
-  - sections

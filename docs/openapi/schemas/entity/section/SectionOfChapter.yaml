@@ -1,5 +1,5 @@
 type: object
-description: Section object
+description: Section object in a Chapter object
 properties:
   id:
     type: string

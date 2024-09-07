@@ -9,12 +9,7 @@
 
 package model
 
-// Section - Section object
-type Section struct {
-
-	// Auto-generated section ID
-	Id string `json:"id"`
-
-	// Section name
-	Name string `json:"name"`
+// GraphSectionalizeResponse - Response Body for Graph Sectionalize API
+type GraphSectionalizeResponse struct {
+	Graphs []Graph `json:"graphs"`
 }

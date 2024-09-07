@@ -1,0 +1,11 @@
+type: object
+description: Error Message for SectionWithoutAutofield list
+properties:
+  message:
+    type: string
+    description: Error message for overall of sections
+    example: sections is required, but got empty list
+  items:
+    type: array
+    items:
+      $ref: ./SectionWithoutAutofieldError.yaml
