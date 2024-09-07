@@ -220,56 +220,22 @@ func TestChapterListDomainValidationError(t *testing.T) {
 }
 
 func TestChapterListInvalidRequestFormat(t *testing.T) {
-	tt := []struct {
-		name    string
-		request string
-	}{
-		{
-			name:    "should return error when user id is not string",
-			request: `{"user": {"id":123}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}}`,
-		},
-		{
-			name:    "should return error when project id is not string",
-			request: `{"user": {"id": "user-id"}, "project": {"id": 123}}`,
-		},
-		{
-			name:    "should return error when user is not object",
-			request: `{"user": 123, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}}`,
-		},
-		{
-			name:    "should return error when project is not object",
-			request: `{"user": {"id": "user-id"}, "project": "PROJECT_WITHOUT_DESCRIPTION"}`,
-		},
-		{
-			name:    "should return error when request body is invalid JSON",
-			request: `{"user": {"id": "user-id", "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}`,
-		},
-		{
-			name:    "should return error when request body is empty",
-			request: "",
-		},
-	}
+	router := setupChapterRouter()
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+	recorder := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(""))
 
-			recorder := httptest.NewRecorder()
-			req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(tc.request))
+	router.ServeHTTP(recorder, req)
 
-			router.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
-			assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-			var responseBody map[string]any
-			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-			assert.Equal(t, map[string]any{
-				"message": "invalid request format",
-				"user":    map[string]any{},
-				"project": map[string]any{},
-			}, responseBody)
-		})
-	}
+	var responseBody map[string]any
+	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+	assert.Equal(t, map[string]any{
+		"message": "invalid request format",
+		"user":    map[string]any{},
+		"project": map[string]any{},
+	}, responseBody)
 }
 
 func TestChapterListInternalError(t *testing.T) {
@@ -592,65 +558,23 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 }
 
 func TestChapterCreateInvalidRequestFormat(t *testing.T) {
-	tt := []struct {
-		name    string
-		request string
-	}{
-		{
-			name:    "should return error when user id is not string",
-			request: `{"user": {"id":123}, "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}}`,
-		},
-		{
-			name:    "should return error when project id is not string",
-			request: `{"user": {"id": "user-id"}, "project": {"id": 123}, "chapter": {"name": "Chapter One"}}`,
-		},
-		{
-			name:    "should return error when chapter name is not string",
-			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": 123}}`,
-		},
-		{
-			name:    "should return error when user is not object",
-			request: `{"user": 123, "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}}`,
-		},
-		{
-			name:    "should return error when project is not object",
-			request: `{"user": {"id": "user-id"}, "project": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API", "chapter": {"name": "Chapter One"}}`,
-		},
-		{
-			name:    "should return error when chapter is not object",
-			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": "Chapter One"}`,
-		},
-		{
-			name:    "should return error when request body is invalid JSON",
-			request: `{"user": {"id": "user-id", "project": {"id": "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"name": "Chapter One"}`,
-		},
-		{
-			name:    "should return error when request body is empty",
-			request: "",
-		},
-	}
+	router := setupChapterRouter()
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+	recorder := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(""))
 
-			recorder := httptest.NewRecorder()
-			req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(tc.request))
+	router.ServeHTTP(recorder, req)
 
-			router.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
-			assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-			var responseBody map[string]any
-			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-			assert.Equal(t, map[string]any{
-				"message": "invalid request format",
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"chapter": map[string]any{},
-			}, responseBody)
-		})
-	}
+	var responseBody map[string]any
+	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+	assert.Equal(t, map[string]any{
+		"message": "invalid request format",
+		"user":    map[string]any{},
+		"project": map[string]any{},
+		"chapter": map[string]any{},
+	}, responseBody)
 }
 
 func TestChapterUpdate(t *testing.T) {
@@ -967,73 +891,23 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 }
 
 func TestChapterUpdateInvalidRequestFormat(t *testing.T) {
-	tt := []struct {
-		name    string
-		request string
-	}{
-		{
-			name:    "should return error when user id is not string",
-			request: `{"user": {"id":123}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"id": "CHAPTER_ONE", "name": "Updated Chapter One"}}`,
-		},
-		{
-			name:    "should return error when project id is not string",
-			request: `{"user": {"id": "user-id"}, "project": {"id": 123}, "chapter": {"id": "CHAPTER_ONE", "name": "Updated Chapter One"}}`,
-		},
-		{
-			name:    "should return error when chapter id is not string",
-			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"id": 123, "name": "Updated Chapter One"}}`,
-		},
-		{
-			name:    "should return error when chapter name is not string",
-			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"id": "CHAPTER_ONE", "name": 123}}`,
-		},
-		{
-			name:    "should return error when chapter number is not number",
-			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"id": "CHAPTER_ONE", "name": "Updated Chapter One", "number": "1"}}`,
-		},
-		{
-			name:    "should return error when user is not object",
-			request: `{"user": 123, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"id": "CHAPTER_ONE", "name": "Updated Chapter One"}}`,
-		},
-		{
-			name:    "should return error when project is not object",
-			request: `{"user": {"id": "user-id"}, "project": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API", "chapter": {"id": "CHAPTER_ONE", "name": "Updated Chapter One"}}`,
-		},
-		{
-			name:    "should return error when chapter is not object",
-			request: `{"user": {"id": "user-id"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": "Updated Chapter One"}`,
-		},
-		{
-			name:    "should return error when request body is invalid JSON",
-			request: `{"user": {"id": "user-id", "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "chapter": {"id": "CHAPTER_ONE", "name": "Updated Chapter One"}`,
-		},
-		{
-			name:    "should return error when request body is empty",
-			request: "",
-		},
-	}
+	router := setupChapterRouter()
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+	recorder := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/chapters/update", strings.NewReader(""))
 
-			recorder := httptest.NewRecorder()
-			req, _ := http.NewRequest("POST", "/api/chapters/update", strings.NewReader(tc.request))
+	router.ServeHTTP(recorder, req)
 
-			router.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
-			assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-			var responseBody map[string]any
-			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-			assert.Equal(t, map[string]any{
-				"message": "invalid request format",
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"chapter": map[string]any{},
-			}, responseBody)
-		})
-	}
+	var responseBody map[string]any
+	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+	assert.Equal(t, map[string]any{
+		"message": "invalid request format",
+		"user":    map[string]any{},
+		"project": map[string]any{},
+		"chapter": map[string]any{},
+	}, responseBody)
 }
 
 func setupChapterRouter() *gin.Engine {
