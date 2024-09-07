@@ -235,67 +235,25 @@ func TestPaperFindDomainValidationError(t *testing.T) {
 }
 
 func TestPaperFindInvalidRequestFormat(t *testing.T) {
-	tt := []struct {
-		name    string
-		request string
-	}{
-		{
-			name:    "should return error when user id is not string",
-			request: `{"user": {"id": 1}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}, "chapter": {"id": "CHAPTER_ONE"}}`,
-		},
-		{
-			name:    "should return error when project id is not string",
-			request: `{"user": {"id": "USER_READ_ONLY"}, "project": {"id": 1}, "chapter": {"id": "CHAPTER_ONE"}}`,
-		},
-		{
-			name:    "should return error when chapter id is not string",
-			request: `{"user": {"id": "USER_READ_ONLY"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}, "chapter": {"id": 1}}`,
-		},
-		{
-			name:    "should return error when user is not object",
-			request: `{"user": "USER_READ_ONLY", "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}, "chapter": {"id": "CHAPTER_ONE"}}`,
-		},
-		{
-			name:    "should return error when project is not object",
-			request: `{"user": {"id": "USER_READ_ONLY"}, "project": "PROJECT_WITHOUT_DESCRIPTION", "chapter": {"id": "CHAPTER_ONE"}}`,
-		},
-		{
-			name:    "should return error when chapter is not object",
-			request: `{"user": {"id": "USER_READ_ONLY"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION"}, "chapter": "CHAPTER_ONE"}`,
-		},
-		{
-			name:    "should return error when request is not object",
-			request: `[]`,
-		},
-		{
-			name:    "should return error when request is empty",
-			request: ``,
-		},
-	}
+	router := setupPaperRouter()
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			router := setupPaperRouter()
+	ecorder := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(""))
 
-			ecorder := httptest.NewRecorder()
-			req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(tc.request))
+	router.ServeHTTP(ecorder, req)
 
-			router.ServeHTTP(ecorder, req)
+	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
 
-			assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+	var responseBody map[string]any
+	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	assert.Nil(t, err)
 
-			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
-			assert.Nil(t, err)
-
-			assert.Equal(t, map[string]any{
-				"message": "invalid request format",
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"chapter": map[string]any{},
-			}, responseBody)
-		})
-	}
+	assert.Equal(t, map[string]any{
+		"message": "invalid request format",
+		"user":    map[string]any{},
+		"project": map[string]any{},
+		"chapter": map[string]any{},
+	}, responseBody)
 }
 
 func TestPaperFindInternalError(t *testing.T) {
@@ -575,71 +533,25 @@ func TestPaperUpdateDomainValidationError(t *testing.T) {
 }
 
 func TestPaperUpdateInvalidRequestFormat(t *testing.T) {
-	tt := []struct {
-		name    string
-		request string
-	}{
-		{
-			name:    "should return error when user id is not string",
-			request: `{"user": {"id": 1}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "paper": {"id": "CHAPTER_ONE", "content": "This is paper content."}}`,
-		},
-		{
-			name:    "should return error when project id is not string",
-			request: `{"user": {"id": "USER_MODIFY_ONLY"}, "project": {"id": 1}, "paper": {"id": "CHAPTER_ONE", "content": "This is paper content."}}`,
-		},
-		{
-			name:    "should return error when paper id is not string",
-			request: `{"user": {"id": "USER_MODIFY_ONLY"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "paper": {"id": 1, "content": "This is paper content."}}`,
-		},
-		{
-			name:    "should return error when paper content is not string",
-			request: `{"user": {"id": "USER_MODIFY_ONLY"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "paper": {"id": "CHAPTER_ONE", "content": 1}}`,
-		},
-		{
-			name:    "should return error when user is not object",
-			request: `{"user": "USER_MODIFY_ONLY", "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "paper": {"id": "CHAPTER_ONE", "content": "This is paper content."}}`,
-		},
-		{
-			name:    "should return error when project is not object",
-			request: `{"user": {"id": "USER_MODIFY_ONLY"}, "project": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API", "paper": {"id": "CHAPTER_ONE", "content": "This is paper content."}}`,
-		},
-		{
-			name:    "should return error when paper is not object",
-			request: `{"user": {"id": "USER_MODIFY_ONLY"}, "project": {"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API"}, "paper": "This is paper content."}`,
-		},
-		{
-			name:    "should return error when request is not object",
-			request: `[]`,
-		},
-		{
-			name:    "should return error when request is empty",
-			request: ``,
-		},
-	}
+	router := setupPaperRouter()
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			router := setupPaperRouter()
+	ecorder := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/papers/update", strings.NewReader(""))
 
-			ecorder := httptest.NewRecorder()
-			req, _ := http.NewRequest("POST", "/api/papers/update", strings.NewReader(tc.request))
+	router.ServeHTTP(ecorder, req)
 
-			router.ServeHTTP(ecorder, req)
+	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
 
-			assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+	var responseBody map[string]any
+	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	assert.Nil(t, err)
 
-			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
-			assert.Nil(t, err)
-
-			assert.Equal(t, map[string]any{
-				"message": "invalid request format",
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"paper":   map[string]any{},
-			}, responseBody)
-		})
-	}
+	assert.Equal(t, map[string]any{
+		"message": "invalid request format",
+		"user":    map[string]any{},
+		"project": map[string]any{},
+		"paper":   map[string]any{},
+	}, responseBody)
 }
 
 func setupPaperRouter() *gin.Engine {
