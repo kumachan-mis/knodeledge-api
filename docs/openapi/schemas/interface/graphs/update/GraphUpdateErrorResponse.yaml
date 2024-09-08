@@ -12,4 +12,4 @@ properties:
   chapter:
     $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
   graph:
-    $ref: ../../../entity/graph/GraphError.yaml
+    $ref: ../../../entity/graph/GraphContentError.yaml

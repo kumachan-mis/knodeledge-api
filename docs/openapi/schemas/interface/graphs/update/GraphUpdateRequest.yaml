@@ -8,7 +8,7 @@ properties:
   chapter:
     $ref: ../../../entity/chapter/ChapterOnlyId.yaml
   graph:
-    $ref: ../../../entity/graph/Graph.yaml
+    $ref: ../../../entity/graph/GraphContent.yaml
 required:
   - user
   - project

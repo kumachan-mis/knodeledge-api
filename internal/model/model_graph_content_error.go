@@ -9,14 +9,11 @@
 
 package model
 
-// GraphError - Error Message for Graph object
-type GraphError struct {
+// GraphContentError - Error Message for GraphContent object
+type GraphContentError struct {
 
 	// Error message for graph ID
 	Id string `json:"id,omitempty"`
-
-	// Error message for graph name
-	Name string `json:"name,omitempty"`
 
 	// Error message for graph paragraph
 	Paragraph string `json:"paragraph,omitempty"`
