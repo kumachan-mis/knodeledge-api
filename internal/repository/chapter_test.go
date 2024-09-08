@@ -27,9 +27,9 @@ func TestFetchChaptersValidDocument(t *testing.T) {
 	assert.Equal(t, 1, chapter.Number)
 	assert.Len(t, chapter.Sections, 2)
 	assert.Equal(t, "SECTION_ONE", chapter.Sections[0].Id)
-	assert.Equal(t, "Section One", chapter.Sections[0].Name)
+	assert.Equal(t, "Introduction", chapter.Sections[0].Name)
 	assert.Equal(t, "SECTION_TWO", chapter.Sections[1].Id)
-	assert.Equal(t, "Section Two", chapter.Sections[1].Name)
+	assert.Equal(t, "Section of Chapter One", chapter.Sections[1].Name)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 
@@ -150,9 +150,9 @@ func TestFetchChapterValidDocument(t *testing.T) {
 	assert.Equal(t, 1, chapter.Number)
 	assert.Len(t, chapter.Sections, 2)
 	assert.Equal(t, "SECTION_ONE", chapter.Sections[0].Id)
-	assert.Equal(t, "Section One", chapter.Sections[0].Name)
+	assert.Equal(t, "Introduction", chapter.Sections[0].Name)
 	assert.Equal(t, "SECTION_TWO", chapter.Sections[1].Id)
-	assert.Equal(t, "Section Two", chapter.Sections[1].Name)
+	assert.Equal(t, "Section of Chapter One", chapter.Sections[1].Name)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 }
@@ -522,14 +522,14 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			Sections: []record.SectionEntry{
 				{
 					Id:        "SECTION_ONE",
-					Name:      "Section One",
+					Name:      "Introduction",
 					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				},
 				{
 					Id:        "SECTION_TWO",
-					Name:      "Section Two",
+					Name:      "Section of Chapter One",
 					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
@@ -568,14 +568,14 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			Sections: []record.SectionEntry{
 				{
 					Id:        "SECTION_ONE",
-					Name:      "Section One",
+					Name:      "Introduction",
 					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				},
 				{
 					Id:        "SECTION_TWO",
-					Name:      "Section Two",
+					Name:      "Section of Chapter One",
 					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
