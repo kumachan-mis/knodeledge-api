@@ -98,6 +98,140 @@ func TestGraphExistsProjectOrChapterNotFound(t *testing.T) {
 	}
 }
 
+func TestFetchGraphValidEntry(t *testing.T) {
+
+	userId := testutil.ReadOnlyUserId()
+	projectId := "PROJECT_WITHOUT_DESCRIPTION"
+	chapterId := "CHAPTER_ONE"
+	sectionId := "SECTION_ONE"
+
+	client := db.FirestoreClient()
+	r := repository.NewGraphRepository(*client)
+
+	entry, rErr := r.FetchGraph(userId, projectId, chapterId, sectionId)
+
+	assert.Nil(t, rErr)
+
+	assert.Equal(t, record.GraphEntry{
+		Name:      "Introduction",
+		Paragraph: "This is an example project of kNODEledge.",
+		UserId:    testutil.ReadOnlyUserId(),
+		CreatedAt: testutil.Date(),
+		UpdatedAt: testutil.Date(),
+	}, *entry)
+}
+
+func TestFetchGraphProjectOrChapterOrSectionNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		sectionId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return not found when user is not author of the project",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return error when chapter not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "UNKNOWN_CHAPTER",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch chapter",
+		},
+		{
+			name:          "should return error when section not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "UNKNOWN_SECTION",
+			expectedError: "failed to fetch graph",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewGraphRepository(*client)
+
+			entry, rErr := r.FetchGraph(tc.userId, tc.projectId, tc.chapterId, tc.sectionId)
+
+			assert.NotNil(t, rErr)
+
+			assert.Nil(t, entry)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
+		})
+	}
+}
+
+func TestFetchGraphInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		sectionId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when graph paragraph is invalid",
+			userId:    testutil.ErrorUserId(7),
+			projectId: "PROJECT_WITH_INVALID_GRAPH_PARAGRAPH",
+			chapterId: "CHAPTER_WITH_INVALID_GRAPH_PARAGRAPH",
+			sectionId: "SECTION_WITH_INVALID_GRAPH_PARAGRAPH",
+			expectedError: "failed to convert snapshot to values: document.GraphValues.paragraph: " +
+				"firestore: cannot set type string to array",
+		},
+		{
+			name:          "should return error when sections have excessive elements",
+			userId:        testutil.ErrorUserId(8),
+			projectId:     "PROJECT_WITH_TOO_MANY_SECTIONS",
+			chapterId:     "CHAPTER_WITH_TOO_MANY_SECTIONS",
+			sectionId:     "UNKNOWN_SECTION",
+			expectedError: "failed to convert values to entry: document.ChapterValues.sections have excessive elements",
+		},
+		{
+			name:          "should return error when sections have insufficient elements",
+			userId:        testutil.ErrorUserId(9),
+			projectId:     "PROJECT_WITH_TOO_FEW_SECTIONS",
+			chapterId:     "CHAPTER_WITH_TOO_FEW_SECTIONS",
+			sectionId:     "SECTION_UNKNOWN",
+			expectedError: "failed to convert values to entry: document.ChapterValues.sections have insufficient elements",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewGraphRepository(*client)
+
+			entry, rErr := r.FetchGraph(tc.userId, tc.projectId, tc.chapterId, tc.sectionId)
+
+			assert.NotNil(t, rErr)
+
+			assert.Nil(t, entry)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %v", tc.expectedError), rErr.Error())
+		})
+	}
+}
+
 func TestInsertGraphsValidEntry(t *testing.T) {
 	client := db.FirestoreClient()
 	r := repository.NewGraphRepository(*client)

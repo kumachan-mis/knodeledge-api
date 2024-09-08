@@ -27,9 +27,9 @@ func TestFetchChaptersValidDocument(t *testing.T) {
 	assert.Equal(t, 1, chapter.Number)
 	assert.Len(t, chapter.Sections, 2)
 	assert.Equal(t, "SECTION_ONE", chapter.Sections[0].Id)
-	assert.Equal(t, "Section One", chapter.Sections[0].Name)
+	assert.Equal(t, "Introduction", chapter.Sections[0].Name)
 	assert.Equal(t, "SECTION_TWO", chapter.Sections[1].Id)
-	assert.Equal(t, "Section Two", chapter.Sections[1].Name)
+	assert.Equal(t, "Section of Chapter One", chapter.Sections[1].Name)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 
@@ -116,10 +116,10 @@ func TestFetchChaptersInvalidDocument(t *testing.T) {
 			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have excessive elements",
 		},
 		{
-			name:          "should return error when chapter ids have deficient elements",
+			name:          "should return error when chapter ids have insufficient elements",
 			userId:        testutil.ErrorUserId(5),
 			projectId:     "PROJECT_WITH_TOO_FEW_CHAPTER_IDS",
-			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have deficient elements",
+			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have insufficient elements",
 		},
 	}
 
@@ -150,53 +150,14 @@ func TestFetchChapterValidDocument(t *testing.T) {
 	assert.Equal(t, 1, chapter.Number)
 	assert.Len(t, chapter.Sections, 2)
 	assert.Equal(t, "SECTION_ONE", chapter.Sections[0].Id)
-	assert.Equal(t, "Section One", chapter.Sections[0].Name)
+	assert.Equal(t, "Introduction", chapter.Sections[0].Name)
 	assert.Equal(t, "SECTION_TWO", chapter.Sections[1].Id)
-	assert.Equal(t, "Section Two", chapter.Sections[1].Name)
+	assert.Equal(t, "Section of Chapter One", chapter.Sections[1].Name)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
 }
 
-func TestFetchChapterNoDocument(t *testing.T) {
-	tt := []struct {
-		name          string
-		userId        string
-		projectId     string
-		chapterId     string
-		expectedError string
-	}{
-		{
-			name:          "should return error when chapter is not found",
-			userId:        testutil.ReadOnlyUserId(),
-			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
-			chapterId:     "UNKNOWN_CHAPTER",
-			expectedError: "failed to fetch chapter",
-		},
-		{
-			name:          "should return error when chapter ids have excessive elements",
-			userId:        testutil.ErrorUserId(4),
-			projectId:     "PROJECT_WITH_TOO_MANY_CHAPTER_IDS",
-			chapterId:     "UNKNOWN_CHAPTER",
-			expectedError: "failed to fetch chapter",
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			client := db.FirestoreClient()
-			r := repository.NewChapterRepository(*client)
-
-			chapters, rErr := r.FetchChapter(tc.userId, tc.projectId, tc.chapterId)
-
-			assert.NotNil(t, rErr)
-			assert.Equal(t, repository.NotFoundError, rErr.Code())
-			assert.Equal(t, fmt.Sprintf("not found: %v", tc.expectedError), rErr.Error())
-			assert.Nil(t, chapters)
-		})
-	}
-}
-
-func TestFetchChapterProjectNotFound(t *testing.T) {
+func TestFetchChapterProjectOrChapterNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -217,6 +178,13 @@ func TestFetchChapterProjectNotFound(t *testing.T) {
 			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
 			chapterId:     "CHAPTER_ONE",
 			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return error when chapter is not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "UNKNOWN_CHAPTER",
+			expectedError: "failed to fetch chapter",
 		},
 	}
 
@@ -260,11 +228,18 @@ func TestFetchChapterInvalidDocument(t *testing.T) {
 				"firestore: cannot set type []string to string",
 		},
 		{
-			name:          "should return error when chapter ids have deficient elements",
+			name:          "should return error when chapter ids have excessive elements",
+			userId:        testutil.ErrorUserId(4),
+			projectId:     "PROJECT_WITH_TOO_MANY_CHAPTER_IDS",
+			chapterId:     "UNKNOWN_CHAPTER",
+			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have excessive elements",
+		},
+		{
+			name:          "should return error when chapter ids have insufficient elements",
 			userId:        testutil.ErrorUserId(5),
 			projectId:     "PROJECT_WITH_TOO_FEW_CHAPTER_IDS",
 			chapterId:     "CHAPTER_UNKNOWN",
-			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have deficient elements",
+			expectedError: "failed to convert values to entry: document.ProjectValues.chapterIds have insufficient elements",
 		},
 	}
 
@@ -522,14 +497,14 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			Sections: []record.SectionEntry{
 				{
 					Id:        "SECTION_ONE",
-					Name:      "Section One",
+					Name:      "Introduction",
 					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				},
 				{
 					Id:        "SECTION_TWO",
-					Name:      "Section Two",
+					Name:      "Section of Chapter One",
 					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
@@ -568,14 +543,14 @@ func TestUpdateChapterValidEntry(t *testing.T) {
 			Sections: []record.SectionEntry{
 				{
 					Id:        "SECTION_ONE",
-					Name:      "Section One",
+					Name:      "Introduction",
 					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				},
 				{
 					Id:        "SECTION_TWO",
-					Name:      "Section Two",
+					Name:      "Section of Chapter One",
 					UserId:    testutil.ModifyOnlyUserId(),
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),

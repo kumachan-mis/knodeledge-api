@@ -11,5 +11,5 @@ properties:
     $ref: ../../../entity/project/ProjectOnlyIdError.yaml
   chapter:
     $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
-  graph:
-    $ref: ../../../entity/graph/GraphOnlyIdError.yaml
+  section:
+    $ref: ../../../entity/section/SectionOnlyIdError.yaml

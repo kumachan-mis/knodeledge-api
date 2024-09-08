@@ -1,8 +1,7 @@
 package repository
 
 import (
-	"fmt"
-	"reflect"
+	"errors"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -87,7 +86,7 @@ func (r chapterRepository) FetchChapters(
 
 		number, ok := chapterNumbers[snapshot.Ref.ID]
 		if !ok {
-			err = fmt.Errorf("%v.chapterIds have deficient elements", reflect.TypeOf(*projectValues))
+			err = errors.New("document.ProjectValues.chapterIds have insufficient elements")
 			return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
 		}
 
@@ -95,7 +94,7 @@ func (r chapterRepository) FetchChapters(
 	}
 
 	if len(entries) != len(projectValues.ChapterIds) {
-		err := fmt.Errorf("%v.chapterIds have excessive elements", reflect.TypeOf(*projectValues))
+		err := errors.New("document.ProjectValues.chapterIds have excessive elements")
 		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
 	}
 	return entries, nil
@@ -115,6 +114,7 @@ func (r chapterRepository) FetchChapter(
 	for i, chapterId := range projectValues.ChapterIds {
 		chapterNumbers[chapterId] = i + 1
 	}
+	number, ok := chapterNumbers[chapterId]
 
 	snapshot, err := r.client.Collection(ProjectCollection).
 		Doc(projectId).
@@ -122,20 +122,22 @@ func (r chapterRepository) FetchChapter(
 		Doc(chapterId).
 		Get(db.FirestoreContext())
 
-	if err != nil {
+	if err != nil && !ok {
 		return nil, Errorf(NotFoundError, "failed to fetch chapter")
+	}
+
+	if err != nil && ok {
+		err := errors.New("document.ProjectValues.chapterIds have excessive elements")
+		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
+	} else if err == nil && !ok {
+		err := errors.New("document.ProjectValues.chapterIds have insufficient elements")
+		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
 	}
 
 	var values document.ChapterValues
 	err = snapshot.DataTo(&values)
 	if err != nil {
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
-	}
-
-	number, ok := chapterNumbers[snapshot.Ref.ID]
-	if !ok {
-		err = fmt.Errorf("%v.chapterIds have deficient elements", reflect.TypeOf(*projectValues))
-		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
 	}
 
 	return r.valuesToEntry(values, number, userId), nil

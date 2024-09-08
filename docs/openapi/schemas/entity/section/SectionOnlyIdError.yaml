@@ -1,0 +1,7 @@
+type: object
+description: Error Message for SectionOnlyId object
+properties:
+  id:
+    type: string
+    description: Error message for section ID
+    example: "section id is required, but got ''"

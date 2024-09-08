@@ -9,8 +9,8 @@
 
 package model
 
-// PaperUpdateErrorResponse - Error Response Body for Paper Update API
-type PaperUpdateErrorResponse struct {
+// GraphUpdateErrorResponse - Error Response Body for Graph Update API
+type GraphUpdateErrorResponse struct {
 
 	// Error message when request body format is invalid
 	Message string `json:"message,omitempty"`
@@ -19,5 +19,7 @@ type PaperUpdateErrorResponse struct {
 
 	Project ProjectOnlyIdError `json:"project,omitempty"`
 
-	Paper PaperError `json:"paper,omitempty"`
+	Chapter ChapterOnlyIdError `json:"chapter,omitempty"`
+
+	Graph GraphError `json:"graph,omitempty"`
 }

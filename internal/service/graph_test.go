@@ -14,6 +14,204 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func TestFindGraphValidEntry(t *testing.T) {
+	maxLengthGraphName := testutil.RandomString(100)
+	maxLengthGraphParagraph := testutil.RandomString(40000)
+
+	tt := []struct {
+		name  string
+		entry record.GraphEntry
+	}{
+		{
+			name: "should return graph with valid entry",
+			entry: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+		},
+		{
+			name: "should return graph with max-length valid entry",
+			entry: record.GraphEntry{
+				Name:      maxLengthGraphName,
+				Paragraph: maxLengthGraphParagraph,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+			r.EXPECT().
+				FetchGraph(testutil.ReadOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
+				Return(&tc.entry, nil)
+
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+
+			s := service.NewGraphService(r, cr)
+
+			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+			sectionId, err := domain.NewSectionIdObject("2000000000000001")
+			assert.Nil(t, err)
+
+			graph, sErr := s.FindGraph(*userId, *projectId, *chapterId, *sectionId)
+			assert.Nil(t, sErr)
+
+			assert.Equal(t, tc.entry.Paragraph, graph.Paragraph().Value())
+			assert.Equal(t, tc.entry.CreatedAt, graph.CreatedAt().Value())
+			assert.Equal(t, tc.entry.UpdatedAt, graph.UpdatedAt().Value())
+		})
+	}
+}
+
+func TestFindGraphInvalidEntry(t *testing.T) {
+	tooLongGraphName := testutil.RandomString(101)
+	tooLongGraphParagraph := testutil.RandomString(40001)
+
+	tt := []struct {
+		name          string
+		entry         record.GraphEntry
+		expectedError string
+	}{
+		{
+			name: "should return error when name is empty",
+			entry: record.GraphEntry{
+				Name:      "",
+				Paragraph: "This is section content. This is section content.",
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (name): " +
+				"graph name is required, but got ''",
+		},
+		{
+			name: "should return error when name is too long",
+			entry: record.GraphEntry{
+				Name:      tooLongGraphName,
+				Paragraph: "This is section content. This is section content.",
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (name): "+
+				"graph name cannot be longer than 100 characters, but got '%v'", tooLongGraphName),
+		},
+		{
+			name: "should return error when paragraph is too long",
+			entry: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: tooLongGraphParagraph,
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (paragraph): " +
+				"graph paragraph must be less than or equal to 40000 bytes, but got 40001 bytes",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+			r.EXPECT().
+				FetchGraph(testutil.ReadOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
+				Return(&tc.entry, nil)
+
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+
+			s := service.NewGraphService(r, cr)
+
+			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+			sectionId, err := domain.NewSectionIdObject("2000000000000001")
+			assert.Nil(t, err)
+
+			graph, sErr := s.FindGraph(*userId, *projectId, *chapterId, *sectionId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
+			assert.Nil(t, graph)
+		})
+	}
+}
+
+func TestFindGraphRepositoryError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "graph not found",
+			expectedError: "failed to find graph: graph not found",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns read failure error",
+			errorCode:     repository.ReadFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to fetch graph: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+			r.EXPECT().
+				FetchGraph(testutil.ReadOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
+				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+
+			s := service.NewGraphService(r, cr)
+
+			userId, err := domain.NewUserIdObject(testutil.ReadOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+			sectionId, err := domain.NewSectionIdObject("2000000000000001")
+			assert.Nil(t, err)
+
+			graph, sErr := s.FindGraph(*userId, *projectId, *chapterId, *sectionId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Nil(t, graph)
+		})
+	}
+}
+
 func TestSectionalizeIntoGraphsValidEntry(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

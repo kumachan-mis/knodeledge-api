@@ -11,6 +11,12 @@ import (
 //go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
 
 type GraphService interface {
+	FindGraph(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+		chapterId domain.ChapterIdObject,
+		sectionId domain.SectionIdObject,
+	) (*domain.GraphEntity, *Error)
 	SectionalizeIntoGraphs(
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
@@ -29,6 +35,23 @@ func NewGraphService(
 	chapterRepository repository.ChapterRepository,
 ) GraphService {
 	return graphService{repository: repository, chapterRepository: chapterRepository}
+}
+
+func (s graphService) FindGraph(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+	chapterId domain.ChapterIdObject,
+	sectionId domain.SectionIdObject,
+) (*domain.GraphEntity, *Error) {
+	entry, rErr := s.repository.FetchGraph(userId.Value(), projectId.Value(), chapterId.Value(), sectionId.Value())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to find graph: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to fetch graph: %w", rErr.Unwrap())
+	}
+
+	return s.entryToEntity(sectionId.Value(), *entry)
 }
 
 func (s graphService) SectionalizeIntoGraphs(

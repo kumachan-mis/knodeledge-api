@@ -47,11 +47,11 @@ func TestChapterList(t *testing.T) {
 				"sections": []any{
 					map[string]any{
 						"id":   "SECTION_ONE",
-						"name": "Section One",
+						"name": "Introduction",
 					},
 					map[string]any{
 						"id":   "SECTION_TWO",
-						"name": "Section Two",
+						"name": "Section of Chapter One",
 					},
 				},
 			},

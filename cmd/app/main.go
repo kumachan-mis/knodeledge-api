@@ -85,6 +85,7 @@ func main() {
 	router.POST("/api/papers/update", paperApi.HandleUpdate)
 
 	graphApi := api.NewGraphApi(graphUseCase)
+	router.POST("/api/graphs/find", graphApi.HandleFind)
 	router.POST("/api/graphs/sectionalize", graphApi.HandleSectionalize)
 
 	err = router.Run(":8080")
