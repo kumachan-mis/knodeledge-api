@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"cloud.google.com/go/firestore"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/document"
@@ -17,6 +19,12 @@ type GraphRepository interface {
 		projectId string,
 		chapterId string,
 	) (bool, *Error)
+	FetchGraph(
+		userId string,
+		projectId string,
+		chapterId string,
+		sectionId string,
+	) (*record.GraphEntry, *Error)
 	InsertGraphs(
 		userId string,
 		projectId string,
@@ -55,10 +63,58 @@ func (r graphRepository) GraphExists(
 		GetAll()
 
 	if err != nil {
-		return false, Errorf(ReadFailurePanic, "failed to fetch graphs: %v", err)
+		return false, Errorf(ReadFailurePanic, "failed to fetch graphs: %w", err)
 	}
 
 	return len(snapshots) > 0, nil
+}
+
+func (r graphRepository) FetchGraph(
+	userId string,
+	projectId string,
+	chapterId string,
+	sectionId string,
+) (*record.GraphEntry, *Error) {
+	chapter, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
+	if rErr != nil {
+		return nil, rErr
+	}
+
+	var section *record.SectionEntry
+	for _, s := range chapter.Sections {
+		if s.Id == sectionId {
+			section = &s
+			break
+		}
+	}
+
+	snapshot, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Collection(GraphCollection).
+		Doc(sectionId).
+		Get(db.FirestoreContext())
+
+	if err != nil && section == nil {
+		return nil, Errorf(NotFoundError, "failed to fetch graph")
+	}
+
+	if err != nil && section != nil {
+		err := errors.New("document.ChapterValues.sections have excessive elements")
+		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
+	} else if err == nil && section == nil {
+		err := errors.New("document.ChapterValues.sections have insufficient elements")
+		return nil, Errorf(ReadFailurePanic, "failed to convert values to entry: %w", err)
+	}
+
+	var values document.GraphValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %v", err)
+	}
+
+	return r.valuesToEntry(values, section.Name, userId), nil
 }
 
 func (r graphRepository) InsertGraphs(
