@@ -9,9 +9,9 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
+	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 	mock_service "github.com/kumachan-mis/knodeledge-api/mock/service"
-	"github.com/kumachan-mis/knodeledge-api/test/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
