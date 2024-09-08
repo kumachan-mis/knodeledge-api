@@ -8,7 +8,7 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
 	"github.com/kumachan-mis/knodeledge-api/internal/record"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
-	"github.com/kumachan-mis/knodeledge-api/test/testutil"
+	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
