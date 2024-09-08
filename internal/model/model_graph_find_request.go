@@ -17,5 +17,5 @@ type GraphFindRequest struct {
 
 	Chapter ChapterOnlyId `json:"chapter"`
 
-	Graph GraphOnlyId `json:"graph"`
+	Section SectionOnlyId `json:"section"`
 }

@@ -7,10 +7,10 @@ properties:
     $ref: ../../../entity/project/ProjectOnlyId.yaml
   chapter:
     $ref: ../../../entity/chapter/ChapterOnlyId.yaml
-  graph:
-    $ref: ../../../entity/graph/GraphOnlyId.yaml
+  section:
+    $ref: ../../../entity/section/SectionOnlyId.yaml
 required:
   - user
   - project
   - chapter
-  - graph
+  - section

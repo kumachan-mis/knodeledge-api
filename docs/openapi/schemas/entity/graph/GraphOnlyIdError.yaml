@@ -1,7 +1,0 @@
-type: object
-description: Error Message for GraphOnlyId object
-properties:
-  id:
-    type: string
-    description: Error message for graph ID
-    example: "graph id is required, but got ''"

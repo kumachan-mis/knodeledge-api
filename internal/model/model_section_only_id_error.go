@@ -9,9 +9,9 @@
 
 package model
 
-// GraphOnlyId - Graph object with only ID
-type GraphOnlyId struct {
+// SectionOnlyIdError - Error Message for SectionOnlyId object
+type SectionOnlyIdError struct {
 
-	// Auto-generated graph ID
-	Id string `json:"id"`
+	// Error message for section ID
+	Id string `json:"id,omitempty"`
 }
