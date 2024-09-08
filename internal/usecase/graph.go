@@ -9,6 +9,8 @@ import (
 //go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
 
 type GraphUseCase interface {
+	FindGraph(request model.GraphFindRequest) (
+		*model.GraphFindResponse, *Error[model.GraphFindErrorResponse])
 	SectionalizeGraph(request model.GraphSectionalizeRequest) (
 		*model.GraphSectionalizeResponse, *Error[model.GraphSectionalizeErrorResponse])
 }
@@ -19,6 +21,66 @@ type graphUseCase struct {
 
 func NewGraphUseCase(service service.GraphService) GraphUseCase {
 	return graphUseCase{service: service}
+}
+
+func (uc graphUseCase) FindGraph(req model.GraphFindRequest) (
+	*model.GraphFindResponse, *Error[model.GraphFindErrorResponse]) {
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
+	sectionId, sectionIdErr := domain.NewSectionIdObject(req.Section.Id)
+
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
+	}
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
+	}
+	chapterIdMsg := ""
+	if chapterIdErr != nil {
+		chapterIdMsg = chapterIdErr.Error()
+	}
+	sectionIdMsg := ""
+	if sectionIdErr != nil {
+		sectionIdMsg = sectionIdErr.Error()
+	}
+
+	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || sectionIdErr != nil {
+		return nil, NewModelBasedError(
+			DomainValidationError,
+			model.GraphFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: userIdMsg},
+				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
+				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
+				Section: model.SectionOnlyIdError{Id: sectionIdMsg},
+			},
+		)
+	}
+
+	entity, fErr := uc.service.FindGraph(*userId, *projectId, *chapterId, *sectionId)
+
+	if fErr != nil && fErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.GraphFindErrorResponse](
+			NotFoundError,
+			fErr.Unwrap().Error(),
+		)
+	}
+	if fErr != nil {
+		return nil, NewMessageBasedError[model.GraphFindErrorResponse](
+			InternalErrorPanic,
+			fErr.Unwrap().Error(),
+		)
+	}
+
+	return &model.GraphFindResponse{
+		Graph: model.Graph{
+			Id:        entity.Id().Value(),
+			Name:      entity.Name().Value(),
+			Paragraph: entity.Paragraph().Value(),
+		},
+	}, nil
 }
 
 func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (

@@ -15,6 +15,206 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func TestFindGraphValidEntity(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	s := mock_service.NewMockGraphService(ctrl)
+
+	id, err := domain.NewGraphIdObject("2000000000000001")
+	assert.Nil(t, err)
+	name, err := domain.NewGraphNameObject("Section")
+	assert.Nil(t, err)
+	paragraph, err := domain.NewGraphParagraphObject("This is graph paragraph")
+	assert.Nil(t, err)
+	createdAt, err := domain.NewCreatedAtObject(testutil.Date())
+	assert.Nil(t, err)
+	updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
+	assert.Nil(t, err)
+
+	graph := domain.NewGraphEntity(*id, *name, *paragraph, *createdAt, *updatedAt)
+
+	s.EXPECT().
+		FindGraph(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Do(func(
+			userId domain.UserIdObject,
+			projectId domain.ProjectIdObject,
+			chapterId domain.ChapterIdObject,
+			sectionId domain.SectionIdObject,
+		) {
+			assert.Equal(t, testutil.ReadOnlyUserId(), userId.Value())
+			assert.Equal(t, "0000000000000001", projectId.Value())
+			assert.Equal(t, "1000000000000001", chapterId.Value())
+			assert.Equal(t, "2000000000000001", sectionId.Value())
+		}).
+		Return(graph, nil)
+
+	uc := usecase.NewGraphUseCase(s)
+
+	res, ucErr := uc.FindGraph(model.GraphFindRequest{
+		User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+		Project: model.ProjectOnlyId{Id: "0000000000000001"},
+		Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
+		Section: model.SectionOnlyId{Id: "2000000000000001"},
+	})
+
+	assert.Nil(t, ucErr)
+
+	assert.Equal(t, "2000000000000001", res.Graph.Id)
+	assert.Equal(t, "Section", res.Graph.Name)
+	assert.Equal(t, "This is graph paragraph", res.Graph.Paragraph)
+}
+
+func TestFindGraphDomainValidationError(t *testing.T) {
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		chapterId string
+		sectionId string
+		expected  model.GraphFindErrorResponse
+	}{
+		{
+			name:      "should return error when user id is empty",
+			userId:    "",
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			sectionId: "2000000000000001",
+			expected: model.GraphFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+			},
+		},
+		{
+			name:      "should return error when project id is empty",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "",
+			chapterId: "1000000000000001",
+			sectionId: "2000000000000001",
+			expected: model.GraphFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+			},
+		},
+		{
+			name:      "should return error when chapter id is empty",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "",
+			sectionId: "2000000000000001",
+			expected: model.GraphFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+			},
+		},
+		{
+			name:      "should return error when section id is empty",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			sectionId: "",
+			expected: model.GraphFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+				Section: model.SectionOnlyIdError{Id: "section id is required, but got ''"},
+			},
+		},
+		{
+			name:      "should return error when all fields are empty",
+			userId:    "",
+			projectId: "",
+			chapterId: "",
+			sectionId: "",
+			expected: model.GraphFindErrorResponse{
+				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+				Section: model.SectionOnlyIdError{Id: "section id is required, but got ''"},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			s := mock_service.NewMockGraphService(ctrl)
+
+			uc := usecase.NewGraphUseCase(s)
+
+			res, ucErr := uc.FindGraph(model.GraphFindRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
+				Section: model.SectionOnlyId{Id: tc.sectionId},
+			})
+
+			expectedJson, _ := json.Marshal(tc.expected)
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
+			assert.Equal(t, tc.expected, *ucErr.Response())
+
+			assert.Nil(t, res)
+		})
+	}
+}
+
+func TestFindGraphServiceError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     service.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  usecase.ErrorCode
+	}{
+		{
+			name:          "should return error when project not found",
+			errorCode:     service.NotFoundError,
+			errorMessage:  "failed to find project",
+			expectedError: "not found: failed to find project",
+			expectedCode:  usecase.NotFoundError,
+		},
+		{
+			name:          "should return error when repository failure",
+			errorCode:     service.RepositoryFailurePanic,
+			errorMessage:  "service error",
+			expectedError: "internal error: service error",
+			expectedCode:  usecase.InternalErrorPanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			s := mock_service.NewMockGraphService(ctrl)
+
+			uc := usecase.NewGraphUseCase(s)
+
+			s.EXPECT().
+				FindGraph(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+
+			res, ucErr := uc.FindGraph(model.GraphFindRequest{
+				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+				Project: model.ProjectOnlyId{Id: "0000000000000001"},
+				Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
+				Section: model.SectionOnlyId{Id: "2000000000000001"},
+			})
+
+			assert.Nil(t, res)
+			assert.Equal(t, tc.expectedError, ucErr.Error())
+			assert.Equal(t, tc.expectedCode, ucErr.Code())
+		})
+	}
+}
+
 func TestSectionalizeGraphValidEntity(t *testing.T) {
 	maxLengthSectionName := testutil.RandomString(100)
 	maxLengthSectionContent := testutil.RandomString(40000)
