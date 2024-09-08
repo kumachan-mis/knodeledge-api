@@ -861,6 +861,7 @@ func setupGraphRouter() *gin.Engine {
 	api := api.NewGraphApi(uc)
 
 	router.POST("/api/graphs/find", api.HandleFind)
+	router.POST("/api/graphs/update", api.HandleUpdate)
 	router.POST("/api/graphs/sectionalize", api.HandleSectionalize)
 
 	return router

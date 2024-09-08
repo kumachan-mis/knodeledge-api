@@ -31,6 +31,13 @@ type GraphRepository interface {
 		chapterId string,
 		entries []record.GraphWithoutAutofieldEntry,
 	) ([]string, []record.GraphEntry, *Error)
+	UpdateGraphContent(
+		userId string,
+		projectId string,
+		chapterId string,
+		sectionId string,
+		entry record.GraphContentWithoutAutofieldEntry,
+	) (*record.GraphContentEntry, *Error)
 }
 
 type graphRepository struct {
@@ -176,6 +183,48 @@ func (r graphRepository) InsertGraphs(
 	return ids, res, nil
 }
 
+func (r graphRepository) UpdateGraphContent(
+	userId string,
+	projectId string,
+	chapterId string,
+	sectionId string,
+	entry record.GraphContentWithoutAutofieldEntry,
+) (*record.GraphContentEntry, *Error) {
+	_, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
+	if rErr != nil {
+		return nil, rErr
+	}
+
+	ref := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Collection(GraphCollection).
+		Doc(sectionId)
+
+	_, err := ref.Set(db.FirestoreContext(), map[string]any{
+		"paragraph": entry.Paragraph,
+		"updatedAt": firestore.ServerTimestamp,
+	}, firestore.MergeAll)
+
+	if err != nil {
+		return nil, Errorf(WriteFailurePanic, "failed to update graph: %v", err)
+	}
+
+	snapshot, err := ref.Get(db.FirestoreContext())
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to fetch updated graph: %w", err)
+	}
+
+	var values document.GraphValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	return r.valuesToContentEntry(values, userId), nil
+}
+
 func (r graphRepository) valuesToEntry(
 	values document.GraphValues,
 	name string,
@@ -184,6 +233,18 @@ func (r graphRepository) valuesToEntry(
 	return &record.GraphEntry{
 		Paragraph: values.Paragraph,
 		Name:      name,
+		UserId:    userId,
+		CreatedAt: values.CreatedAt,
+		UpdatedAt: values.UpdatedAt,
+	}
+}
+
+func (r graphRepository) valuesToContentEntry(
+	values document.GraphValues,
+	userId string,
+) *record.GraphContentEntry {
+	return &record.GraphContentEntry{
+		Paragraph: values.Paragraph,
 		UserId:    userId,
 		CreatedAt: values.CreatedAt,
 		UpdatedAt: values.UpdatedAt,
