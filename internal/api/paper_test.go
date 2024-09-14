@@ -330,8 +330,6 @@ func TestPaperUpdate(t *testing.T) {
 }
 
 func TestPaperUpdateNotFound(t *testing.T) {
-	router := setupPaperRouter()
-
 	tt := []struct {
 		name      string
 		userId    string
@@ -360,6 +358,8 @@ func TestPaperUpdateNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
+			router := setupPaperRouter()
+
 			ecorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
 				"user": map[string]any{

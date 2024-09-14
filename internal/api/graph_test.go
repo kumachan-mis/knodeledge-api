@@ -850,6 +850,314 @@ func TestGraphSectionalizeInvalidRequestFormat(t *testing.T) {
 	}, responseBody)
 }
 
+func TestGraphUpdate(t *testing.T) {
+	router := setupGraphRouter()
+
+	ecorder := httptest.NewRecorder()
+	requestBody, _ := json.Marshal(map[string]any{
+		"user": map[string]any{
+			"id": testutil.ModifyOnlyUserId(),
+		},
+		"project": map[string]any{
+			"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+		},
+		"chapter": map[string]any{
+			"id": "CHAPTER_ONE",
+		},
+		"graph": map[string]any{
+			"id":        "SECTION_ONE",
+			"name":      "Updated Graph",
+			"paragraph": "Updated paragraph content.",
+		},
+	})
+	req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(string(requestBody)))
+
+	router.ServeHTTP(ecorder, req)
+
+	assert.Equal(t, http.StatusOK, ecorder.Code)
+
+	var responseBody map[string]any
+	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, map[string]any{
+		"graph": map[string]any{
+			"id":        "SECTION_ONE",
+			"paragraph": "Updated paragraph content.",
+		},
+	}, responseBody)
+}
+
+func TestGraphUpdateNotFound(t *testing.T) {
+
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		chapterId string
+		graphId   string
+	}{
+		{
+			name:      "should return error when project not found",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "UNKNOWN_PROJECT",
+			chapterId: "CHAPTER_ONE",
+			graphId:   "SECTION_ONE",
+		},
+		{
+			name:      "should return not found when user is not author of the project",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+			chapterId: "CHAPTER_ONE",
+			graphId:   "SECTION_ONE",
+		},
+		{
+			name:      "should return error when chapter not found",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+			chapterId: "UNKNOWN_CHAPTER",
+			graphId:   "SECTION_ONE",
+		},
+		{
+			name:      "should return error when section not found",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+			chapterId: "CHAPTER_ONE",
+			graphId:   "UNKNOWN_SECTION",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupGraphRouter()
+
+			ecorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(map[string]any{
+				"user": map[string]any{
+					"id": tc.userId,
+				},
+				"project": map[string]any{
+					"id": tc.projectId,
+				},
+				"chapter": map[string]any{
+					"id": tc.chapterId,
+				},
+				"graph": map[string]any{
+					"id":        tc.graphId,
+					"paragraph": "Updated paragraph content.",
+				},
+			})
+			req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(ecorder, req)
+
+			assert.Equal(t, http.StatusNotFound, ecorder.Code)
+
+			var responseBody map[string]any
+			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			assert.Nil(t, err)
+
+			assert.Equal(t, map[string]any{
+				"message": "not found",
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph":   map[string]any{},
+			}, responseBody)
+		})
+	}
+}
+
+func TestGraphUpdateDomainValidationError(t *testing.T) {
+	tooLongGraphParagraph := testutil.RandomString(40001)
+
+	tt := []struct {
+		name             string
+		request          map[string]any
+		expectedResponse map[string]any
+	}{
+		{
+			name: "should return error when user id is empty",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": "",
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": "Updated paragraph content.",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph":   map[string]any{},
+			},
+		},
+		{
+			name: "should return error when project id is empty",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": "Updated paragraph content.",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{},
+				"project": map[string]any{
+					"id": "project id is required, but got ''",
+				},
+				"chapter": map[string]any{},
+				"graph":   map[string]any{},
+			},
+		},
+		{
+			name: "should return error when chapter id is empty",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": "Updated paragraph content.",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{
+					"id": "chapter id is required, but got ''",
+				},
+				"graph": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when graph id is empty",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "",
+					"paragraph": "Updated paragraph content.",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph": map[string]any{
+					"id": "graph id is required, but got ''",
+				},
+			},
+		},
+		{
+			name: "should return error when graph paragraph is too long",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": tooLongGraphParagraph,
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph": map[string]any{
+					"paragraph": "graph paragraph must be less than or equal to 40000 bytes, but got 40001 bytes",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupGraphRouter()
+
+			ecorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(ecorder, req)
+
+			assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+
+			var responseBody map[string]any
+			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			assert.Nil(t, err)
+
+			assert.Equal(t, map[string]any{
+				"message": "invalid request value",
+				"user":    tc.expectedResponse["user"],
+				"project": tc.expectedResponse["project"],
+				"chapter": tc.expectedResponse["chapter"],
+				"graph":   tc.expectedResponse["graph"],
+			}, responseBody)
+		})
+	}
+}
+
+func TestGraphUpdateInvalidRequestFormat(t *testing.T) {
+	router := setupGraphRouter()
+
+	ecorder := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(""))
+
+	router.ServeHTTP(ecorder, req)
+
+	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+
+	var responseBody map[string]any
+	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, map[string]any{
+		"message": "invalid request format",
+		"user":    map[string]any{},
+		"project": map[string]any{},
+		"chapter": map[string]any{},
+		"graph":   map[string]any{},
+	}, responseBody)
+}
+
 func setupGraphRouter() *gin.Engine {
 	router := gin.Default()
 	client := db.FirestoreClient()
