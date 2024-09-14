@@ -55,7 +55,7 @@ func TestGraphFind(t *testing.T) {
 	}, responseBody)
 }
 
-func TestGraphFindProjectOrChapterOrSectionNotFound(t *testing.T) {
+func TestGraphFindNotFound(t *testing.T) {
 	router := setupGraphRouter()
 
 	tt := []struct {
@@ -402,7 +402,7 @@ func TestGraphSectionalize(t *testing.T) {
 	}, responseBody)
 }
 
-func TestGraphSectionalizeProjectOrChapterNotFound(t *testing.T) {
+func TestGraphSectionalizeNotFound(t *testing.T) {
 	tt := []struct {
 		name      string
 		userId    string

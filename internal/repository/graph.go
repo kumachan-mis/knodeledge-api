@@ -190,9 +190,20 @@ func (r graphRepository) UpdateGraphContent(
 	sectionId string,
 	entry record.GraphContentWithoutAutofieldEntry,
 ) (*record.GraphContentEntry, *Error) {
-	_, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
+	chapter, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
 	if rErr != nil {
 		return nil, rErr
+	}
+
+	var section *record.SectionEntry
+	for _, s := range chapter.Sections {
+		if s.Id == sectionId {
+			section = &s
+			break
+		}
+	}
+	if section == nil {
+		return nil, Errorf(NotFoundError, "failed to fetch graph")
 	}
 
 	ref := r.client.Collection(ProjectCollection).

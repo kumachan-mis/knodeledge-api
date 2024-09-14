@@ -59,7 +59,7 @@ func TestPaperFind(t *testing.T) {
 	}, responseBody)
 }
 
-func TestPaperFindProjectOrChapterNotFound(t *testing.T) {
+func TestPaperFindNotFound(t *testing.T) {
 	router := setupPaperRouter()
 
 	tt := []struct {
@@ -329,7 +329,7 @@ func TestPaperUpdate(t *testing.T) {
 	}, responseBody)
 }
 
-func TestPaperUpdateProjectOrChapterNotFound(t *testing.T) {
+func TestPaperUpdateNotFound(t *testing.T) {
 	router := setupPaperRouter()
 
 	tt := []struct {

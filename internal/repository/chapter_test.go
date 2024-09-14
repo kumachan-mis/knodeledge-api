@@ -30,15 +30,15 @@ func TestFetchChaptersValidDocument(t *testing.T) {
 	assert.Equal(t, "Introduction", chapter.Sections[0].Name)
 	assert.Equal(t, "SECTION_TWO", chapter.Sections[1].Id)
 	assert.Equal(t, "Section of Chapter One", chapter.Sections[1].Name)
-	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
-	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
+	assert.Equal(t, testutil.Date(), chapter.CreatedAt)
+	assert.Equal(t, testutil.Date(), chapter.UpdatedAt)
 
 	chapter = chapters["CHAPTER_TWO"]
 	assert.Equal(t, "Chapter Two", chapter.Name)
 	assert.Equal(t, 2, chapter.Number)
 	assert.Len(t, chapter.Sections, 0)
-	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
-	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
+	assert.Equal(t, testutil.Date(), chapter.CreatedAt)
+	assert.Equal(t, testutil.Date(), chapter.UpdatedAt)
 }
 
 func TestFetchChaptersNoDocument(t *testing.T) {
@@ -52,7 +52,7 @@ func TestFetchChaptersNoDocument(t *testing.T) {
 	assert.Empty(t, chapters)
 }
 
-func TestFetchChaptersProjectNotFound(t *testing.T) {
+func TestFetchChaptersNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -153,11 +153,11 @@ func TestFetchChapterValidDocument(t *testing.T) {
 	assert.Equal(t, "Introduction", chapter.Sections[0].Name)
 	assert.Equal(t, "SECTION_TWO", chapter.Sections[1].Id)
 	assert.Equal(t, "Section of Chapter One", chapter.Sections[1].Name)
-	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.CreatedAt)
-	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), chapter.UpdatedAt)
+	assert.Equal(t, testutil.Date(), chapter.CreatedAt)
+	assert.Equal(t, testutil.Date(), chapter.UpdatedAt)
 }
 
-func TestFetchChapterProjectOrChapterNotFound(t *testing.T) {
+func TestFetchChapterNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -376,7 +376,7 @@ func TestInsertChapterValidEntry(t *testing.T) {
 	}, chapters)
 }
 
-func TestInsertChapterProjectNotFound(t *testing.T) {
+func TestInsertChapterNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -792,7 +792,7 @@ func TestUpdateChapterSectionsValidEntry(t *testing.T) {
 	assert.Less(t, now.Sub(updatedChapter.UpdatedAt), time.Second)
 }
 
-func TestUpdateChapterSectionsNotFound(t *testing.T) {
+func TestUpdateChaptersNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
