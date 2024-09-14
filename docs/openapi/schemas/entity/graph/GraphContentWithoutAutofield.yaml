@@ -1,10 +1,6 @@
 type: object
-description: Graph object with only content fields
+description: Graph object with only content fields without auto-generated fields
 properties:
-  id:
-    type: string
-    description: Auto-generated section ID
-    example: 123e4567-e89b-12d3-a456-426614174000
   paragraph:
     type: string
     maxLength: 40000
@@ -13,5 +9,4 @@ properties:
       ## Introduction
       This is the introduction of the paper.
 required:
-  - id
   - paragraph
