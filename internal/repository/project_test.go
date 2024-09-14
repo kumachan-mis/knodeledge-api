@@ -27,15 +27,15 @@ func TestFetchProjectsValidDocument(t *testing.T) {
 	assert.Equal(t, "No Description Project", project.Name)
 	assert.Equal(t, "", project.Description)
 	assert.Equal(t, userId, project.UserId)
-	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), project.CreatedAt)
-	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), project.UpdatedAt)
+	assert.Equal(t, testutil.Date(), project.CreatedAt)
+	assert.Equal(t, testutil.Date(), project.UpdatedAt)
 
 	project = projects["PROJECT_WITH_DESCRIPTION"]
 	assert.Equal(t, "Described Project", project.Name)
 	assert.Equal(t, "This is project description", project.Description)
 	assert.Equal(t, userId, project.UserId)
-	assert.Equal(t, time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC), project.CreatedAt)
-	assert.Equal(t, time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC), project.UpdatedAt)
+	assert.Equal(t, testutil.Date().Add(-1*time.Hour), project.CreatedAt)
+	assert.Equal(t, testutil.Date().Add(-1*time.Hour), project.UpdatedAt)
 }
 
 func TestFetchProjectsNoDocument(t *testing.T) {
@@ -98,8 +98,8 @@ func TestFetchProjectValidDocument(t *testing.T) {
 				Name:        "No Description Project",
 				Description: "",
 				UserId:      testutil.ReadOnlyUserId(),
-				CreatedAt:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-				UpdatedAt:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				CreatedAt:   testutil.Date(),
+				UpdatedAt:   testutil.Date(),
 			},
 		},
 		{
@@ -109,8 +109,8 @@ func TestFetchProjectValidDocument(t *testing.T) {
 				Name:        "Described Project",
 				Description: "This is project description",
 				UserId:      testutil.ReadOnlyUserId(),
-				CreatedAt:   time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC),
-				UpdatedAt:   time.Date(2023, 12, 31, 23, 0, 0, 0, time.UTC),
+				CreatedAt:   testutil.Date().Add(-1 * time.Hour),
+				UpdatedAt:   testutil.Date().Add(-1 * time.Hour),
 			},
 		},
 	}
@@ -289,7 +289,7 @@ func TestUpdateProjectValidEntry(t *testing.T) {
 			assert.Equal(t, tc.project.Name, updatedProject.Name)
 			assert.Equal(t, tc.project.Description, updatedProject.Description)
 			assert.Equal(t, tc.userId, updatedProject.UserId)
-			assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), updatedProject.CreatedAt)
+			assert.Equal(t, testutil.Date(), updatedProject.CreatedAt)
 			assert.Less(t, now.Sub(updatedProject.UpdatedAt), time.Second)
 		})
 	}

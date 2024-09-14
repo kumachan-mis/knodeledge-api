@@ -90,7 +90,7 @@ func TestChapterListEmpty(t *testing.T) {
 	})
 }
 
-func TestChapterListProjectNotFound(t *testing.T) {
+func TestChapterListNotFound(t *testing.T) {
 	tt := []struct {
 		name    string
 		request map[string]any
@@ -302,7 +302,7 @@ func TestChapterCreate(t *testing.T) {
 	}, responseBody)
 }
 
-func TestChapterCreateProjectNotFound(t *testing.T) {
+func TestChapterCreateNotFound(t *testing.T) {
 	tt := []struct {
 		name    string
 		request map[string]any

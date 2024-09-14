@@ -38,7 +38,7 @@ func TestFetchPaperValidEntry(t *testing.T) {
 	assert.Equal(t, testutil.Date(), entry.UpdatedAt)
 }
 
-func TestFetchPaperProjectOrChapterNotFound(t *testing.T) {
+func TestFetchPaperNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -149,7 +149,7 @@ func TestInsertPaperValidEntry(t *testing.T) {
 	assert.Less(t, now.Sub(entry.UpdatedAt), time.Second)
 }
 
-func TestInsertPaperProjectOrChapterNotFound(t *testing.T) {
+func TestInsertPaperNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -205,7 +205,7 @@ func TestUpdatePaterValidEntry(t *testing.T) {
 
 	userId := testutil.ModifyOnlyUserId()
 	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
-	chapterId := "CHAPTER_ONE"
+	chapterId := "CHAPTER_TWO"
 	content := strings.Join([]string{
 		"## Introduction",
 		"This is the introduction of the paper.",
@@ -224,11 +224,11 @@ func TestUpdatePaterValidEntry(t *testing.T) {
 
 	assert.Equal(t, content, entry.Content)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), entry.UserId)
-	assert.Less(t, now.Sub(entry.CreatedAt), time.Second)
+	assert.Equal(t, testutil.Date(), entry.CreatedAt)
 	assert.Less(t, now.Sub(entry.UpdatedAt), time.Second)
 }
 
-func TestUpdatePaperProjectOrChapterNotFound(t *testing.T) {
+func TestUpdatePaperNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string

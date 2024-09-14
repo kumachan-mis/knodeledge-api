@@ -17,6 +17,13 @@ type GraphService interface {
 		chapterId domain.ChapterIdObject,
 		sectionId domain.SectionIdObject,
 	) (*domain.GraphEntity, *Error)
+	UpdateGraphContent(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+		chapterId domain.ChapterIdObject,
+		graphId domain.GraphIdObject,
+		graph domain.GraphContentWithoutAutofieldEntity,
+	) (*domain.GraphContentEntity, *Error)
 	SectionalizeIntoGraphs(
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
@@ -52,6 +59,34 @@ func (s graphService) FindGraph(
 	}
 
 	return s.entryToEntity(sectionId.Value(), *entry)
+}
+
+func (s graphService) UpdateGraphContent(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+	chapterId domain.ChapterIdObject,
+	graphId domain.GraphIdObject,
+	graph domain.GraphContentWithoutAutofieldEntity,
+) (*domain.GraphContentEntity, *Error) {
+	entryWithoutAutofield := record.GraphContentWithoutAutofieldEntry{
+		Paragraph: graph.Paragraph().Value(),
+	}
+
+	entry, rErr := s.repository.UpdateGraphContent(
+		userId.Value(),
+		projectId.Value(),
+		chapterId.Value(),
+		graphId.Value(),
+		entryWithoutAutofield,
+	)
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return nil, Errorf(NotFoundError, "failed to update graph content: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return nil, Errorf(RepositoryFailurePanic, "failed to update graph content: %w", rErr.Unwrap())
+	}
+
+	return s.entryToContentEntity(graphId.Value(), *entry)
 }
 
 func (s graphService) SectionalizeIntoGraphs(
@@ -149,4 +184,25 @@ func (s graphService) entryToEntity(key string, entry record.GraphEntry) (*domai
 	}
 
 	return domain.NewGraphEntity(*id, *name, *paragraph, *createdAt, *updatedAt), nil
+}
+
+func (s graphService) entryToContentEntity(key string, entry record.GraphContentEntry) (*domain.GraphContentEntity, *Error) {
+	id, err := domain.NewGraphIdObject(key)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (id): %w", err)
+	}
+	paragraph, err := domain.NewGraphParagraphObject(entry.Paragraph)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (paragraph): %w", err)
+	}
+	createdAt, err := domain.NewCreatedAtObject(entry.CreatedAt)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (createdAt): %w", err)
+	}
+	updatedAt, err := domain.NewUpdatedAtObject(entry.UpdatedAt)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (updatedAt): %w", err)
+	}
+
+	return domain.NewGraphContentEntity(*id, *paragraph, *createdAt, *updatedAt), nil
 }

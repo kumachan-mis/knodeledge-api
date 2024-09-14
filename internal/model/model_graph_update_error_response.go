@@ -21,5 +21,5 @@ type GraphUpdateErrorResponse struct {
 
 	Chapter ChapterOnlyIdError `json:"chapter,omitempty"`
 
-	Graph GraphError `json:"graph,omitempty"`
+	Graph GraphContentError `json:"graph,omitempty"`
 }

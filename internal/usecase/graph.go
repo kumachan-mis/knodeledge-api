@@ -11,6 +11,8 @@ import (
 type GraphUseCase interface {
 	FindGraph(request model.GraphFindRequest) (
 		*model.GraphFindResponse, *Error[model.GraphFindErrorResponse])
+	UpdateGraph(request model.GraphUpdateRequest) (
+		*model.GraphUpdateResponse, *Error[model.GraphUpdateErrorResponse])
 	SectionalizeGraph(request model.GraphSectionalizeRequest) (
 		*model.GraphSectionalizeResponse, *Error[model.GraphSectionalizeErrorResponse])
 }
@@ -78,6 +80,72 @@ func (uc graphUseCase) FindGraph(req model.GraphFindRequest) (
 		Graph: model.Graph{
 			Id:        entity.Id().Value(),
 			Name:      entity.Name().Value(),
+			Paragraph: entity.Paragraph().Value(),
+		},
+	}, nil
+}
+
+func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
+	*model.GraphUpdateResponse, *Error[model.GraphUpdateErrorResponse]) {
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
+	graphId, graphIdErr := domain.NewGraphIdObject(req.Graph.Id)
+	graphParagraph, graphParagraphErr := domain.NewGraphParagraphObject(req.Graph.Paragraph)
+
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
+	}
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
+	}
+	chapterIdMsg := ""
+	if chapterIdErr != nil {
+		chapterIdMsg = chapterIdErr.Error()
+	}
+	graphIdMsg := ""
+	if graphIdErr != nil {
+		graphIdMsg = graphIdErr.Error()
+	}
+	graphParagraphMsg := ""
+	if graphParagraphErr != nil {
+		graphParagraphMsg = graphParagraphErr.Error()
+	}
+
+	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || graphIdErr != nil || graphParagraphErr != nil {
+		return nil, NewModelBasedError(
+			DomainValidationError,
+			model.GraphUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: userIdMsg},
+				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
+				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
+				Graph:   model.GraphContentError{Id: graphIdMsg, Paragraph: graphParagraphMsg},
+			},
+		)
+	}
+
+	graph := domain.NewGraphContentWithoutAutofieldEntity(*graphParagraph)
+
+	entity, uErr := uc.service.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
+
+	if uErr != nil && uErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.GraphUpdateErrorResponse](
+			NotFoundError,
+			uErr.Unwrap().Error(),
+		)
+	}
+	if uErr != nil {
+		return nil, NewMessageBasedError[model.GraphUpdateErrorResponse](
+			InternalErrorPanic,
+			uErr.Unwrap().Error(),
+		)
+	}
+
+	return &model.GraphUpdateResponse{
+		Graph: model.GraphContent{
+			Id:        entity.Id().Value(),
 			Paragraph: entity.Paragraph().Value(),
 		},
 	}, nil

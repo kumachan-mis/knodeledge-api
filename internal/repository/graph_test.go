@@ -51,7 +51,7 @@ func TestGraphExistsValidEntry(t *testing.T) {
 	}
 }
 
-func TestGraphExistsProjectOrChapterNotFound(t *testing.T) {
+func TestGraphExistsNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -121,7 +121,7 @@ func TestFetchGraphValidEntry(t *testing.T) {
 	}, *entry)
 }
 
-func TestFetchGraphProjectOrChapterOrSectionNotFound(t *testing.T) {
+func TestFetchGraphNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -286,7 +286,7 @@ func TestInsertGraphsValidEntry(t *testing.T) {
 	assert.Less(t, now.Sub(createdEntry.UpdatedAt), time.Second)
 }
 
-func TestInsertGraphProjectOrChapterNotFound(t *testing.T) {
+func TestInsertGraphNotFound(t *testing.T) {
 	tt := []struct {
 		name          string
 		userId        string
@@ -335,6 +335,92 @@ func TestInsertGraphProjectOrChapterNotFound(t *testing.T) {
 			assert.Equal(t, repository.NotFoundError, rErr.Code())
 			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
 			assert.Nil(t, createdPaper)
+		})
+	}
+}
+
+func TestUpdateGraphContentValidEntry(t *testing.T) {
+	userId := testutil.ModifyOnlyUserId()
+	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
+	chapterId := "CHAPTER_ONE"
+	sectionId := "SECTION_ONE"
+
+	client := db.FirestoreClient()
+	r := repository.NewGraphRepository(*client)
+
+	paragraph := "This is the introduction of the paper."
+
+	updatedEntry, rErr := r.UpdateGraphContent(userId, projectId, chapterId, sectionId, record.GraphContentWithoutAutofieldEntry{
+		Paragraph: paragraph,
+	})
+	now := time.Now()
+
+	assert.Nil(t, rErr)
+
+	assert.Equal(t, paragraph, updatedEntry.Paragraph)
+	assert.Equal(t, testutil.ModifyOnlyUserId(), updatedEntry.UserId)
+	assert.Equal(t, testutil.Date(), updatedEntry.CreatedAt)
+	assert.Less(t, now.Sub(updatedEntry.UpdatedAt), time.Second)
+
+}
+
+func TestUpdateGraphContentNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		sectionId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project not found",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return not found when user is not author of the project",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITH_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return error when chapter not found",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			chapterId:     "UNKNOWN_CHAPTER",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch chapter",
+		},
+		{
+			name:          "should return error when section not found",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "UNKNOWN_SECTION",
+			expectedError: "failed to fetch graph",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewGraphRepository(*client)
+
+			entry, rErr := r.UpdateGraphContent(tc.userId, tc.projectId, tc.chapterId, tc.sectionId, record.GraphContentWithoutAutofieldEntry{
+				Paragraph: "content",
+			})
+
+			assert.NotNil(t, rErr)
+
+			assert.Nil(t, entry)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
 		})
 	}
 }

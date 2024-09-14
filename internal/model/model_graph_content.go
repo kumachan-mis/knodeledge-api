@@ -9,7 +9,12 @@
 
 package model
 
-// GraphUpdateResponse - Response Body for Graph Update API
-type GraphUpdateResponse struct {
-	Graph GraphContent `json:"graph"`
+// GraphContent - Graph object with only content fields
+type GraphContent struct {
+
+	// Auto-generated section ID
+	Id string `json:"id"`
+
+	// Graph paragraph
+	Paragraph string `json:"paragraph"`
 }

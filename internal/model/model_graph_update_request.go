@@ -17,5 +17,5 @@ type GraphUpdateRequest struct {
 
 	Chapter ChapterOnlyId `json:"chapter"`
 
-	Graph Graph `json:"graph"`
+	Graph GraphContent `json:"graph"`
 }

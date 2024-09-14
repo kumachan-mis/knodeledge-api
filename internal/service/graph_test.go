@@ -711,3 +711,180 @@ func TestSectionalizeIntoGraphsChapterRepositoryError(t *testing.T) {
 		})
 	}
 }
+func TestUpdateGraphContentValidEntry(t *testing.T) {
+	maxLengthPaperContent := testutil.RandomString(40000)
+
+	tt := []struct {
+		name  string
+		entry record.GraphContentEntry
+	}{
+		{
+			name: "should update graph content",
+			entry: record.GraphContentEntry{
+				Paragraph: "Updated section content.",
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+		},
+		{
+			name: "should update graph content with max-length paragraph",
+			entry: record.GraphContentEntry{
+				Paragraph: maxLengthPaperContent,
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+			r.EXPECT().
+				UpdateGraphContent(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001", gomock.Any()).
+				Return(&tc.entry, nil)
+
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+
+			s := service.NewGraphService(r, cr)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+			graphId, err := domain.NewGraphIdObject("2000000000000001")
+			assert.Nil(t, err)
+			paragraph, err := domain.NewGraphParagraphObject(tc.entry.Paragraph)
+			assert.Nil(t, err)
+			graph := domain.NewGraphContentWithoutAutofieldEntity(*paragraph)
+
+			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
+			assert.Nil(t, sErr)
+
+			assert.Equal(t, tc.entry.Paragraph, updatedGraph.Paragraph().Value())
+			assert.Equal(t, tc.entry.CreatedAt, updatedGraph.CreatedAt().Value())
+			assert.Equal(t, tc.entry.UpdatedAt, updatedGraph.UpdatedAt().Value())
+		})
+	}
+}
+
+func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
+	tooLongGraphParagraph := testutil.RandomString(40001)
+
+	tt := []struct {
+		name                string
+		updatedGraphContent record.GraphContentEntry
+		expectedError       string
+	}{
+		{
+			name: "should return error when paragraph is too long",
+			updatedGraphContent: record.GraphContentEntry{
+				Paragraph: tooLongGraphParagraph,
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to content entity (paragraph): " +
+				"graph paragraph must be less than or equal to 40000 bytes, but got 40001 bytes",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+			r.EXPECT().
+				UpdateGraphContent(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001", gomock.Any()).
+				Return(&tc.updatedGraphContent, nil)
+
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+
+			s := service.NewGraphService(r, cr)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+			graphId, err := domain.NewGraphIdObject("2000000000000001")
+			assert.Nil(t, err)
+			paragraph, err := domain.NewGraphParagraphObject("This is updated graph paragraph")
+			assert.Nil(t, err)
+			graph := domain.NewGraphContentWithoutAutofieldEntity(*paragraph)
+
+			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, service.DomainFailurePanic, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("domain failure: %v", tc.expectedError), sErr.Error())
+			assert.Nil(t, updatedGraph)
+		})
+	}
+}
+
+func TestUpdateGraphContentRepositoryError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "graph not found",
+			expectedError: "failed to update graph content: graph not found",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns write failure error",
+			errorCode:     repository.WriteFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to update graph content: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+			r.EXPECT().
+				UpdateGraphContent(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001", gomock.Any()).
+				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+
+			s := service.NewGraphService(r, cr)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+			graphId, err := domain.NewGraphIdObject("2000000000000001")
+			assert.Nil(t, err)
+			paragraph, err := domain.NewGraphParagraphObject("Updated section content.")
+			assert.Nil(t, err)
+			graph := domain.NewGraphContentWithoutAutofieldEntity(*paragraph)
+
+			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
+			assert.Nil(t, updatedGraph)
+		})
+	}
+}
