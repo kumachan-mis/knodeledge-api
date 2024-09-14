@@ -1,0 +1,9 @@
+# List of unused schemas. These are not used in API definitions but useful for frontend development.
+PaperWithoutAutofield:
+  $ref: ./entity/paper/PaperWithoutAutofield.yaml
+PaperWithoutAutofieldError:
+  $ref: ./entity/paper/PaperWithoutAutofieldError.yaml
+GraphContentWithoutAutofield:
+  $ref: ./entity/graph/GraphContentWithoutAutofield.yaml
+GraphContentWithoutAutofieldError:
+  $ref: ./entity/graph/GraphContentWithoutAutofieldError.yaml

@@ -1,0 +1,7 @@
+type: object
+description: Error Message for GraphContentWithoutAutofield object
+properties:
+  paragraph:
+    type: string
+    description: Error message for graph paragraph
+    example: graph paragraph must be less than or equal to 40000 bytes
