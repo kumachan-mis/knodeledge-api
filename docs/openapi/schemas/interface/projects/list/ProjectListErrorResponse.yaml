@@ -7,3 +7,5 @@ properties:
     example: unexpected EOF
   user:
     $ref: ../../../entity/user/UserOnlyIdError.yaml
+required:
+  - message

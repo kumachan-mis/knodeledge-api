@@ -13,3 +13,5 @@ properties:
     $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
   graph:
     $ref: ../../../entity/graph/GraphContentError.yaml
+required:
+  - message

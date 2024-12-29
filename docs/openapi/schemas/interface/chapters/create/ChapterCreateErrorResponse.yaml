@@ -11,3 +11,5 @@ properties:
     $ref: ../../../entity/project/ProjectOnlyIdError.yaml
   chapter:
     $ref: ../../../entity/chapter/ChapterWithoutAutofieldError.yaml
+required:
+  - message
