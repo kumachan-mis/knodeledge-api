@@ -866,7 +866,6 @@ func TestGraphUpdate(t *testing.T) {
 		},
 		"graph": map[string]any{
 			"id":        "SECTION_ONE",
-			"name":      "Updated Graph",
 			"paragraph": "Updated paragraph content.",
 		},
 	})
@@ -883,6 +882,7 @@ func TestGraphUpdate(t *testing.T) {
 	assert.Equal(t, map[string]any{
 		"graph": map[string]any{
 			"id":        "SECTION_ONE",
+			"name":      "Introduction",
 			"paragraph": "Updated paragraph content.",
 		},
 	}, responseBody)

@@ -144,8 +144,9 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 	}
 
 	return &model.GraphUpdateResponse{
-		Graph: model.GraphContent{
+		Graph: model.Graph{
 			Id:        entity.Id().Value(),
+			Name:      entity.Name().Value(),
 			Paragraph: entity.Paragraph().Value(),
 		},
 	}, nil

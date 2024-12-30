@@ -721,6 +721,8 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 
 			id, err := domain.NewGraphIdObject("2000000000000001")
 			assert.Nil(t, err)
+			name, err := domain.NewGraphNameObject("Section")
+			assert.Nil(t, err)
 			paragraph, err := domain.NewGraphParagraphObject(tc.paragraph)
 			assert.Nil(t, err)
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
@@ -728,7 +730,7 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 
-			graphContent := domain.NewGraphContentEntity(*id, *paragraph, *createdAt, *updatedAt)
+			graph := domain.NewGraphEntity(*id, *name, *paragraph, *createdAt, *updatedAt)
 
 			s.EXPECT().
 				UpdateGraphContent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -745,7 +747,7 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 					assert.Equal(t, "2000000000000001", graphId.Value())
 					assert.Equal(t, tc.paragraph, graph.Paragraph().Value())
 				}).
-				Return(graphContent, nil)
+				Return(graph, nil)
 
 			uc := usecase.NewGraphUseCase(s)
 
@@ -761,6 +763,7 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 
 			assert.Nil(t, ucErr)
 			assert.Equal(t, "2000000000000001", res.Graph.Id)
+			assert.Equal(t, "Section", res.Graph.Name)
 			assert.Equal(t, tc.paragraph, res.Graph.Paragraph)
 		})
 	}

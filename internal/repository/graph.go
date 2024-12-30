@@ -37,7 +37,7 @@ type GraphRepository interface {
 		chapterId string,
 		sectionId string,
 		entry record.GraphContentWithoutAutofieldEntry,
-	) (*record.GraphContentEntry, *Error)
+	) (*record.GraphEntry, *Error)
 }
 
 type graphRepository struct {
@@ -189,7 +189,7 @@ func (r graphRepository) UpdateGraphContent(
 	chapterId string,
 	sectionId string,
 	entry record.GraphContentWithoutAutofieldEntry,
-) (*record.GraphContentEntry, *Error) {
+) (*record.GraphEntry, *Error) {
 	chapter, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
 	if rErr != nil {
 		return nil, rErr
@@ -233,7 +233,7 @@ func (r graphRepository) UpdateGraphContent(
 		return nil, Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
 	}
 
-	return r.valuesToContentEntry(values, userId), nil
+	return r.valuesToEntry(values, section.Name, userId), nil
 }
 
 func (r graphRepository) valuesToEntry(
@@ -242,19 +242,7 @@ func (r graphRepository) valuesToEntry(
 	userId string,
 ) *record.GraphEntry {
 	return &record.GraphEntry{
-		Paragraph: values.Paragraph,
 		Name:      name,
-		UserId:    userId,
-		CreatedAt: values.CreatedAt,
-		UpdatedAt: values.UpdatedAt,
-	}
-}
-
-func (r graphRepository) valuesToContentEntry(
-	values document.GraphValues,
-	userId string,
-) *record.GraphContentEntry {
-	return &record.GraphContentEntry{
 		Paragraph: values.Paragraph,
 		UserId:    userId,
 		CreatedAt: values.CreatedAt,

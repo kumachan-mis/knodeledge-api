@@ -322,12 +322,13 @@ func TestInsertGraphNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewGraphRepository(*client)
 
-			id, createdPaper, rErr := r.InsertGraphs(tc.userId, tc.projectId, tc.chapterId, []record.GraphWithoutAutofieldEntry{
-				{
-					Name:      "Section Name",
-					Paragraph: "paragraph",
-				},
-			})
+			id, createdPaper, rErr := r.InsertGraphs(tc.userId, tc.projectId, tc.chapterId,
+				[]record.GraphWithoutAutofieldEntry{
+					{
+						Name:      "Section Name",
+						Paragraph: "paragraph",
+					},
+				})
 
 			assert.NotNil(t, rErr)
 
@@ -350,13 +351,15 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 
 	paragraph := "This is the introduction of the paper."
 
-	updatedEntry, rErr := r.UpdateGraphContent(userId, projectId, chapterId, sectionId, record.GraphContentWithoutAutofieldEntry{
-		Paragraph: paragraph,
-	})
+	updatedEntry, rErr := r.UpdateGraphContent(userId, projectId, chapterId, sectionId,
+		record.GraphContentWithoutAutofieldEntry{
+			Paragraph: paragraph,
+		})
 	now := time.Now()
 
 	assert.Nil(t, rErr)
 
+	assert.Equal(t, "Introduction", updatedEntry.Name)
 	assert.Equal(t, paragraph, updatedEntry.Paragraph)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), updatedEntry.UserId)
 	assert.Equal(t, testutil.Date(), updatedEntry.CreatedAt)
@@ -412,9 +415,10 @@ func TestUpdateGraphContentNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewGraphRepository(*client)
 
-			entry, rErr := r.UpdateGraphContent(tc.userId, tc.projectId, tc.chapterId, tc.sectionId, record.GraphContentWithoutAutofieldEntry{
-				Paragraph: "content",
-			})
+			entry, rErr := r.UpdateGraphContent(tc.userId, tc.projectId, tc.chapterId, tc.sectionId,
+				record.GraphContentWithoutAutofieldEntry{
+					Paragraph: "content",
+				})
 
 			assert.NotNil(t, rErr)
 

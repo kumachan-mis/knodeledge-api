@@ -713,15 +713,17 @@ func TestSectionalizeIntoGraphsChapterRepositoryError(t *testing.T) {
 	}
 }
 func TestUpdateGraphContentValidEntry(t *testing.T) {
+	maxLengthGraphName := testutil.RandomString(100)
 	maxLengthPaperContent := testutil.RandomString(40000)
 
 	tt := []struct {
 		name  string
-		entry record.GraphContentEntry
+		entry record.GraphEntry
 	}{
 		{
 			name: "should update graph content",
-			entry: record.GraphContentEntry{
+			entry: record.GraphEntry{
+				Name:      "Section",
 				Paragraph: "Updated section content.",
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
@@ -730,7 +732,8 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 		},
 		{
 			name: "should update graph content with max-length paragraph",
-			entry: record.GraphContentEntry{
+			entry: record.GraphEntry{
+				Name:      maxLengthGraphName,
 				Paragraph: maxLengthPaperContent,
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
@@ -768,6 +771,7 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 			assert.Nil(t, sErr)
 
+			assert.Equal(t, tc.entry.Name, updatedGraph.Name().Value())
 			assert.Equal(t, tc.entry.Paragraph, updatedGraph.Paragraph().Value())
 			assert.Equal(t, tc.entry.CreatedAt, updatedGraph.CreatedAt().Value())
 			assert.Equal(t, tc.entry.UpdatedAt, updatedGraph.UpdatedAt().Value())
@@ -776,22 +780,48 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 }
 
 func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
+	tooLongGraphName := testutil.RandomString(101)
 	tooLongGraphParagraph := testutil.RandomString(40001)
 
 	tt := []struct {
-		name                string
-		updatedGraphContent record.GraphContentEntry
-		expectedError       string
+		name          string
+		updatedGraph  record.GraphEntry
+		expectedError string
 	}{
 		{
+			name: "should return error when name is empty",
+			updatedGraph: record.GraphEntry{
+				Name:      "",
+				Paragraph: "This is updated graph paragraph.",
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (name): " +
+				"graph name is required, but got ''",
+		},
+		{
+			name: "should return error when name is too long",
+			updatedGraph: record.GraphEntry{
+				Name:      tooLongGraphName,
+				Paragraph: "This is updated graph paragraph.",
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (name): "+
+				"graph name cannot be longer than 100 characters, but got '%v'", tooLongGraphName),
+		},
+		{
 			name: "should return error when paragraph is too long",
-			updatedGraphContent: record.GraphContentEntry{
+			updatedGraph: record.GraphEntry{
+				Name:      "Section",
 				Paragraph: tooLongGraphParagraph,
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
-			expectedError: "failed to convert entry to content entity (paragraph): " +
+			expectedError: "failed to convert entry to entity (paragraph): " +
 				"graph paragraph must be less than or equal to 40000 bytes, but got 40001 bytes",
 		},
 	}
@@ -804,7 +834,7 @@ func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
 			r := mock_repository.NewMockGraphRepository(ctrl)
 			r.EXPECT().
 				UpdateGraphContent(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001", gomock.Any()).
-				Return(&tc.updatedGraphContent, nil)
+				Return(&tc.updatedGraph, nil)
 
 			cr := mock_repository.NewMockChapterRepository(ctrl)
 

@@ -23,7 +23,7 @@ type GraphService interface {
 		chapterId domain.ChapterIdObject,
 		graphId domain.GraphIdObject,
 		graph domain.GraphContentWithoutAutofieldEntity,
-	) (*domain.GraphContentEntity, *Error)
+	) (*domain.GraphEntity, *Error)
 	SectionalizeIntoGraphs(
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
@@ -67,7 +67,7 @@ func (s graphService) UpdateGraphContent(
 	chapterId domain.ChapterIdObject,
 	graphId domain.GraphIdObject,
 	graph domain.GraphContentWithoutAutofieldEntity,
-) (*domain.GraphContentEntity, *Error) {
+) (*domain.GraphEntity, *Error) {
 	entryWithoutAutofield := record.GraphContentWithoutAutofieldEntry{
 		Paragraph: graph.Paragraph().Value(),
 	}
@@ -86,7 +86,7 @@ func (s graphService) UpdateGraphContent(
 		return nil, Errorf(RepositoryFailurePanic, "failed to update graph content: %w", rErr.Unwrap())
 	}
 
-	return s.entryToContentEntity(graphId.Value(), *entry)
+	return s.entryToEntity(graphId.Value(), *entry)
 }
 
 func (s graphService) SectionalizeIntoGraphs(
@@ -184,25 +184,4 @@ func (s graphService) entryToEntity(key string, entry record.GraphEntry) (*domai
 	}
 
 	return domain.NewGraphEntity(*id, *name, *paragraph, *createdAt, *updatedAt), nil
-}
-
-func (s graphService) entryToContentEntity(key string, entry record.GraphContentEntry) (*domain.GraphContentEntity, *Error) {
-	id, err := domain.NewGraphIdObject(key)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (id): %w", err)
-	}
-	paragraph, err := domain.NewGraphParagraphObject(entry.Paragraph)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (paragraph): %w", err)
-	}
-	createdAt, err := domain.NewCreatedAtObject(entry.CreatedAt)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (createdAt): %w", err)
-	}
-	updatedAt, err := domain.NewUpdatedAtObject(entry.UpdatedAt)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (updatedAt): %w", err)
-	}
-
-	return domain.NewGraphContentEntity(*id, *paragraph, *createdAt, *updatedAt), nil
 }
