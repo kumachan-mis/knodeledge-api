@@ -199,7 +199,7 @@ func TestFindGraphServiceError(t *testing.T) {
 
 			s.EXPECT().
 				FindGraph(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			res, ucErr := uc.FindGraph(model.GraphFindRequest{
 				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
@@ -671,7 +671,7 @@ func TestSectionalizeGraphServiceError(t *testing.T) {
 			s := mock_service.NewMockGraphService(ctrl)
 			s.EXPECT().
 				SectionalizeIntoGraphs(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			uc := usecase.NewGraphUseCase(s)
 
@@ -914,7 +914,7 @@ func TestUpdateGraphContentServiceError(t *testing.T) {
 
 			s.EXPECT().
 				UpdateGraphContent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			res, ucErr := uc.UpdateGraph(model.GraphUpdateRequest{
 				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},

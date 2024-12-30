@@ -70,6 +70,7 @@ func TestFindGraphValidEntry(t *testing.T) {
 			graph, sErr := s.FindGraph(*userId, *projectId, *chapterId, *sectionId)
 			assert.Nil(t, sErr)
 
+			assert.Equal(t, tc.entry.Name, graph.Name().Value())
 			assert.Equal(t, tc.entry.Paragraph, graph.Paragraph().Value())
 			assert.Equal(t, tc.entry.CreatedAt, graph.CreatedAt().Value())
 			assert.Equal(t, tc.entry.UpdatedAt, graph.UpdatedAt().Value())
@@ -188,7 +189,7 @@ func TestFindGraphRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockGraphRepository(ctrl)
 			r.EXPECT().
 				FetchGraph(testutil.ReadOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			cr := mock_repository.NewMockChapterRepository(ctrl)
 
@@ -505,7 +506,7 @@ func TestSectionalizeIntoGraphsRepositoryGraphExistsError(t *testing.T) {
 			r := mock_repository.NewMockGraphRepository(ctrl)
 			r.EXPECT().
 				GraphExists(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
-				Return(false, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(false, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
 
@@ -583,7 +584,7 @@ func TestSectionalizeIntoGraphsRepotoryInsertGraphsError(t *testing.T) {
 							Paragraph: sectionContent,
 						},
 					}).
-				Return(nil, nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
 
@@ -680,7 +681,7 @@ func TestSectionalizeIntoGraphsChapterRepositoryError(t *testing.T) {
 							Name: sectonName,
 						},
 					}).
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			s := service.NewGraphService(r, chapterRepository)
 
@@ -862,7 +863,7 @@ func TestUpdateGraphContentRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockGraphRepository(ctrl)
 			r.EXPECT().
 				UpdateGraphContent(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001", gomock.Any()).
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			cr := mock_repository.NewMockChapterRepository(ctrl)
 
