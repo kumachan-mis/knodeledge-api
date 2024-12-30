@@ -351,10 +351,9 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 
 	paragraph := "This is the introduction of the paper."
 
-	updatedEntry, rErr := r.UpdateGraphContent(userId, projectId, chapterId, sectionId,
-		record.GraphContentWithoutAutofieldEntry{
-			Paragraph: paragraph,
-		})
+	updatedEntry, rErr := r.UpdateGraphContent(userId, projectId, chapterId, sectionId, record.GraphContentEntry{
+		Paragraph: paragraph,
+	})
 	now := time.Now()
 
 	assert.Nil(t, rErr)
@@ -415,10 +414,9 @@ func TestUpdateGraphContentNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewGraphRepository(*client)
 
-			entry, rErr := r.UpdateGraphContent(tc.userId, tc.projectId, tc.chapterId, tc.sectionId,
-				record.GraphContentWithoutAutofieldEntry{
-					Paragraph: "content",
-				})
+			entry, rErr := r.UpdateGraphContent(tc.userId, tc.projectId, tc.chapterId, tc.sectionId, record.GraphContentEntry{
+				Paragraph: "content",
+			})
 
 			assert.NotNil(t, rErr)
 

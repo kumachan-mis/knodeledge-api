@@ -126,7 +126,7 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 		)
 	}
 
-	graph := domain.NewGraphContentWithoutAutofieldEntity(*graphParagraph)
+	graph := domain.NewGraphContentEntity(*graphParagraph)
 
 	entity, uErr := uc.service.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 

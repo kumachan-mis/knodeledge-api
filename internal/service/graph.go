@@ -22,7 +22,7 @@ type GraphService interface {
 		projectId domain.ProjectIdObject,
 		chapterId domain.ChapterIdObject,
 		graphId domain.GraphIdObject,
-		graph domain.GraphContentWithoutAutofieldEntity,
+		graph domain.GraphContentEntity,
 	) (*domain.GraphEntity, *Error)
 	SectionalizeIntoGraphs(
 		userId domain.UserIdObject,
@@ -66,9 +66,9 @@ func (s graphService) UpdateGraphContent(
 	projectId domain.ProjectIdObject,
 	chapterId domain.ChapterIdObject,
 	graphId domain.GraphIdObject,
-	graph domain.GraphContentWithoutAutofieldEntity,
+	graph domain.GraphContentEntity,
 ) (*domain.GraphEntity, *Error) {
-	entryWithoutAutofield := record.GraphContentWithoutAutofieldEntry{
+	entryWithoutAutofield := record.GraphContentEntry{
 		Paragraph: graph.Paragraph().Value(),
 	}
 

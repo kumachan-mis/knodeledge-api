@@ -766,7 +766,7 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 			assert.Nil(t, err)
 			paragraph, err := domain.NewGraphParagraphObject(tc.entry.Paragraph)
 			assert.Nil(t, err)
-			graph := domain.NewGraphContentWithoutAutofieldEntity(*paragraph)
+			graph := domain.NewGraphContentEntity(*paragraph)
 
 			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 			assert.Nil(t, sErr)
@@ -850,7 +850,7 @@ func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
 			assert.Nil(t, err)
 			paragraph, err := domain.NewGraphParagraphObject("This is updated graph paragraph")
 			assert.Nil(t, err)
-			graph := domain.NewGraphContentWithoutAutofieldEntity(*paragraph)
+			graph := domain.NewGraphContentEntity(*paragraph)
 
 			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 			assert.NotNil(t, sErr)
@@ -909,7 +909,7 @@ func TestUpdateGraphContentRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			paragraph, err := domain.NewGraphParagraphObject("Updated section content.")
 			assert.Nil(t, err)
-			graph := domain.NewGraphContentWithoutAutofieldEntity(*paragraph)
+			graph := domain.NewGraphContentEntity(*paragraph)
 
 			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 			assert.NotNil(t, sErr)

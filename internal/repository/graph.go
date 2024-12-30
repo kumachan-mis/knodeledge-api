@@ -36,7 +36,7 @@ type GraphRepository interface {
 		projectId string,
 		chapterId string,
 		sectionId string,
-		entry record.GraphContentWithoutAutofieldEntry,
+		entry record.GraphContentEntry,
 	) (*record.GraphEntry, *Error)
 }
 
@@ -188,7 +188,7 @@ func (r graphRepository) UpdateGraphContent(
 	projectId string,
 	chapterId string,
 	sectionId string,
-	entry record.GraphContentWithoutAutofieldEntry,
+	entry record.GraphContentEntry,
 ) (*record.GraphEntry, *Error) {
 	chapter, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
 	if rErr != nil {

@@ -739,7 +739,7 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 					projectId domain.ProjectIdObject,
 					chapterId domain.ChapterIdObject,
 					graphId domain.GraphIdObject,
-					graph domain.GraphContentWithoutAutofieldEntity,
+					graph domain.GraphContentEntity,
 				) {
 					assert.Equal(t, testutil.ModifyOnlyUserId(), userId.Value())
 					assert.Equal(t, "0000000000000001", projectId.Value())
