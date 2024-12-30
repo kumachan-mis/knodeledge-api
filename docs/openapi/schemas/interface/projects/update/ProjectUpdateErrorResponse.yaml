@@ -9,3 +9,5 @@ properties:
     $ref: ../../../entity/user/UserOnlyIdError.yaml
   project:
     $ref: ../../../entity/project/ProjectError.yaml
+required:
+  - message

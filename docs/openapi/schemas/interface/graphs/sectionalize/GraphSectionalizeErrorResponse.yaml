@@ -13,3 +13,5 @@ properties:
     $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
   sections:
     $ref: ../../../entity/section/SectionWithoutAutofieldListError.yaml
+required:
+  - message

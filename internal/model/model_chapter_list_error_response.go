@@ -13,7 +13,7 @@ package model
 type ChapterListErrorResponse struct {
 
 	// Error message when request body format is invalid
-	Message string `json:"message,omitempty"`
+	Message string `json:"message"`
 
 	User UserOnlyIdError `json:"user,omitempty"`
 
