@@ -1,0 +1,11 @@
+type: object
+description: Error Message for GraphChild list
+properties:
+  message:
+    type: string
+    description: Error message for overall of children
+    example: name of neighboring nodes must be unique, but got 'Background' duplicated
+  items:
+    type: array
+    items:
+      $ref: ./GraphChildError.yaml

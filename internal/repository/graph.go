@@ -150,6 +150,7 @@ func (r graphRepository) InsertGraphs(
 
 		_, err := bw.Create(docRef, map[string]any{
 			"paragraph": entry.Paragraph,
+			"children":  r.childrenEntryToValues(entry.Children),
 			"createdAt": firestore.ServerTimestamp,
 			"updatedAt": firestore.ServerTimestamp,
 		})
@@ -215,6 +216,7 @@ func (r graphRepository) UpdateGraphContent(
 
 	_, err := ref.Set(db.FirestoreContext(), map[string]any{
 		"paragraph": entry.Paragraph,
+		"children":  r.childrenEntryToValues(entry.Children),
 		"updatedAt": firestore.ServerTimestamp,
 	}, firestore.MergeAll)
 
@@ -244,8 +246,39 @@ func (r graphRepository) valuesToEntry(
 	return &record.GraphEntry{
 		Name:      name,
 		Paragraph: values.Paragraph,
+		Children:  r.childrenValuesToEntry(values.Children),
 		UserId:    userId,
 		CreatedAt: values.CreatedAt,
 		UpdatedAt: values.UpdatedAt,
 	}
+}
+
+func (r graphRepository) childrenValuesToEntry(
+	values []document.GraphChildValues,
+) []record.GraphChildEntry {
+	entries := make([]record.GraphChildEntry, len(values))
+	for i, value := range values {
+		entries[i] = record.GraphChildEntry{
+			Name:        value.Name,
+			Relation:    value.Relation,
+			Description: value.Descrition,
+			Children:    r.childrenValuesToEntry(value.Children),
+		}
+	}
+	return entries
+}
+
+func (r graphRepository) childrenEntryToValues(
+	children []record.GraphChildEntry,
+) []document.GraphChildValues {
+	values := make([]document.GraphChildValues, len(children))
+	for i, child := range children {
+		values[i] = document.GraphChildValues{
+			Name:       child.Name,
+			Relation:   child.Relation,
+			Descrition: child.Description,
+			Children:   r.childrenEntryToValues(child.Children),
+		}
+	}
+	return values
 }

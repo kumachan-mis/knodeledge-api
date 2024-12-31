@@ -4,6 +4,7 @@ type GraphEntity struct {
 	id        GraphIdObject
 	name      GraphNameObject
 	paragraph GraphParagraphObject
+	children  GraphChildrenEntity
 	createdAt CreatedAtObject
 	updatedAt UpdatedAtObject
 }
@@ -12,6 +13,7 @@ func NewGraphEntity(
 	id GraphIdObject,
 	name GraphNameObject,
 	paragraph GraphParagraphObject,
+	children GraphChildrenEntity,
 	createdAt CreatedAtObject,
 	updatedAt UpdatedAtObject,
 ) *GraphEntity {
@@ -19,6 +21,7 @@ func NewGraphEntity(
 		id:        id,
 		name:      name,
 		paragraph: paragraph,
+		children:  children,
 		createdAt: createdAt,
 		updatedAt: updatedAt,
 	}
@@ -34,6 +37,10 @@ func (e *GraphEntity) Name() *GraphNameObject {
 
 func (e *GraphEntity) Paragraph() *GraphParagraphObject {
 	return &e.paragraph
+}
+
+func (e *GraphEntity) Children() *GraphChildrenEntity {
+	return &e.children
 }
 
 func (e *GraphEntity) CreatedAt() *CreatedAtObject {

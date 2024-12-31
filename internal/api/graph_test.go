@@ -51,6 +51,33 @@ func TestGraphFind(t *testing.T) {
 			"id":        "SECTION_ONE",
 			"name":      "Introduction",
 			"paragraph": "This is an example project of kNODEledge.",
+			"children": []any{
+				map[string]any{
+					"name":        "Background",
+					"relation":    "part of",
+					"description": "This is background part.",
+					"children": []any{
+						map[string]any{
+							"name":        "IT in Education",
+							"relation":    "one of",
+							"description": "This is IT in Education part.",
+							"children":    []any{},
+						},
+					},
+				},
+				map[string]any{
+					"name":        "Motivation",
+					"relation":    "part of",
+					"description": "This is motivation part.",
+					"children":    []any{},
+				},
+				map[string]any{
+					"name":        "Literature Review",
+					"relation":    "part of",
+					"description": "This is literature review part.",
+					"children":    []any{},
+				},
+			},
 		},
 	}, responseBody)
 }
@@ -392,11 +419,13 @@ func TestGraphSectionalize(t *testing.T) {
 				"id":        graphId1,
 				"name":      "Section One",
 				"paragraph": "Content of Section One",
+				"children":  []any{},
 			},
 			map[string]any{
 				"id":        graphId2,
 				"name":      maxLengthSectionName,
 				"paragraph": maxLengthSectionContent,
+				"children":  []any{},
 			},
 		},
 	}, responseBody)
@@ -865,8 +894,41 @@ func TestGraphUpdate(t *testing.T) {
 			"id": "CHAPTER_ONE",
 		},
 		"graph": map[string]any{
-			"id":        "SECTION_ONE",
+			"id":        "SECTION_TWO",
 			"paragraph": "Updated paragraph content.",
+			"children": []any{
+				map[string]any{
+					"name":        "Background",
+					"relation":    "part of",
+					"description": "This is background part.",
+					"children": []any{
+						map[string]any{
+							"name":        "IT in Education",
+							"relation":    "one of",
+							"description": "This is IT in Education part.",
+							"children":    []any{},
+						},
+						map[string]any{
+							"name":        "IT in Business",
+							"relation":    "one of",
+							"description": "This is IT in Business part.",
+							"children":    []any{},
+						},
+					},
+				},
+				map[string]any{
+					"name":        "Motivation",
+					"relation":    "part of",
+					"description": "This is motivation part.",
+					"children":    []any{},
+				},
+				map[string]any{
+					"name":        "Literature Review",
+					"relation":    "part of",
+					"description": "This is literature review part.",
+					"children":    []any{},
+				},
+			},
 		},
 	})
 	req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(string(requestBody)))
@@ -881,9 +943,42 @@ func TestGraphUpdate(t *testing.T) {
 
 	assert.Equal(t, map[string]any{
 		"graph": map[string]any{
-			"id":        "SECTION_ONE",
-			"name":      "Introduction",
+			"id":        "SECTION_TWO",
+			"name":      "Section of Chapter One",
 			"paragraph": "Updated paragraph content.",
+			"children": []any{
+				map[string]any{
+					"name":        "Background",
+					"relation":    "part of",
+					"description": "This is background part.",
+					"children": []any{
+						map[string]any{
+							"name":        "IT in Education",
+							"relation":    "one of",
+							"description": "This is IT in Education part.",
+							"children":    []any{},
+						},
+						map[string]any{
+							"name":        "IT in Business",
+							"relation":    "one of",
+							"description": "This is IT in Business part.",
+							"children":    []any{},
+						},
+					},
+				},
+				map[string]any{
+					"name":        "Motivation",
+					"relation":    "part of",
+					"description": "This is motivation part.",
+					"children":    []any{},
+				},
+				map[string]any{
+					"name":        "Literature Review",
+					"relation":    "part of",
+					"description": "This is literature review part.",
+					"children":    []any{},
+				},
+			},
 		},
 	}, responseBody)
 }
@@ -945,6 +1040,7 @@ func TestGraphUpdateNotFound(t *testing.T) {
 				"graph": map[string]any{
 					"id":        tc.graphId,
 					"paragraph": "Updated paragraph content.",
+					"children":  []any{},
 				},
 			})
 			req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(string(requestBody)))
@@ -962,7 +1058,9 @@ func TestGraphUpdateNotFound(t *testing.T) {
 				"user":    map[string]any{},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
-				"graph":   map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{},
+				},
 			}, responseBody)
 		})
 	}
@@ -970,6 +1068,10 @@ func TestGraphUpdateNotFound(t *testing.T) {
 
 func TestGraphUpdateDomainValidationError(t *testing.T) {
 	tooLongGraphParagraph := testutil.RandomString(40001)
+
+	tooLongChildName := testutil.RandomString(101)
+	tooLongRelation := testutil.RandomString(101)
+	tooLongDescription := testutil.RandomString(401)
 
 	tt := []struct {
 		name             string
@@ -991,6 +1093,7 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				"graph": map[string]any{
 					"id":        "SECTION_ONE",
 					"paragraph": "Updated paragraph content.",
+					"children":  []any{},
 				},
 			},
 			expectedResponse: map[string]any{
@@ -999,7 +1102,9 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				},
 				"project": map[string]any{},
 				"chapter": map[string]any{},
-				"graph":   map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{},
+				},
 			},
 		},
 		{
@@ -1017,6 +1122,7 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				"graph": map[string]any{
 					"id":        "SECTION_ONE",
 					"paragraph": "Updated paragraph content.",
+					"children":  []any{},
 				},
 			},
 			expectedResponse: map[string]any{
@@ -1025,7 +1131,9 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 					"id": "project id is required, but got ''",
 				},
 				"chapter": map[string]any{},
-				"graph":   map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{},
+				},
 			},
 		},
 		{
@@ -1043,6 +1151,7 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				"graph": map[string]any{
 					"id":        "SECTION_ONE",
 					"paragraph": "Updated paragraph content.",
+					"children":  []any{},
 				},
 			},
 			expectedResponse: map[string]any{
@@ -1051,7 +1160,9 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				"chapter": map[string]any{
 					"id": "chapter id is required, but got ''",
 				},
-				"graph": map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{},
+				},
 			},
 		},
 		{
@@ -1069,6 +1180,14 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				"graph": map[string]any{
 					"id":        "",
 					"paragraph": "Updated paragraph content.",
+					"children": []any{
+						map[string]any{
+							"name":        "Child",
+							"relation":    "child relation",
+							"description": "child description",
+							"children":    []any{},
+						},
+					},
 				},
 			},
 			expectedResponse: map[string]any{
@@ -1077,6 +1196,13 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				"chapter": map[string]any{},
 				"graph": map[string]any{
 					"id": "graph id is required, but got ''",
+					"children": map[string]any{
+						"items": []any{
+							map[string]any{
+								"children": map[string]any{},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -1095,6 +1221,7 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				"graph": map[string]any{
 					"id":        "SECTION_ONE",
 					"paragraph": tooLongGraphParagraph,
+					"children":  []any{},
 				},
 			},
 			expectedResponse: map[string]any{
@@ -1103,6 +1230,242 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 				"chapter": map[string]any{},
 				"graph": map[string]any{
 					"paragraph": "graph paragraph must be less than or equal to 40000 bytes, but got 40001 bytes",
+					"children":  map[string]any{},
+				},
+			},
+		},
+		{
+			name: "should return error when child name is too long",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": "Updated paragraph content.",
+					"children": []any{
+						map[string]any{
+							"name":        tooLongChildName,
+							"relation":    "child relation",
+							"description": "child description",
+							"children":    []any{},
+						},
+					},
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{
+						"items": []any{
+							map[string]any{
+								"name": fmt.Sprintf("graph name cannot be longer than 100 characters, but got '%v'",
+									tooLongChildName),
+								"children": map[string]any{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should return error when child relation is too long",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": "Updated paragraph content.",
+					"children": []any{
+						map[string]any{
+							"name":        "Child",
+							"relation":    tooLongRelation,
+							"description": "child description",
+							"children":    []any{},
+						},
+					},
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{
+						"items": []any{
+							map[string]any{
+								"relation": fmt.Sprintf("graph relation cannot be longer than 100 characters, but got '%v'",
+									tooLongRelation),
+								"children": map[string]any{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should return error when child description is too long",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": "Updated paragraph content.",
+					"children": []any{
+						map[string]any{
+							"name":        "Child",
+							"relation":    "child relation",
+							"description": tooLongDescription,
+							"children":    []any{},
+						},
+					},
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{
+						"items": []any{
+							map[string]any{
+								"description": fmt.Sprintf("graph description cannot be longer than 400 characters, but got '%v'",
+									tooLongDescription),
+								"children": map[string]any{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should return error when child names are duplicated",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": "Updated paragraph content.",
+					"children": []any{
+						map[string]any{
+							"name":        "Child",
+							"relation":    "child relation",
+							"description": "child description",
+							"children":    []any{},
+						},
+						map[string]any{
+							"name":        "Child",
+							"relation":    "child relation",
+							"description": "child description",
+							"children":    []any{},
+						},
+					},
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{
+						"message": "names of children must be unique, but got 'Child' duplicated",
+						"items": []any{
+							map[string]any{
+								"children": map[string]any{},
+							},
+							map[string]any{
+								"children": map[string]any{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should return error when grand child has errors",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+				"graph": map[string]any{
+					"id":        "SECTION_ONE",
+					"paragraph": "Updated paragraph content.",
+					"children": []any{
+						map[string]any{
+							"name":        "Child",
+							"relation":    "child relation",
+							"description": "child description",
+							"children": []any{
+								map[string]any{
+									"name":        tooLongChildName,
+									"relation":    tooLongRelation,
+									"description": tooLongDescription,
+									"children":    []any{},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+				"graph": map[string]any{
+					"children": map[string]any{
+						"items": []any{
+							map[string]any{
+								"children": map[string]any{
+									"items": []any{
+										map[string]any{
+											"name": fmt.Sprintf("graph name cannot be longer than 100 characters, but got '%v'",
+												tooLongChildName),
+											"relation": fmt.Sprintf("graph relation cannot be longer than 100 characters, but got '%v'",
+												tooLongRelation),
+											"description": fmt.Sprintf("graph description cannot be longer than 400 characters, but got '%v'",
+												tooLongDescription),
+											"children": map[string]any{},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -1154,7 +1517,9 @@ func TestGraphUpdateInvalidRequestFormat(t *testing.T) {
 		"user":    map[string]any{},
 		"project": map[string]any{},
 		"chapter": map[string]any{},
-		"graph":   map[string]any{},
+		"graph": map[string]any{
+			"children": map[string]any{},
+		},
 	}, responseBody)
 }
 

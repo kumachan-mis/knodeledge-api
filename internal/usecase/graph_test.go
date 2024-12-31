@@ -27,12 +27,36 @@ func TestFindGraphValidEntity(t *testing.T) {
 	assert.Nil(t, err)
 	paragraph, err := domain.NewGraphParagraphObject("This is graph paragraph")
 	assert.Nil(t, err)
+
+	emptyChildren, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{})
+	assert.Nil(t, err)
+
+	grandChildName, err := domain.NewGraphNameObject("GrandChild")
+	assert.Nil(t, err)
+	grandChildRelation, err := domain.NewGraphRelationObject("grandchild relation")
+	assert.Nil(t, err)
+	grandChildDescription, err := domain.NewGraphDescriptionObject("grandchild description")
+	assert.Nil(t, err)
+	grandChild := domain.NewGraphChildEntity(*grandChildName, *grandChildRelation, *grandChildDescription, *emptyChildren)
+	grandChildren, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{*grandChild})
+	assert.Nil(t, err)
+
+	childName, err := domain.NewGraphNameObject("Child")
+	assert.Nil(t, err)
+	childRelation, err := domain.NewGraphRelationObject("child relation")
+	assert.Nil(t, err)
+	childDescription, err := domain.NewGraphDescriptionObject("child description")
+	assert.Nil(t, err)
+	child := domain.NewGraphChildEntity(*childName, *childRelation, *childDescription, *grandChildren)
+	children, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{*child})
+	assert.Nil(t, err)
+
 	createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 	updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 	assert.Nil(t, err)
 
-	graph := domain.NewGraphEntity(*id, *name, *paragraph, *createdAt, *updatedAt)
+	graph := domain.NewGraphEntity(*id, *name, *paragraph, *children, *createdAt, *updatedAt)
 
 	s.EXPECT().
 		FindGraph(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -63,6 +87,17 @@ func TestFindGraphValidEntity(t *testing.T) {
 	assert.Equal(t, "2000000000000001", res.Graph.Id)
 	assert.Equal(t, "Section", res.Graph.Name)
 	assert.Equal(t, "This is graph paragraph", res.Graph.Paragraph)
+
+	assert.Equal(t, 1, len(res.Graph.Children))
+	assert.Equal(t, "Child", res.Graph.Children[0].Name)
+	assert.Equal(t, "child relation", res.Graph.Children[0].Relation)
+	assert.Equal(t, "child description", res.Graph.Children[0].Description)
+
+	assert.Equal(t, 1, len(res.Graph.Children[0].Children))
+	assert.Equal(t, "GrandChild", res.Graph.Children[0].Children[0].Name)
+	assert.Equal(t, "grandchild relation", res.Graph.Children[0].Children[0].Relation)
+	assert.Equal(t, "grandchild description", res.Graph.Children[0].Children[0].Description)
+	assert.Equal(t, 0, len(res.Graph.Children[0].Children[0].Children))
 }
 
 func TestFindGraphDomainValidationError(t *testing.T) {
@@ -314,11 +349,13 @@ func TestSectionalizeGraphValidEntity(t *testing.T) {
 				assert.Nil(t, err)
 				paragraph, err := domain.NewGraphParagraphObject(section.Content)
 				assert.Nil(t, err)
+				children, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{})
+				assert.Nil(t, err)
 				createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 				assert.NoError(t, err)
 				updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 				assert.NoError(t, err)
-				grapths[i] = *domain.NewGraphEntity(*id, *name, *paragraph, *createdAt, *updatedAt)
+				grapths[i] = *domain.NewGraphEntity(*id, *name, *paragraph, *children, *createdAt, *updatedAt)
 			}
 			s.EXPECT().
 				SectionalizeIntoGraphs(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -698,17 +735,30 @@ func TestSectionalizeGraphServiceError(t *testing.T) {
 func TestUpdateGraphContentValidEntity(t *testing.T) {
 	maxLengthParagraph := testutil.RandomString(40000)
 
+	maxLengthChildName := testutil.RandomString(100)
+	maxLengthRelation := testutil.RandomString(100)
+	maxLengthDescription := testutil.RandomString(400)
+
 	tt := []struct {
-		name      string
-		paragraph string
+		name        string
+		paragraph   string
+		childName   string
+		relation    string
+		description string
 	}{
 		{
-			name:      "should update graph content",
-			paragraph: "This is updated graph paragraph",
+			name:        "should update graph content",
+			paragraph:   "This is updated graph paragraph",
+			childName:   "Child",
+			relation:    "child relation",
+			description: "child description",
 		},
 		{
-			name:      "should update graph content with max length paragraph",
-			paragraph: maxLengthParagraph,
+			name:        "should update graph content with max length paragraph",
+			paragraph:   maxLengthParagraph,
+			childName:   maxLengthChildName,
+			relation:    maxLengthRelation,
+			description: maxLengthDescription,
 		},
 	}
 
@@ -725,12 +775,36 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 			assert.Nil(t, err)
 			paragraph, err := domain.NewGraphParagraphObject(tc.paragraph)
 			assert.Nil(t, err)
+
+			emptyChildren, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{})
+			assert.Nil(t, err)
+
+			grandChildName, err := domain.NewGraphNameObject(tc.childName)
+			assert.Nil(t, err)
+			grandChildRelation, err := domain.NewGraphRelationObject(tc.relation)
+			assert.Nil(t, err)
+			grandChildDescription, err := domain.NewGraphDescriptionObject(tc.description)
+			assert.Nil(t, err)
+			grandChild := domain.NewGraphChildEntity(*grandChildName, *grandChildRelation, *grandChildDescription, *emptyChildren)
+			grandChildren, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{*grandChild})
+			assert.Nil(t, err)
+
+			childName, err := domain.NewGraphNameObject(tc.childName)
+			assert.Nil(t, err)
+			childRelation, err := domain.NewGraphRelationObject(tc.relation)
+			assert.Nil(t, err)
+			childDescription, err := domain.NewGraphDescriptionObject(tc.description)
+			assert.Nil(t, err)
+			child := domain.NewGraphChildEntity(*childName, *childRelation, *childDescription, *grandChildren)
+			children, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{*child})
+			assert.Nil(t, err)
+
 			createdAt, err := domain.NewCreatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 			updatedAt, err := domain.NewUpdatedAtObject(testutil.Date())
 			assert.Nil(t, err)
 
-			graph := domain.NewGraphEntity(*id, *name, *paragraph, *createdAt, *updatedAt)
+			graph := domain.NewGraphEntity(*id, *name, *paragraph, *children, *createdAt, *updatedAt)
 
 			s.EXPECT().
 				UpdateGraphContent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -758,6 +832,21 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 				Graph: model.GraphContent{
 					Id:        "2000000000000001",
 					Paragraph: tc.paragraph,
+					Children: []model.GraphChild{
+						{
+							Name:        tc.childName,
+							Relation:    tc.relation,
+							Description: tc.description,
+							Children: []model.GraphChild{
+								{
+									Name:        tc.childName,
+									Relation:    tc.relation,
+									Description: tc.description,
+									Children:    []model.GraphChild{},
+								},
+							},
+						},
+					},
 				},
 			})
 
@@ -772,6 +861,10 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 	tooLongParagraph := testutil.RandomString(40001)
 
+	tooLongChildName := testutil.RandomString(101)
+	tooLongRelation := testutil.RandomString(101)
+	tooLongDescription := testutil.RandomString(401)
+
 	tt := []struct {
 		name      string
 		userId    string
@@ -779,6 +872,7 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 		chapterId string
 		graphId   string
 		paragraph string
+		children  []model.GraphChild
 		expected  model.GraphUpdateErrorResponse
 	}{
 		{
@@ -788,11 +882,19 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
+			children:  []model.GraphChild{},
 			expected: model.GraphUpdateErrorResponse{
 				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph:   model.GraphContentError{Id: "", Paragraph: ""},
+				Graph: model.GraphContentError{
+					Id:        "",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items:   []model.GraphChildError{},
+					},
+				},
 			},
 		},
 		{
@@ -802,11 +904,19 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
+			children:  []model.GraphChild{},
 			expected: model.GraphUpdateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
 				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph:   model.GraphContentError{Id: "", Paragraph: ""},
+				Graph: model.GraphContentError{
+					Id:        "",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items:   []model.GraphChildError{},
+					},
+				},
 			},
 		},
 		{
@@ -816,11 +926,19 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
+			children:  []model.GraphChild{},
 			expected: model.GraphUpdateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
-				Graph:   model.GraphContentError{Id: "", Paragraph: ""},
+				Graph: model.GraphContentError{
+					Id:        "",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items:   []model.GraphChildError{},
+					},
+				},
 			},
 		},
 		{
@@ -830,11 +948,36 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "",
 			paragraph: "This is updated graph paragraph",
+			children: []model.GraphChild{
+				{
+					Name:        "Child",
+					Relation:    "child relation",
+					Description: "child description",
+					Children:    []model.GraphChild{},
+				},
+			},
 			expected: model.GraphUpdateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph:   model.GraphContentError{Id: "graph id is required, but got ''", Paragraph: ""},
+				Graph: model.GraphContentError{
+					Id:        "graph id is required, but got ''",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items: []model.GraphChildError{
+							{
+								Name:        "",
+								Relation:    "",
+								Description: "",
+								Children: model.GraphChildrenError{
+									Message: "",
+									Items:   []model.GraphChildError{},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -844,11 +987,260 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: tooLongParagraph,
+			children:  []model.GraphChild{},
 			expected: model.GraphUpdateErrorResponse{
 				User:    model.UserOnlyIdError{Id: ""},
 				Project: model.ProjectOnlyIdError{Id: ""},
 				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph:   model.GraphContentError{Id: "", Paragraph: fmt.Sprintf("graph paragraph must be less than or equal to 40000 bytes, but got %d bytes", len(tooLongParagraph))},
+				Graph: model.GraphContentError{
+					Id: "",
+					Paragraph: fmt.Sprintf(
+						"graph paragraph must be less than or equal to 40000 bytes, but got %d bytes",
+						len(tooLongParagraph)),
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items:   []model.GraphChildError{},
+					},
+				},
+			},
+		},
+		{
+			name:      "should return error when child name is too long",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			graphId:   "2000000000000001",
+			paragraph: "This is updated graph paragraph",
+			children: []model.GraphChild{
+				{
+					Name:        tooLongChildName,
+					Relation:    "child relation",
+					Description: "child description",
+					Children:    []model.GraphChild{},
+				},
+			},
+			expected: model.GraphUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+				Graph: model.GraphContentError{
+					Id:        "",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items: []model.GraphChildError{
+							{
+								Name: fmt.Sprintf(
+									"graph name cannot be longer than 100 characters, but got '%v'",
+									tooLongChildName),
+								Relation:    "",
+								Description: "",
+								Children: model.GraphChildrenError{
+									Message: "",
+									Items:   []model.GraphChildError{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:      "should return error when child relation is too long",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			graphId:   "2000000000000001",
+			paragraph: "This is updated graph paragraph",
+			children: []model.GraphChild{
+				{
+					Name:        "Child",
+					Relation:    tooLongRelation,
+					Description: "child description",
+					Children:    []model.GraphChild{},
+				},
+			},
+			expected: model.GraphUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+				Graph: model.GraphContentError{
+					Id:        "",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items: []model.GraphChildError{
+							{
+								Name: "",
+								Relation: fmt.Sprintf(
+									"graph relation cannot be longer than 100 characters, but got '%v'",
+									tooLongRelation),
+								Description: "",
+								Children: model.GraphChildrenError{
+									Message: "",
+									Items:   []model.GraphChildError{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:      "should return error when child description is too long",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			graphId:   "2000000000000001",
+			paragraph: "This is updated graph paragraph",
+			children: []model.GraphChild{
+				{
+					Name:        "Child",
+					Relation:    "child relation",
+					Description: tooLongDescription,
+					Children:    []model.GraphChild{},
+				},
+			},
+			expected: model.GraphUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+				Graph: model.GraphContentError{
+					Id:        "",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items: []model.GraphChildError{
+							{
+								Name:     "",
+								Relation: "",
+								Description: fmt.Sprintf(
+									"graph description cannot be longer than 400 characters, but got '%v'",
+									tooLongDescription),
+								Children: model.GraphChildrenError{
+									Message: "",
+									Items:   []model.GraphChildError{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:      "should return error when child names are duplicated",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			graphId:   "2000000000000001",
+			paragraph: "This is updated graph paragraph",
+			children: []model.GraphChild{
+				{
+					Name:        "Child",
+					Relation:    "child relation",
+					Description: "child description",
+					Children:    []model.GraphChild{},
+				},
+				{
+					Name:        "Child",
+					Relation:    "child relation",
+					Description: "child description",
+					Children:    []model.GraphChild{},
+				},
+			},
+			expected: model.GraphUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+				Graph: model.GraphContentError{
+					Id:        "",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "names of children must be unique, but got 'Child' duplicated",
+						Items: []model.GraphChildError{
+							{
+								Name:        "",
+								Relation:    "",
+								Description: "",
+								Children: model.GraphChildrenError{
+									Message: "",
+									Items:   []model.GraphChildError{},
+								},
+							},
+							{
+								Name:        "",
+								Relation:    "",
+								Description: "",
+								Children: model.GraphChildrenError{
+									Message: "",
+									Items:   []model.GraphChildError{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:      "should return error when grand child has errors",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			graphId:   "2000000000000001",
+			paragraph: "This is updated graph paragraph",
+			children: []model.GraphChild{
+				{
+					Name:        "Child",
+					Relation:    "child relation",
+					Description: "child description",
+					Children: []model.GraphChild{
+						{
+							Name:        tooLongChildName,
+							Relation:    tooLongRelation,
+							Description: tooLongDescription,
+							Children:    []model.GraphChild{},
+						},
+					},
+				},
+			},
+			expected: model.GraphUpdateErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+				Graph: model.GraphContentError{
+					Id:        "",
+					Paragraph: "",
+					Children: model.GraphChildrenError{
+						Message: "",
+						Items: []model.GraphChildError{
+							{
+								Name:        "",
+								Relation:    "",
+								Description: "",
+								Children: model.GraphChildrenError{
+									Message: "",
+									Items: []model.GraphChildError{
+										{
+											Name: fmt.Sprintf(
+												"graph name cannot be longer than 100 characters, but got '%v'",
+												tooLongChildName),
+											Relation: fmt.Sprintf(
+												"graph relation cannot be longer than 100 characters, but got '%v'",
+												tooLongRelation),
+											Description: fmt.Sprintf(
+												"graph description cannot be longer than 400 characters, but got '%v'",
+												tooLongDescription),
+											Children: model.GraphChildrenError{
+												Message: "",
+												Items:   []model.GraphChildError{},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -869,6 +1261,7 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 				Graph: model.GraphContent{
 					Id:        tc.graphId,
 					Paragraph: tc.paragraph,
+					Children:  tc.children,
 				},
 			})
 

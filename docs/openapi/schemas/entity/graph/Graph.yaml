@@ -17,7 +17,12 @@ properties:
     example: |
       ## Introduction
       This is the introduction of the paper.
+  children:
+    type: array
+    items:
+      $ref: ./GraphChild.yaml
 required:
   - id
   - name
   - paragraph
+  - children

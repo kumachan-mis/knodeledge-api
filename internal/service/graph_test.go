@@ -18,6 +18,10 @@ func TestFindGraphValidEntry(t *testing.T) {
 	maxLengthGraphName := testutil.RandomString(100)
 	maxLengthGraphParagraph := testutil.RandomString(40000)
 
+	maxLengthChildName := testutil.RandomString(100)
+	maxLengthRelation := testutil.RandomString(100)
+	maxLengthDescription := testutil.RandomString(400)
+
 	tt := []struct {
 		name  string
 		entry record.GraphEntry
@@ -27,6 +31,14 @@ func TestFindGraphValidEntry(t *testing.T) {
 			entry: record.GraphEntry{
 				Name:      "Section",
 				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -37,6 +49,14 @@ func TestFindGraphValidEntry(t *testing.T) {
 			entry: record.GraphEntry{
 				Name:      maxLengthGraphName,
 				Paragraph: maxLengthGraphParagraph,
+				Children: []record.GraphChildEntry{
+					{
+						Name:        maxLengthChildName,
+						Relation:    maxLengthRelation,
+						Description: maxLengthDescription,
+						Children:    []record.GraphChildEntry{},
+					},
+				},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -69,9 +89,16 @@ func TestFindGraphValidEntry(t *testing.T) {
 
 			graph, sErr := s.FindGraph(*userId, *projectId, *chapterId, *sectionId)
 			assert.Nil(t, sErr)
+			children := graph.Children().Value()
 
 			assert.Equal(t, tc.entry.Name, graph.Name().Value())
 			assert.Equal(t, tc.entry.Paragraph, graph.Paragraph().Value())
+			assert.Len(t, tc.entry.Children, len(children))
+			for i, child := range tc.entry.Children {
+				assert.Equal(t, child.Name, children[i].Name().Value())
+				assert.Equal(t, child.Relation, children[i].Relation().Value())
+				assert.Equal(t, child.Description, children[i].Description().Value())
+			}
 			assert.Equal(t, tc.entry.CreatedAt, graph.CreatedAt().Value())
 			assert.Equal(t, tc.entry.UpdatedAt, graph.UpdatedAt().Value())
 		})
@@ -81,6 +108,10 @@ func TestFindGraphValidEntry(t *testing.T) {
 func TestFindGraphInvalidEntry(t *testing.T) {
 	tooLongGraphName := testutil.RandomString(101)
 	tooLongGraphParagraph := testutil.RandomString(40001)
+
+	tooLongChildName := testutil.RandomString(101)
+	tooLongRelation := testutil.RandomString(101)
+	tooLongDescription := testutil.RandomString(401)
 
 	tt := []struct {
 		name          string
@@ -92,6 +123,7 @@ func TestFindGraphInvalidEntry(t *testing.T) {
 			entry: record.GraphEntry{
 				Name:      "",
 				Paragraph: "This is section content. This is section content.",
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -104,6 +136,7 @@ func TestFindGraphInvalidEntry(t *testing.T) {
 			entry: record.GraphEntry{
 				Name:      tooLongGraphName,
 				Paragraph: "This is section content. This is section content.",
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -116,12 +149,123 @@ func TestFindGraphInvalidEntry(t *testing.T) {
 			entry: record.GraphEntry{
 				Name:      "Section",
 				Paragraph: tooLongGraphParagraph,
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ReadOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (paragraph): " +
 				"graph paragraph must be less than or equal to 40000 bytes, but got 40001 bytes",
+		},
+		{
+			name: "should return error when child name is empty",
+			entry: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (children): " +
+				"failed to convert child entry to entity (name): " +
+				"graph name is required, but got ''",
+		},
+		{
+			name: "should return error when child name is too long",
+			entry: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        tooLongChildName,
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (name): "+
+				"graph name cannot be longer than 100 characters, but got '%v'", tooLongChildName),
+		},
+		{
+			name: "should return error when child relation is too long",
+			entry: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    tooLongRelation,
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (relation): "+
+				"graph relation cannot be longer than 100 characters, but got '%v'", tooLongRelation),
+		},
+		{
+			name: "should return error when child description is too long",
+			entry: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: tooLongDescription,
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (description): "+
+				"graph description cannot be longer than 400 characters, but got '%v'", tooLongDescription),
+		},
+		{
+			name: "should return error when child name is duplicated",
+			entry: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ReadOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (children): " +
+				"names of children must be unique, but got 'Child' duplicated",
 		},
 	}
 
@@ -232,16 +376,19 @@ func TestSectionalizeIntoGraphsValidEntry(t *testing.T) {
 				{
 					Name:      sectonName,
 					Paragraph: sectionContent,
+					Children:  []record.GraphChildEntry{},
 				},
 				{
 					Name:      maxLengthSectonName,
 					Paragraph: maxLengthSectionContent,
+					Children:  []record.GraphChildEntry{},
 				},
 			}).
 		Return([]string{"2000000000000001", "2000000000000002"}, []record.GraphEntry{
 			{
 				Name:      sectonName,
 				Paragraph: sectionContent,
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -249,6 +396,7 @@ func TestSectionalizeIntoGraphsValidEntry(t *testing.T) {
 			{
 				Name:      maxLengthSectonName,
 				Paragraph: maxLengthSectionContent,
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -376,6 +524,10 @@ func TestSectionalizeIntoGraphsInvalidInsertedGraph(t *testing.T) {
 	tooLongGraphName := testutil.RandomString(101)
 	tooLongGraphParagraph := testutil.RandomString(40001)
 
+	tooLongChildName := testutil.RandomString(101)
+	tooLongRelation := testutil.RandomString(101)
+	tooLongDescription := testutil.RandomString(401)
+
 	tt := []struct {
 		name          string
 		insertedGraph record.GraphEntry
@@ -386,6 +538,10 @@ func TestSectionalizeIntoGraphsInvalidInsertedGraph(t *testing.T) {
 			insertedGraph: record.GraphEntry{
 				Name:      "",
 				Paragraph: "This is section content. This is section content.",
+				Children:  []record.GraphChildEntry{},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (name): " +
 				"graph name is required, but got ''",
@@ -395,6 +551,7 @@ func TestSectionalizeIntoGraphsInvalidInsertedGraph(t *testing.T) {
 			insertedGraph: record.GraphEntry{
 				Name:      tooLongGraphName,
 				Paragraph: "This is section content. This is section content.",
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -407,12 +564,123 @@ func TestSectionalizeIntoGraphsInvalidInsertedGraph(t *testing.T) {
 			insertedGraph: record.GraphEntry{
 				Name:      "Section",
 				Paragraph: tooLongGraphParagraph,
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (paragraph): " +
 				"graph paragraph must be less than or equal to 40000 bytes, but got 40001 bytes",
+		},
+		{
+			name: "should return error when child name is empty",
+			insertedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (children): " +
+				"failed to convert child entry to entity (name): " +
+				"graph name is required, but got ''",
+		},
+		{
+			name: "should return error when child name is too long",
+			insertedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        tooLongChildName,
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (name): "+
+				"graph name cannot be longer than 100 characters, but got '%v'", tooLongChildName),
+		},
+		{
+			name: "should return error when child relation is too long",
+			insertedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    tooLongRelation,
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (relation): "+
+				"graph relation cannot be longer than 100 characters, but got '%v'", tooLongRelation),
+		},
+		{
+			name: "should return error when child description is too long",
+			insertedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: tooLongDescription,
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (description): "+
+				"graph description cannot be longer than 400 characters, but got '%v'", tooLongDescription),
+		},
+		{
+			name: "should return error when child name is duplicated",
+			insertedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (children): " +
+				"names of children must be unique, but got 'Child' duplicated",
 		},
 	}
 
@@ -434,6 +702,7 @@ func TestSectionalizeIntoGraphsInvalidInsertedGraph(t *testing.T) {
 						{
 							Name:      sectonName,
 							Paragraph: sectionContent,
+							Children:  []record.GraphChildEntry{},
 						},
 					}).
 				Return([]string{"2000000000000001"}, []record.GraphEntry{tc.insertedGraph}, nil)
@@ -582,6 +851,7 @@ func TestSectionalizeIntoGraphsRepotoryInsertGraphsError(t *testing.T) {
 						{
 							Name:      sectonName,
 							Paragraph: sectionContent,
+							Children:  []record.GraphChildEntry{},
 						},
 					}).
 				Return(nil, nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
@@ -660,12 +930,14 @@ func TestSectionalizeIntoGraphsChapterRepositoryError(t *testing.T) {
 						{
 							Name:      sectonName,
 							Paragraph: sectionContent,
+							Children:  []record.GraphChildEntry{},
 						},
 					}).
 				Return([]string{"2000000000000001"}, []record.GraphEntry{
 					{
 						Name:      sectonName,
 						Paragraph: sectionContent,
+						Children:  []record.GraphChildEntry{},
 						UserId:    testutil.ModifyOnlyUserId(),
 						CreatedAt: testutil.Date(),
 						UpdatedAt: testutil.Date(),
@@ -714,7 +986,11 @@ func TestSectionalizeIntoGraphsChapterRepositoryError(t *testing.T) {
 }
 func TestUpdateGraphContentValidEntry(t *testing.T) {
 	maxLengthGraphName := testutil.RandomString(100)
-	maxLengthPaperContent := testutil.RandomString(40000)
+	maxLengthGraphParagraph := testutil.RandomString(40000)
+
+	maxLengthChildName := testutil.RandomString(100)
+	maxLengthRelation := testutil.RandomString(100)
+	maxLengthDescription := testutil.RandomString(400)
 
 	tt := []struct {
 		name  string
@@ -725,6 +1001,14 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 			entry: record.GraphEntry{
 				Name:      "Section",
 				Paragraph: "Updated section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -734,7 +1018,15 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 			name: "should update graph content with max-length paragraph",
 			entry: record.GraphEntry{
 				Name:      maxLengthGraphName,
-				Paragraph: maxLengthPaperContent,
+				Paragraph: maxLengthGraphParagraph,
+				Children: []record.GraphChildEntry{
+					{
+						Name:        maxLengthChildName,
+						Relation:    maxLengthRelation,
+						Description: maxLengthDescription,
+						Children:    []record.GraphChildEntry{},
+					},
+				},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -766,22 +1058,47 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 			assert.Nil(t, err)
 			paragraph, err := domain.NewGraphParagraphObject(tc.entry.Paragraph)
 			assert.Nil(t, err)
-			graph := domain.NewGraphContentEntity(*paragraph)
+			childList := make([]domain.GraphChildEntity, len(tc.entry.Children))
+			for i, child := range tc.entry.Children {
+				name, err := domain.NewGraphNameObject(child.Name)
+				assert.Nil(t, err)
+				relation, err := domain.NewGraphRelationObject(child.Relation)
+				assert.Nil(t, err)
+				description, err := domain.NewGraphDescriptionObject(child.Description)
+				assert.Nil(t, err)
+				children, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{})
+				assert.Nil(t, err)
+				childList[i] = *domain.NewGraphChildEntity(*name, *relation, *description, *children)
+			}
+			children, err := domain.NewGraphChildrenEntity(childList)
+			assert.Nil(t, err)
+			graph := domain.NewGraphContentEntity(*paragraph, *children)
 
 			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 			assert.Nil(t, sErr)
+			updatedChildren := updatedGraph.Children().Value()
 
 			assert.Equal(t, tc.entry.Name, updatedGraph.Name().Value())
 			assert.Equal(t, tc.entry.Paragraph, updatedGraph.Paragraph().Value())
+			assert.Len(t, tc.entry.Children, updatedGraph.Children().Len())
+			for i, child := range tc.entry.Children {
+				assert.Equal(t, child.Name, updatedChildren[i].Name().Value())
+				assert.Equal(t, child.Relation, updatedChildren[i].Relation().Value())
+				assert.Equal(t, child.Description, updatedChildren[i].Description().Value())
+			}
 			assert.Equal(t, tc.entry.CreatedAt, updatedGraph.CreatedAt().Value())
 			assert.Equal(t, tc.entry.UpdatedAt, updatedGraph.UpdatedAt().Value())
 		})
 	}
 }
 
-func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
+func TestUpdateGraphContentInvalidUpdatedGraph(t *testing.T) {
 	tooLongGraphName := testutil.RandomString(101)
 	tooLongGraphParagraph := testutil.RandomString(40001)
+
+	tooLongChildName := testutil.RandomString(101)
+	tooLongRelation := testutil.RandomString(101)
+	tooLongDescription := testutil.RandomString(401)
 
 	tt := []struct {
 		name          string
@@ -793,6 +1110,7 @@ func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
 			updatedGraph: record.GraphEntry{
 				Name:      "",
 				Paragraph: "This is updated graph paragraph.",
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -805,6 +1123,7 @@ func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
 			updatedGraph: record.GraphEntry{
 				Name:      tooLongGraphName,
 				Paragraph: "This is updated graph paragraph.",
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
@@ -817,12 +1136,123 @@ func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
 			updatedGraph: record.GraphEntry{
 				Name:      "Section",
 				Paragraph: tooLongGraphParagraph,
+				Children:  []record.GraphChildEntry{},
 				UserId:    testutil.ModifyOnlyUserId(),
 				CreatedAt: testutil.Date(),
 				UpdatedAt: testutil.Date(),
 			},
 			expectedError: "failed to convert entry to entity (paragraph): " +
 				"graph paragraph must be less than or equal to 40000 bytes, but got 40001 bytes",
+		},
+		{
+			name: "should return error when child name is empty",
+			updatedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (children): " +
+				"failed to convert child entry to entity (name): " +
+				"graph name is required, but got ''",
+		},
+		{
+			name: "should return error when child name is too long",
+			updatedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        tooLongChildName,
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (name): "+
+				"graph name cannot be longer than 100 characters, but got '%v'", tooLongChildName),
+		},
+		{
+			name: "should return error when child relation is too long",
+			updatedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    tooLongRelation,
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (relation): "+
+				"graph relation cannot be longer than 100 characters, but got '%v'", tooLongRelation),
+		},
+		{
+			name: "should return error when child description is too long",
+			updatedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: tooLongDescription,
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: fmt.Sprintf("failed to convert entry to entity (children): "+
+				"failed to convert child entry to entity (description): "+
+				"graph description cannot be longer than 400 characters, but got '%v'", tooLongDescription),
+		},
+		{
+			name: "should return error when child name is duplicated",
+			updatedGraph: record.GraphEntry{
+				Name:      "Section",
+				Paragraph: "This is section content. This is section content.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+					{
+						Name:        "Child",
+						Relation:    "relation",
+						Description: "This is child description.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+			expectedError: "failed to convert entry to entity (children): " +
+				"names of children must be unique, but got 'Child' duplicated",
 		},
 	}
 
@@ -850,7 +1280,9 @@ func TestUpdateGraphContentInvalidUpdatedGraphContent(t *testing.T) {
 			assert.Nil(t, err)
 			paragraph, err := domain.NewGraphParagraphObject("This is updated graph paragraph")
 			assert.Nil(t, err)
-			graph := domain.NewGraphContentEntity(*paragraph)
+			children, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{})
+			assert.Nil(t, err)
+			graph := domain.NewGraphContentEntity(*paragraph, *children)
 
 			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 			assert.NotNil(t, sErr)
@@ -909,7 +1341,9 @@ func TestUpdateGraphContentRepositoryError(t *testing.T) {
 			assert.Nil(t, err)
 			paragraph, err := domain.NewGraphParagraphObject("Updated section content.")
 			assert.Nil(t, err)
-			graph := domain.NewGraphContentEntity(*paragraph)
+			children, err := domain.NewGraphChildrenEntity([]domain.GraphChildEntity{})
+			assert.Nil(t, err)
+			graph := domain.NewGraphContentEntity(*paragraph, *children)
 
 			updatedGraph, sErr := s.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 			assert.NotNil(t, sErr)

@@ -1,0 +1,26 @@
+type: object
+description: GraphChild object
+properties:
+  name:
+    type: string
+    maxLength: 100
+    description: Child node name of the graph
+    example: Study of Note Apps
+  relation:
+    type: string
+    description: Graph relation
+    example: part of
+  description:
+    type: string
+    maxLength: 400
+    description: Graph description
+    example: This is a part of the overview section.
+  children:
+    type: array
+    items:
+      $ref: ./GraphChild.yaml
+required:
+  - name
+  - relation
+  - description
+  - children
