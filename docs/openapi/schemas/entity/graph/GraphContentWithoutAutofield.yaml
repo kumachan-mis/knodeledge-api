@@ -14,3 +14,4 @@ properties:
       $ref: ./GraphChild.yaml
 required:
   - paragraph
+  - children
