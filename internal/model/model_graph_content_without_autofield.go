@@ -15,5 +15,5 @@ type GraphContentWithoutAutofield struct {
 	// Graph paragraph
 	Paragraph string `json:"paragraph"`
 
-	Children []GraphChild `json:"children,omitempty"`
+	Children []GraphChild `json:"children"`
 }
