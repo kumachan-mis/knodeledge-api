@@ -17,4 +17,6 @@ type GraphContentError struct {
 
 	// Error message for graph paragraph
 	Paragraph string `json:"paragraph,omitempty"`
+
+	Children GraphChildrenError `json:"children,omitempty"`
 }

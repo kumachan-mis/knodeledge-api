@@ -5,3 +5,5 @@ properties:
     type: string
     description: Error message for graph paragraph
     example: graph paragraph must be less than or equal to 40000 bytes
+  children:
+    $ref: ./GraphChildrenError.yaml

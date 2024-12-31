@@ -380,7 +380,7 @@ func TestListChaptersRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockChapterRepository(ctrl)
 			r.EXPECT().
 				FetchChapters(testutil.ReadOnlyUserId(), "0000000000000001").
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			pr := mock_repository.NewMockPaperRepository(ctrl)
 
@@ -681,7 +681,7 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 					Name:   "Chapter One",
 					Number: 1,
 				}).
-				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return("", nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			pr := mock_repository.NewMockPaperRepository(ctrl)
 
@@ -754,7 +754,7 @@ func TestCreateChapterPaperRepositoryError(t *testing.T) {
 			pr := mock_repository.NewMockPaperRepository(ctrl)
 			pr.EXPECT().
 				InsertPaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", paper).
-				Return("", nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return("", nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			s := service.NewChapterService(r, pr)
 
@@ -1097,7 +1097,7 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 						Number: 1,
 					},
 				).
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			pr := mock_repository.NewMockPaperRepository(ctrl)
 

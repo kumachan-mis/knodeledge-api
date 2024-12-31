@@ -22,8 +22,8 @@ type GraphService interface {
 		projectId domain.ProjectIdObject,
 		chapterId domain.ChapterIdObject,
 		graphId domain.GraphIdObject,
-		graph domain.GraphContentWithoutAutofieldEntity,
-	) (*domain.GraphContentEntity, *Error)
+		graph domain.GraphContentEntity,
+	) (*domain.GraphEntity, *Error)
 	SectionalizeIntoGraphs(
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
@@ -66,10 +66,11 @@ func (s graphService) UpdateGraphContent(
 	projectId domain.ProjectIdObject,
 	chapterId domain.ChapterIdObject,
 	graphId domain.GraphIdObject,
-	graph domain.GraphContentWithoutAutofieldEntity,
-) (*domain.GraphContentEntity, *Error) {
-	entryWithoutAutofield := record.GraphContentWithoutAutofieldEntry{
+	graph domain.GraphContentEntity,
+) (*domain.GraphEntity, *Error) {
+	entryWithoutAutofield := record.GraphContentEntry{
 		Paragraph: graph.Paragraph().Value(),
+		Children:  s.childrenEntityToEntry(*graph.Children()),
 	}
 
 	entry, rErr := s.repository.UpdateGraphContent(
@@ -86,7 +87,7 @@ func (s graphService) UpdateGraphContent(
 		return nil, Errorf(RepositoryFailurePanic, "failed to update graph content: %w", rErr.Unwrap())
 	}
 
-	return s.entryToContentEntity(graphId.Value(), *entry)
+	return s.entryToEntity(graphId.Value(), *entry)
 }
 
 func (s graphService) SectionalizeIntoGraphs(
@@ -112,6 +113,7 @@ func (s graphService) SectionalizeIntoGraphs(
 		entriesWithoutAutofield[i] = record.GraphWithoutAutofieldEntry{
 			Name:      section.Name().Value(),
 			Paragraph: section.Content().Value(),
+			Children:  []record.GraphChildEntry{},
 		}
 	}
 
@@ -174,6 +176,10 @@ func (s graphService) entryToEntity(key string, entry record.GraphEntry) (*domai
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (paragraph): %w", err)
 	}
+	children, sErr := s.childrenEntryToEntity(entry.Children)
+	if sErr != nil {
+		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (children): %w", sErr.Unwrap())
+	}
 	createdAt, err := domain.NewCreatedAtObject(entry.CreatedAt)
 	if err != nil {
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (createdAt): %w", err)
@@ -183,26 +189,44 @@ func (s graphService) entryToEntity(key string, entry record.GraphEntry) (*domai
 		return nil, Errorf(DomainFailurePanic, "failed to convert entry to entity (updatedAt): %w", err)
 	}
 
-	return domain.NewGraphEntity(*id, *name, *paragraph, *createdAt, *updatedAt), nil
+	return domain.NewGraphEntity(*id, *name, *paragraph, *children, *createdAt, *updatedAt), nil
 }
 
-func (s graphService) entryToContentEntity(key string, entry record.GraphContentEntry) (*domain.GraphContentEntity, *Error) {
-	id, err := domain.NewGraphIdObject(key)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (id): %w", err)
-	}
-	paragraph, err := domain.NewGraphParagraphObject(entry.Paragraph)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (paragraph): %w", err)
-	}
-	createdAt, err := domain.NewCreatedAtObject(entry.CreatedAt)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (createdAt): %w", err)
-	}
-	updatedAt, err := domain.NewUpdatedAtObject(entry.UpdatedAt)
-	if err != nil {
-		return nil, Errorf(DomainFailurePanic, "failed to convert entry to content entity (updatedAt): %w", err)
+func (s graphService) childrenEntryToEntity(entry []record.GraphChildEntry) (*domain.GraphChildrenEntity, *Error) {
+	entities := make([]domain.GraphChildEntity, len(entry))
+	for i, child := range entry {
+		name, err := domain.NewGraphNameObject(child.Name)
+		if err != nil {
+			return nil, Errorf(DomainFailurePanic, "failed to convert child entry to entity (name): %w", err)
+		}
+		relation, err := domain.NewGraphRelationObject(child.Relation)
+		if err != nil {
+			return nil, Errorf(DomainFailurePanic, "failed to convert child entry to entity (relation): %w", err)
+		}
+		description, err := domain.NewGraphDescriptionObject(child.Description)
+		if err != nil {
+			return nil, Errorf(DomainFailurePanic, "failed to convert child entry to entity (description): %w", err)
+		}
+		children, err := s.childrenEntryToEntity(child.Children)
+		entities[i] = *domain.NewGraphChildEntity(*name, *relation, *description, *children)
 	}
 
-	return domain.NewGraphContentEntity(*id, *paragraph, *createdAt, *updatedAt), nil
+	entity, err := domain.NewGraphChildrenEntity(entities)
+	if err != nil {
+		return nil, Errorf(DomainFailurePanic, "%w", err)
+	}
+	return entity, nil
+}
+
+func (s graphService) childrenEntityToEntry(entity domain.GraphChildrenEntity) []record.GraphChildEntry {
+	entries := make([]record.GraphChildEntry, entity.Len())
+	for i, child := range entity.Value() {
+		entries[i] = record.GraphChildEntry{
+			Name:        child.Name().Value(),
+			Relation:    child.Relation().Value(),
+			Description: child.Description().Value(),
+			Children:    s.childrenEntityToEntry(*child.Children()),
+		}
+	}
+	return entries
 }

@@ -295,7 +295,7 @@ func TestFindProjectServiceError(t *testing.T) {
 
 			s.EXPECT().
 				FindProject(gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			uc := usecase.NewProjectUseCase(s)
 

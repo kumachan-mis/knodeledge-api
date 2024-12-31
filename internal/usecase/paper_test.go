@@ -169,7 +169,7 @@ func TestFindPaperServiceError(t *testing.T) {
 
 			s.EXPECT().
 				FindPaper(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			res, ucErr := uc.FindPaper(model.PaperFindRequest{
 				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
@@ -375,7 +375,7 @@ func TestUpdatePaperServiceError(t *testing.T) {
 
 			s.EXPECT().
 				UpdatePaper(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			res, ucErr := uc.UpdatePaper(model.PaperUpdateRequest{
 				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},

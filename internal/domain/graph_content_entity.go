@@ -1,38 +1,24 @@
 package domain
 
 type GraphContentEntity struct {
-	id        GraphIdObject
 	paragraph GraphParagraphObject
-	createdAt CreatedAtObject
-	updatedAt UpdatedAtObject
+	children  GraphChildrenEntity
 }
 
 func NewGraphContentEntity(
-	id GraphIdObject,
 	paragraph GraphParagraphObject,
-	createdAt CreatedAtObject,
-	updatedAt UpdatedAtObject,
+	children GraphChildrenEntity,
 ) *GraphContentEntity {
 	return &GraphContentEntity{
-		id:        id,
 		paragraph: paragraph,
-		createdAt: createdAt,
-		updatedAt: updatedAt,
+		children:  children,
 	}
-}
-
-func (e *GraphContentEntity) Id() *GraphIdObject {
-	return &e.id
 }
 
 func (e *GraphContentEntity) Paragraph() *GraphParagraphObject {
 	return &e.paragraph
 }
 
-func (e *GraphContentEntity) CreatedAt() *CreatedAtObject {
-	return &e.createdAt
-}
-
-func (e *GraphContentEntity) UpdatedAt() *UpdatedAtObject {
-	return &e.updatedAt
+func (e *GraphContentEntity) Children() *GraphChildrenEntity {
+	return &e.children
 }

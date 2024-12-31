@@ -61,18 +61,18 @@ func (uc graphUseCase) FindGraph(req model.GraphFindRequest) (
 		)
 	}
 
-	entity, fErr := uc.service.FindGraph(*userId, *projectId, *chapterId, *sectionId)
+	entity, sErr := uc.service.FindGraph(*userId, *projectId, *chapterId, *sectionId)
 
-	if fErr != nil && fErr.Code() == service.NotFoundError {
+	if sErr != nil && sErr.Code() == service.NotFoundError {
 		return nil, NewMessageBasedError[model.GraphFindErrorResponse](
 			NotFoundError,
-			fErr.Unwrap().Error(),
+			sErr.Unwrap().Error(),
 		)
 	}
-	if fErr != nil {
+	if sErr != nil {
 		return nil, NewMessageBasedError[model.GraphFindErrorResponse](
 			InternalErrorPanic,
-			fErr.Unwrap().Error(),
+			sErr.Unwrap().Error(),
 		)
 	}
 
@@ -81,6 +81,7 @@ func (uc graphUseCase) FindGraph(req model.GraphFindRequest) (
 			Id:        entity.Id().Value(),
 			Name:      entity.Name().Value(),
 			Paragraph: entity.Paragraph().Value(),
+			Children:  uc.childrenEntityToModel(entity.Children()),
 		},
 	}, nil
 }
@@ -92,6 +93,7 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
 	graphId, graphIdErr := domain.NewGraphIdObject(req.Graph.Id)
 	graphParagraph, graphParagraphErr := domain.NewGraphParagraphObject(req.Graph.Paragraph)
+	graphChildren, graphChildrenErr, graphChildrenOk := uc.childrenModelToEntity(req.Graph.Children)
 
 	userIdMsg := ""
 	if userIdErr != nil {
@@ -114,19 +116,24 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 		graphParagraphMsg = graphParagraphErr.Error()
 	}
 
-	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || graphIdErr != nil || graphParagraphErr != nil {
+	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil ||
+		graphIdErr != nil || graphParagraphErr != nil || !graphChildrenOk {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.GraphUpdateErrorResponse{
 				User:    model.UserOnlyIdError{Id: userIdMsg},
 				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
 				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
-				Graph:   model.GraphContentError{Id: graphIdMsg, Paragraph: graphParagraphMsg},
+				Graph: model.GraphContentError{
+					Id:        graphIdMsg,
+					Paragraph: graphParagraphMsg,
+					Children:  *graphChildrenErr,
+				},
 			},
 		)
 	}
 
-	graph := domain.NewGraphContentWithoutAutofieldEntity(*graphParagraph)
+	graph := domain.NewGraphContentEntity(*graphParagraph, *graphChildren)
 
 	entity, uErr := uc.service.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 
@@ -144,9 +151,11 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 	}
 
 	return &model.GraphUpdateResponse{
-		Graph: model.GraphContent{
+		Graph: model.Graph{
 			Id:        entity.Id().Value(),
+			Name:      entity.Name().Value(),
 			Paragraph: entity.Paragraph().Value(),
+			Children:  uc.childrenEntityToModel(entity.Children()),
 		},
 	}, nil
 }
@@ -156,27 +165,7 @@ func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
-
-	sectionItems := make([]domain.SectionWithoutAutofieldEntity, len(req.Sections))
-	sectionItemErrors := make([]model.SectionWithoutAutofieldError, len(req.Sections))
-
-	ectionItemErrorExists := false
-	for i, section := range req.Sections {
-		sectionName, sectionNameErr := domain.NewSectionNameObject(section.Name)
-		if sectionNameErr != nil {
-			sectionItemErrors[i].Name = sectionNameErr.Error()
-			ectionItemErrorExists = true
-		}
-		sectionContent, sectionContentErr := domain.NewSectionContentObject(section.Content)
-		if sectionContentErr != nil {
-			sectionItemErrors[i].Content = sectionContentErr.Error()
-			ectionItemErrorExists = true
-		}
-		if sectionNameErr == nil && sectionContentErr == nil {
-			sectionItems[i] = *domain.NewSectionWithoutAutofieldEntity(*sectionName, *sectionContent)
-		}
-	}
-	sections, sectionsErr := domain.NewSectionWithoutAutofieldEntityList(sectionItems)
+	sections, sectionsErr, sectionsOk := uc.sectiionsModelToEntity(req.Sections)
 
 	userIdMsg := ""
 	if userIdErr != nil {
@@ -190,22 +179,15 @@ func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
 	if chapterIdErr != nil {
 		chapterIdMsg = chapterIdErr.Error()
 	}
-	sectionsMsg := ""
-	if sectionsErr != nil {
-		sectionsMsg = sectionsErr.Error()
-	}
 
-	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || ectionItemErrorExists || sectionsErr != nil {
+	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || !sectionsOk {
 		return nil, NewModelBasedError(
 			DomainValidationError,
 			model.GraphSectionalizeErrorResponse{
-				User:    model.UserOnlyIdError{Id: userIdMsg},
-				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
-				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
-				Sections: model.SectionWithoutAutofieldListError{
-					Message: sectionsMsg,
-					Items:   sectionItemErrors,
-				},
+				User:     model.UserOnlyIdError{Id: userIdMsg},
+				Project:  model.ProjectOnlyIdError{Id: projectIdMsg},
+				Chapter:  model.ChapterOnlyIdError{Id: chapterIdMsg},
+				Sections: *sectionsErr,
 			},
 		)
 	}
@@ -236,8 +218,96 @@ func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
 			Id:        entity.Id().Value(),
 			Name:      entity.Name().Value(),
 			Paragraph: entity.Paragraph().Value(),
+			Children:  uc.childrenEntityToModel(entity.Children()),
 		}
 	}
 
 	return &model.GraphSectionalizeResponse{Graphs: graphs}, nil
+}
+
+func (uc graphUseCase) childrenEntityToModel(entity *domain.GraphChildrenEntity) []model.GraphChild {
+	children := make([]model.GraphChild, len(entity.Value()))
+	for i, child := range entity.Value() {
+		children[i] = model.GraphChild{
+			Name:        child.Name().Value(),
+			Relation:    child.Relation().Value(),
+			Description: child.Description().Value(),
+			Children:    uc.childrenEntityToModel(child.Children()),
+		}
+	}
+	return children
+}
+
+func (uc graphUseCase) childrenModelToEntity(children []model.GraphChild) (
+	*domain.GraphChildrenEntity, *model.GraphChildrenError, bool) {
+	childItems := make([]domain.GraphChildEntity, len(children))
+	childItemErrors := make([]model.GraphChildError, len(children))
+
+	childItemErrorExists := false
+	for i, child := range children {
+		name, nameErr := domain.NewGraphNameObject(child.Name)
+		if nameErr != nil {
+			childItemErrors[i].Name = nameErr.Error()
+			childItemErrorExists = true
+		}
+		relation, relationErr := domain.NewGraphRelationObject(child.Relation)
+		if relationErr != nil {
+			childItemErrors[i].Relation = relationErr.Error()
+			childItemErrorExists = true
+		}
+		desc, descErr := domain.NewGraphDescriptionObject(child.Description)
+		if descErr != nil {
+			childItemErrors[i].Description = descErr.Error()
+			childItemErrorExists = true
+		}
+		children, childrenErr, childrenOk := uc.childrenModelToEntity(child.Children)
+		childItemErrors[i].Children = *childrenErr
+		if !childrenOk {
+			childItemErrorExists = true
+		}
+		if nameErr == nil && relationErr == nil && descErr == nil && childrenOk {
+			childItems[i] = *domain.NewGraphChildEntity(*name, *relation, *desc, *children)
+		}
+	}
+
+	childrenErrorMessage := ""
+	entity, err := domain.NewGraphChildrenEntity(childItems)
+	if err != nil {
+		childrenErrorMessage = err.Error()
+	}
+
+	ok := childrenErrorMessage == "" && !childItemErrorExists
+	return entity, &model.GraphChildrenError{Message: childrenErrorMessage, Items: childItemErrors}, ok
+}
+
+func (uc graphUseCase) sectiionsModelToEntity(sections []model.SectionWithoutAutofield) (
+	*domain.SectionWithoutAutofieldEntityList, *model.SectionWithoutAutofieldListError, bool) {
+	sectionItems := make([]domain.SectionWithoutAutofieldEntity, len(sections))
+	sectionItemErrors := make([]model.SectionWithoutAutofieldError, len(sections))
+
+	sectionItemErrorExists := false
+	for i, section := range sections {
+		sectionName, sectionNameErr := domain.NewSectionNameObject(section.Name)
+		if sectionNameErr != nil {
+			sectionItemErrors[i].Name = sectionNameErr.Error()
+			sectionItemErrorExists = true
+		}
+		sectionContent, sectionContentErr := domain.NewSectionContentObject(section.Content)
+		if sectionContentErr != nil {
+			sectionItemErrors[i].Content = sectionContentErr.Error()
+			sectionItemErrorExists = true
+		}
+		if sectionNameErr == nil && sectionContentErr == nil {
+			sectionItems[i] = *domain.NewSectionWithoutAutofieldEntity(*sectionName, *sectionContent)
+		}
+	}
+
+	sectionsErrorMessage := ""
+	entity, err := domain.NewSectionWithoutAutofieldEntityList(sectionItems)
+	if err != nil {
+		sectionsErrorMessage = err.Error()
+	}
+
+	ok := sectionsErrorMessage == "" && !sectionItemErrorExists
+	return entity, &model.SectionWithoutAutofieldListError{Message: sectionsErrorMessage, Items: sectionItemErrors}, ok
 }

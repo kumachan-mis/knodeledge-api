@@ -710,7 +710,7 @@ func TestUpdateChapterSectionsValidEntry(t *testing.T) {
 
 	userId := testutil.ModifyOnlyUserId()
 	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
-	chapterId := "CHAPTER_ONE"
+	chapterId := "CHAPTER_TWO"
 
 	updatedSections, rErr := r.UpdateChapterSections(userId, projectId, chapterId, []record.SectionWithoutAutofieldEntry{})
 	now := time.Now()
@@ -724,8 +724,8 @@ func TestUpdateChapterSectionsValidEntry(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, record.ChapterEntry{
-		Name:      "Chapter One",
-		Number:    1,
+		Name:      "Chapter Two",
+		Number:    2,
 		Sections:  []record.SectionEntry{},
 		UserId:    testutil.ModifyOnlyUserId(),
 		CreatedAt: testutil.Date(),
@@ -767,8 +767,8 @@ func TestUpdateChapterSectionsValidEntry(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, record.ChapterEntry{
-		Name:   "Chapter One",
-		Number: 1,
+		Name:   "Chapter Two",
+		Number: 2,
 		Sections: []record.SectionEntry{
 			{
 				Id:        "SECTION_ONE",

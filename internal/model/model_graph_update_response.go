@@ -11,5 +11,5 @@ package model
 
 // GraphUpdateResponse - Response Body for Graph Update API
 type GraphUpdateResponse struct {
-	Graph GraphContent `json:"graph"`
+	Graph Graph `json:"graph"`
 }

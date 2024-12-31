@@ -1,0 +1,17 @@
+type: object
+description: Error Message for GraphChild object
+properties:
+  name:
+    type: string
+    description: Error message for graph child name
+    example: "graph child name is required, but got ''"
+  relation:
+    type: string
+    description: Error message for graph child relation
+    example: "graph child relation is required, but got ''"
+  description:
+    type: string
+    description: Error message for graph child description
+    example: "graph child description must be less than or equal to 400 bytes"
+  children:
+    $ref: ./GraphChildrenError.yaml

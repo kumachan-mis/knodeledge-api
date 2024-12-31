@@ -17,4 +17,6 @@ type GraphContent struct {
 
 	// Graph paragraph
 	Paragraph string `json:"paragraph"`
+
+	Children []GraphChild `json:"children"`
 }

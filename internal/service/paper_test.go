@@ -151,7 +151,7 @@ func TestFindPaperRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
 				FetchPaper(testutil.ReadOnlyUserId(), "0000000000000001", "1000000000000001").
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			s := service.NewPaperService(r)
 
@@ -318,7 +318,7 @@ func TestUpdatePaperRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockPaperRepository(ctrl)
 			r.EXPECT().
 				UpdatePaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", gomock.Any()).
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			s := service.NewPaperService(r)
 

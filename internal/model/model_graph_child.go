@@ -9,17 +9,17 @@
 
 package model
 
-// Graph - Graph object
-type Graph struct {
+// GraphChild - GraphChild object
+type GraphChild struct {
 
-	// Auto-generated section ID
-	Id string `json:"id"`
-
-	// Graph name
+	// Child node name of the graph
 	Name string `json:"name"`
 
-	// Graph paragraph
-	Paragraph string `json:"paragraph"`
+	// Graph relation
+	Relation string `json:"relation"`
+
+	// Graph description
+	Description string `json:"description"`
 
 	Children []GraphChild `json:"children"`
 }

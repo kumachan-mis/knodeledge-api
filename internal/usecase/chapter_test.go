@@ -196,7 +196,7 @@ func TestListChaptersServiceError(t *testing.T) {
 
 			s.EXPECT().
 				ListChapters(gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			uc := usecase.NewChapterUseCase(s)
 
@@ -440,7 +440,7 @@ func TestCreateChapterChapterServiceError(t *testing.T) {
 
 			s.EXPECT().
 				CreateChapter(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			uc := usecase.NewChapterUseCase(s)
 
@@ -729,7 +729,7 @@ func TestUpdateChapterServiceError(t *testing.T) {
 
 			s.EXPECT().
 				UpdateChapter(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, service.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			uc := usecase.NewChapterUseCase(s)
 

@@ -115,6 +115,33 @@ func TestFetchGraphValidEntry(t *testing.T) {
 	assert.Equal(t, record.GraphEntry{
 		Name:      "Introduction",
 		Paragraph: "This is an example project of kNODEledge.",
+		Children: []record.GraphChildEntry{
+			{
+				Name:        "Background",
+				Relation:    "part of",
+				Description: "This is background part.",
+				Children: []record.GraphChildEntry{
+					{
+						Name:        "IT in Education",
+						Relation:    "one of",
+						Description: "This is IT in Education part.",
+						Children:    []record.GraphChildEntry{},
+					},
+				},
+			},
+			{
+				Name:        "Motivation",
+				Relation:    "part of",
+				Description: "This is motivation part.",
+				Children:    []record.GraphChildEntry{},
+			},
+			{
+				Name:        "Literature Review",
+				Relation:    "part of",
+				Description: "This is literature review part.",
+				Children:    []record.GraphChildEntry{},
+			},
+		},
 		UserId:    testutil.ReadOnlyUserId(),
 		CreatedAt: testutil.Date(),
 		UpdatedAt: testutil.Date(),
@@ -238,7 +265,7 @@ func TestInsertGraphsValidEntry(t *testing.T) {
 
 	userId := testutil.ModifyOnlyUserId()
 	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
-	chapterId := "CHAPTER_ONE"
+	chapterId := "CHAPTER_TWO"
 
 	paragraph1 := strings.Join([]string{
 		"## Introduction",
@@ -252,10 +279,12 @@ func TestInsertGraphsValidEntry(t *testing.T) {
 		{
 			Name:      "Introduction",
 			Paragraph: paragraph1,
+			Children:  []record.GraphChildEntry{},
 		},
 		{
 			Name:      "What is note apps?",
 			Paragraph: paragraph2,
+			Children:  []record.GraphChildEntry{},
 		},
 	}
 
@@ -272,6 +301,7 @@ func TestInsertGraphsValidEntry(t *testing.T) {
 	assert.NotEmpty(t, id)
 	assert.Equal(t, "Introduction", createdEntry.Name)
 	assert.Equal(t, paragraph1, createdEntry.Paragraph)
+	assert.Equal(t, []record.GraphChildEntry{}, createdEntry.Children)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), createdEntry.UserId)
 	assert.Less(t, now.Sub(createdEntry.CreatedAt), time.Second)
 	assert.Less(t, now.Sub(createdEntry.UpdatedAt), time.Second)
@@ -281,6 +311,7 @@ func TestInsertGraphsValidEntry(t *testing.T) {
 	assert.NotEmpty(t, id)
 	assert.Equal(t, "What is note apps?", createdEntry.Name)
 	assert.Equal(t, paragraph2, createdEntry.Paragraph)
+	assert.Equal(t, []record.GraphChildEntry{}, createdEntry.Children)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), createdEntry.UserId)
 	assert.Less(t, now.Sub(createdEntry.CreatedAt), time.Second)
 	assert.Less(t, now.Sub(createdEntry.UpdatedAt), time.Second)
@@ -322,12 +353,14 @@ func TestInsertGraphNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewGraphRepository(*client)
 
-			id, createdPaper, rErr := r.InsertGraphs(tc.userId, tc.projectId, tc.chapterId, []record.GraphWithoutAutofieldEntry{
-				{
-					Name:      "Section Name",
-					Paragraph: "paragraph",
-				},
-			})
+			id, createdPaper, rErr := r.InsertGraphs(tc.userId, tc.projectId, tc.chapterId,
+				[]record.GraphWithoutAutofieldEntry{
+					{
+						Name:      "Section Name",
+						Paragraph: "paragraph",
+						Children:  []record.GraphChildEntry{},
+					},
+				})
 
 			assert.NotNil(t, rErr)
 
@@ -349,15 +382,49 @@ func TestUpdateGraphContentValidEntry(t *testing.T) {
 	r := repository.NewGraphRepository(*client)
 
 	paragraph := "This is the introduction of the paper."
+	children := []record.GraphChildEntry{
+		{
+			Name:        "Background",
+			Relation:    "part of",
+			Description: "This is background part.",
+			Children: []record.GraphChildEntry{
+				{
+					Name:        "IT in Education",
+					Relation:    "one of",
+					Description: "This is IT in Education part.",
+					Children:    []record.GraphChildEntry{},
+				},
+				{
+					Name:        "IT in Business",
+					Relation:    "one of",
+					Description: "This is IT in Business part.",
+					Children:    []record.GraphChildEntry{},
+				},
+			},
+		},
+		{
+			Name:        "Motivation",
+			Relation:    "one of",
+			Description: "This is motivation part.",
+			Children:    []record.GraphChildEntry{},
+		},
+		{
+			Name:        "Lterature Review",
+			Relation:    "one of",
+			Description: "This is literature review part.",
+			Children:    []record.GraphChildEntry{},
+		},
+	}
 
-	updatedEntry, rErr := r.UpdateGraphContent(userId, projectId, chapterId, sectionId, record.GraphContentWithoutAutofieldEntry{
-		Paragraph: paragraph,
-	})
+	updatedEntry, rErr := r.UpdateGraphContent(userId, projectId, chapterId, sectionId,
+		record.GraphContentEntry{Paragraph: paragraph, Children: children})
 	now := time.Now()
 
 	assert.Nil(t, rErr)
 
+	assert.Equal(t, "Introduction", updatedEntry.Name)
 	assert.Equal(t, paragraph, updatedEntry.Paragraph)
+	assert.Equal(t, children, updatedEntry.Children)
 	assert.Equal(t, testutil.ModifyOnlyUserId(), updatedEntry.UserId)
 	assert.Equal(t, testutil.Date(), updatedEntry.CreatedAt)
 	assert.Less(t, now.Sub(updatedEntry.UpdatedAt), time.Second)
@@ -412,7 +479,7 @@ func TestUpdateGraphContentNotFound(t *testing.T) {
 			client := db.FirestoreClient()
 			r := repository.NewGraphRepository(*client)
 
-			entry, rErr := r.UpdateGraphContent(tc.userId, tc.projectId, tc.chapterId, tc.sectionId, record.GraphContentWithoutAutofieldEntry{
+			entry, rErr := r.UpdateGraphContent(tc.userId, tc.projectId, tc.chapterId, tc.sectionId, record.GraphContentEntry{
 				Paragraph: "content",
 			})
 

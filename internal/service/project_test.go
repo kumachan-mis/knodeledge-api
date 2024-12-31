@@ -388,7 +388,7 @@ func TestFindProjectRepositoryError(t *testing.T) {
 			r := mock_repository.NewMockProjectRepository(ctrl)
 			r.EXPECT().
 				FetchProject(testutil.ReadOnlyUserId(), "0000000000000001").
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			s := service.NewProjectService(r)
 
@@ -789,7 +789,7 @@ func TestUpdateProjectRepositoryError(t *testing.T) {
 						Description: "This is updated project",
 					},
 				).
-				Return(nil, repository.Errorf(tc.errorCode, tc.errorMessage))
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
 			s := service.NewProjectService(r)
 
