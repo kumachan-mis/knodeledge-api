@@ -52,15 +52,15 @@ generate:
 
 .PHONY: start-firestore-emulator edit-firestore-emulator-fixtures
 
-start-firestore-emulator:
+db:
 	firebase emulators:start --only firestore --import ${FIXTURES_DIR}
 
-edit-firestore-emulator-fixtures:
+edit-db:
 	firebase emulators:start --only firestore --import ${FIXTURES_DIR} --export-on-exit
 
 .PHONY: start-docs-server stop-docs-server build-docs gen-openapi-go gen-openapi-node
 
-start-docs-server:
+start-docs:
 	@docker run --detach --name ${OPEN_API_DOCS_SERVER} -v "${API_REPOSITORY_ROOT}:/api" -p 8081:8081 \
 		redocly/cli preview-docs \
 		/api/${OPEN_API_INDEX} \
@@ -70,7 +70,7 @@ start-docs-server:
 
 	@echo "OpenAPI docs server started at http://localhost:8081"
 
-stop-docs-server:
+stop-docs:
 	@docker stop ${OPEN_API_DOCS_SERVER} 1> /dev/null
 	@docker rm ${OPEN_API_DOCS_SERVER} 1> /dev/null
 
