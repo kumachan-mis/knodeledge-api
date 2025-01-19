@@ -1,11 +1,11 @@
 {
-    "go.inferGopath": true,
-    "go.goroot": "${env:HOME}/.asdf/installs/golang/1.23.2/go",
-    "gopls": {
-        "ui.semanticTokens": true
-    },
-    "[go]": {
-        "editor.defaultFormatter": "golang.go",
-    },
-    "editor.formatOnSave": true,
+  "go.inferGopath": true,
+  "go.goroot": "${env:HOME}/.asdf/installs/golang/1.23.5/go",
+  "gopls": {
+    "ui.semanticTokens": true
+  },
+  "[go]": {
+    "editor.defaultFormatter": "golang.go"
+  },
+  "editor.formatOnSave": true
 }
