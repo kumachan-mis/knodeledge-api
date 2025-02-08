@@ -1,0 +1,35 @@
+post:
+  tags:
+    - Graphs
+  operationId: graphs-delete
+  summary: Delete graph
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/interface/graphs/delete/GraphDeleteRequest.yaml
+  responses:
+    "200":
+      description: OK - Returns success message
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationSuccessResponse.yaml
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/graphs/delete/GraphDeleteErrorResponse.yaml
+    "404":
+      description: Not Found - Graph not found or not authorized
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/graphs/delete/GraphDeleteErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

@@ -1,0 +1,9 @@
+type: object
+description: Common Success response for application
+properties:
+  message:
+    type: string
+    description: Success message
+    example: Deleted successfully
+required:
+  - message

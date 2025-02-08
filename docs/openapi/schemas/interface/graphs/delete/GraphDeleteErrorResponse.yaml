@@ -1,0 +1,17 @@
+type: object
+description: Error Response Body for Graph Delete API
+properties:
+  message:
+    type: string
+    description: Error message when request body format is invalid
+    example: unexpected EOF
+  user:
+    $ref: ../../../entity/user/UserOnlyIdError.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyIdError.yaml
+  chapter:
+    $ref: ../../../entity/chapter/ChapterOnlyIdError.yaml
+  section:
+    $ref: ../../../entity/section/SectionOnlyIdError.yaml
+required:
+  - message
