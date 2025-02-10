@@ -24,6 +24,12 @@ type GraphService interface {
 		graphId domain.GraphIdObject,
 		graph domain.GraphContentEntity,
 	) (*domain.GraphEntity, *Error)
+	DeleteGraph(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+		chapterId domain.ChapterIdObject,
+		sectionId domain.SectionIdObject,
+	) *Error
 	SectionalizeIntoGraphs(
 		userId domain.UserIdObject,
 		projectId domain.ProjectIdObject,
@@ -88,6 +94,55 @@ func (s graphService) UpdateGraphContent(
 	}
 
 	return s.entryToEntity(graphId.Value(), *entry)
+}
+
+func (s graphService) DeleteGraph(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+	chapterId domain.ChapterIdObject,
+	sectionId domain.SectionIdObject,
+) *Error {
+	chapter, rErr := s.chapterRepository.FetchChapter(userId.Value(), projectId.Value(), chapterId.Value())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return Errorf(NotFoundError, "failed to delete graph: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return Errorf(RepositoryFailurePanic, "failed to delete graph: %w", rErr.Unwrap())
+	}
+
+	rErr = s.repository.DeleteGraph(userId.Value(), projectId.Value(), chapterId.Value(), sectionId.Value())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return Errorf(NotFoundError, "failed to delete graph: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return Errorf(RepositoryFailurePanic, "failed to delete graph: %w", rErr.Unwrap())
+	}
+
+	sectionWithoutAutofield := make([]record.SectionWithoutAutofieldEntry, 0, len(chapter.Sections)-1)
+	for _, section := range chapter.Sections {
+		if section.Id == sectionId.Value() {
+			continue
+		}
+		sectionWithoutAutofield = append(sectionWithoutAutofield, record.SectionWithoutAutofieldEntry{
+			Id:   section.Id,
+			Name: section.Name,
+		})
+	}
+
+	_, rErr = s.chapterRepository.UpdateChapterSections(
+		userId.Value(),
+		projectId.Value(),
+		chapterId.Value(),
+		sectionWithoutAutofield,
+	)
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return Errorf(NotFoundError, "failed to delete graph: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return Errorf(RepositoryFailurePanic, "failed to delete graph: %w", rErr.Unwrap())
+	}
+
+	return nil
 }
 
 func (s graphService) SectionalizeIntoGraphs(

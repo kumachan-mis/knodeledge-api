@@ -491,3 +491,76 @@ func TestUpdateGraphContentNotFound(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteGraphValidEntry(t *testing.T) {
+
+	userId := testutil.ModifyOnlyUserId()
+	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_REPOSITORY"
+	chapterId := "CHAPTER_ONE"
+	sectionId := "SECTION_ONE"
+
+	client := db.FirestoreClient()
+	r := repository.NewGraphRepository(*client)
+
+	rErr := r.DeleteGraph(userId, projectId, chapterId, sectionId)
+
+	assert.Nil(t, rErr)
+}
+
+func TestDeleteGraphNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		sectionId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return not found when user is not author of the project",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return error when chapter not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "UNKNOWN_CHAPTER",
+			sectionId:     "SECTION_ONE",
+			expectedError: "failed to fetch chapter",
+		},
+		{
+			name:          "should return error when section not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "UNKNOWN_SECTION",
+			expectedError: "failed to fetch graph",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewGraphRepository(*client)
+
+			rErr := r.DeleteGraph(tc.userId, tc.projectId, tc.chapterId, tc.sectionId)
+
+			assert.NotNil(t, rErr)
+
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %s", tc.expectedError), rErr.Error())
+		})
+	}
+}

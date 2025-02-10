@@ -38,6 +38,12 @@ type GraphRepository interface {
 		sectionId string,
 		entry record.GraphContentEntry,
 	) (*record.GraphEntry, *Error)
+	DeleteGraph(
+		userId string,
+		projectId string,
+		chapterId string,
+		sectionId string,
+	) *Error
 }
 
 type graphRepository struct {
@@ -236,6 +242,36 @@ func (r graphRepository) UpdateGraphContent(
 	}
 
 	return r.valuesToEntry(values, section.Name, userId), nil
+}
+
+func (r graphRepository) DeleteGraph(
+	userId string,
+	projectId string,
+	chapterId string,
+	sectionId string,
+) *Error {
+	_, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
+	if rErr != nil {
+		return rErr
+	}
+
+	ref := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId).
+		Collection(GraphCollection).
+		Doc(sectionId)
+
+	if _, err := ref.Get(db.FirestoreContext()); err != nil {
+		return Errorf(NotFoundError, "failed to fetch graph")
+	}
+
+	_, err := ref.Delete(db.FirestoreContext())
+	if err != nil {
+		return Errorf(WriteFailurePanic, "failed to delete graph: %v", err)
+	}
+
+	return nil
 }
 
 func (r graphRepository) valuesToEntry(

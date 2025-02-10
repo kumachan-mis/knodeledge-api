@@ -357,6 +357,296 @@ func TestFindGraphRepositoryError(t *testing.T) {
 	}
 }
 
+func TestDeleteGraphValidEntry(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockGraphRepository(ctrl)
+	r.EXPECT().
+		DeleteGraph(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
+		Return(nil)
+
+	chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
+	chapterRepository.EXPECT().
+		FetchChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+		Return(&record.ChapterEntry{
+			Name:   "Chapter",
+			Number: 1,
+			Sections: []record.SectionEntry{
+				{
+					Id:   "2000000000000001",
+					Name: "Section",
+				},
+				{
+					Id:   "2000000000000002",
+					Name: "Section",
+				},
+			},
+			UserId:    testutil.ModifyOnlyUserId(),
+			CreatedAt: testutil.Date(),
+			UpdatedAt: testutil.Date(),
+		}, nil)
+	chapterRepository.EXPECT().
+		UpdateChapterSections(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001",
+			[]record.SectionWithoutAutofieldEntry{
+				{
+					Id:   "2000000000000002",
+					Name: "Section",
+				},
+			}).
+		Return([]record.SectionEntry{
+			{
+				Id:        "2000000000000002",
+				Name:      "Section",
+				UserId:    testutil.ModifyOnlyUserId(),
+				CreatedAt: testutil.Date(),
+				UpdatedAt: testutil.Date(),
+			},
+		}, nil)
+
+	s := service.NewGraphService(r, chapterRepository)
+
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+	assert.NoError(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.NoError(t, err)
+
+	chapterId, err := domain.NewChapterIdObject("1000000000000001")
+	assert.NoError(t, err)
+
+	sectionId, err := domain.NewSectionIdObject("2000000000000001")
+	assert.NoError(t, err)
+
+	err = s.DeleteGraph(*userId, *projectId, *chapterId, *sectionId)
+
+	assert.Nil(t, err)
+}
+
+func TestDeleteGraphRepositoryDeleteGraphError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "graph not found",
+			expectedError: "failed to delete graph: graph not found",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns delete failure error",
+			errorCode:     repository.WriteFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to delete graph: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+			r.EXPECT().
+				DeleteGraph(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
+				Return(repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
+
+			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
+			chapterRepository.EXPECT().
+				FetchChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+				Return(&record.ChapterEntry{
+					Name:   "Chapter",
+					Number: 1,
+					Sections: []record.SectionEntry{
+						{
+							Id:   "2000000000000001",
+							Name: "Section",
+						},
+						{
+							Id:   "2000000000000002",
+							Name: "Section",
+						},
+					},
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				}, nil)
+
+			s := service.NewGraphService(r, chapterRepository)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.NoError(t, err)
+
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.NoError(t, err)
+
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.NoError(t, err)
+
+			sectionId, err := domain.NewSectionIdObject("2000000000000001")
+			assert.NoError(t, err)
+
+			rErr := s.DeleteGraph(*userId, *projectId, *chapterId, *sectionId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, tc.expectedCode, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), rErr.Error())
+		})
+	}
+}
+
+func TestDeleteGraphRepositoryFetchChapterError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "chapter not found",
+			expectedError: "failed to delete graph: chapter not found",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns read failure error",
+			errorCode:     repository.ReadFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to delete graph: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+
+			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
+			chapterRepository.EXPECT().
+				FetchChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
+
+			s := service.NewGraphService(r, chapterRepository)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.NoError(t, err)
+
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.NoError(t, err)
+
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.NoError(t, err)
+
+			sectionId, err := domain.NewSectionIdObject("2000000000000001")
+			assert.NoError(t, err)
+
+			rErr := s.DeleteGraph(*userId, *projectId, *chapterId, *sectionId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, tc.expectedCode, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), rErr.Error())
+		})
+	}
+}
+
+func TestDeleteGraphRepositoryUpdateChapterSectionsError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "chapter not found",
+			expectedError: "failed to delete graph: chapter not found",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns write failure error",
+			errorCode:     repository.WriteFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to delete graph: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockGraphRepository(ctrl)
+			r.EXPECT().
+				DeleteGraph(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
+				Return(nil)
+
+			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
+			chapterRepository.EXPECT().
+				FetchChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+				Return(&record.ChapterEntry{
+					Name:   "Chapter",
+					Number: 1,
+					Sections: []record.SectionEntry{
+						{
+							Id:   "2000000000000001",
+							Name: "Section",
+						},
+						{
+							Id:   "2000000000000002",
+							Name: "Section",
+						},
+					},
+					UserId:    testutil.ModifyOnlyUserId(),
+					CreatedAt: testutil.Date(),
+					UpdatedAt: testutil.Date(),
+				}, nil)
+			chapterRepository.EXPECT().
+				UpdateChapterSections(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001",
+					[]record.SectionWithoutAutofieldEntry{
+						{
+							Id:   "2000000000000002",
+							Name: "Section",
+						},
+					}).
+				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
+
+			s := service.NewGraphService(r, chapterRepository)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.NoError(t, err)
+
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.NoError(t, err)
+
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.NoError(t, err)
+
+			sectionId, err := domain.NewSectionIdObject("2000000000000001")
+			assert.NoError(t, err)
+
+			rErr := s.DeleteGraph(*userId, *projectId, *chapterId, *sectionId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, tc.expectedCode, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), rErr.Error())
+		})
+	}
+}
+
 func TestSectionalizeIntoGraphsValidEntry(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

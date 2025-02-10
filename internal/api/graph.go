@@ -11,6 +11,7 @@ import (
 type GraphApi interface {
 	HandleFind(c *gin.Context)
 	HandleUpdate(c *gin.Context)
+	HandleDelete(c *gin.Context)
 	HandleSectionalize(c *gin.Context)
 }
 
@@ -87,6 +88,46 @@ func (api graphApi) HandleUpdate(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
 		c.JSON(http.StatusNotFound, model.GraphUpdateErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	if ucErr != nil {
+		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (api graphApi) HandleDelete(c *gin.Context) {
+	var request model.GraphDeleteRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, model.GraphDeleteErrorResponse{
+			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	res, ucErr := api.usecase.DeleteGraph(request)
+
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
+		resErr := UseCaseErrorToResponse(ucErr)
+		c.JSON(http.StatusBadRequest, model.GraphDeleteErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+			User:    resErr.User,
+			Project: resErr.Project,
+			Chapter: resErr.Chapter,
+			Section: resErr.Section,
+		})
+		return
+	}
+
+	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
+		c.JSON(http.StatusNotFound, model.GraphDeleteErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
