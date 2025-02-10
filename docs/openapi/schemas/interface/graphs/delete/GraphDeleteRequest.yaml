@@ -1,0 +1,16 @@
+type: object
+description: Request Body for Graph Delete API
+properties:
+  user:
+    $ref: ../../../entity/user/UserOnlyId.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyId.yaml
+  chapter:
+    $ref: ../../../entity/chapter/ChapterOnlyId.yaml
+  section:
+    $ref: ../../../entity/section/SectionOnlyId.yaml
+required:
+  - user
+  - project
+  - chapter
+  - section

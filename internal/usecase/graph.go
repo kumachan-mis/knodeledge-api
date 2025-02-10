@@ -13,6 +13,8 @@ type GraphUseCase interface {
 		*model.GraphFindResponse, *Error[model.GraphFindErrorResponse])
 	UpdateGraph(request model.GraphUpdateRequest) (
 		*model.GraphUpdateResponse, *Error[model.GraphUpdateErrorResponse])
+	DeleteGraph(request model.GraphDeleteRequest) (
+		*model.ApplicationSuccessResponse, *Error[model.GraphDeleteErrorResponse])
 	SectionalizeGraph(request model.GraphSectionalizeRequest) (
 		*model.GraphSectionalizeResponse, *Error[model.GraphSectionalizeErrorResponse])
 }
@@ -158,6 +160,60 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 			Children:  uc.childrenEntityToModel(entity.Children()),
 		},
 	}, nil
+}
+
+func (uc graphUseCase) DeleteGraph(req model.GraphDeleteRequest) (
+	*model.ApplicationSuccessResponse, *Error[model.GraphDeleteErrorResponse]) {
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
+	sectionId, sectionIdErr := domain.NewSectionIdObject(req.Section.Id)
+
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
+	}
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
+	}
+	chapterIdMsg := ""
+	if chapterIdErr != nil {
+		chapterIdMsg = chapterIdErr.Error()
+	}
+	sectionIdMsg := ""
+	if sectionIdErr != nil {
+		sectionIdMsg = sectionIdErr.Error()
+	}
+
+	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || sectionIdErr != nil {
+		return nil, NewModelBasedError(
+			DomainValidationError,
+			model.GraphDeleteErrorResponse{
+				User:    model.UserOnlyIdError{Id: userIdMsg},
+				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
+				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
+				Section: model.SectionOnlyIdError{Id: sectionIdMsg},
+			},
+		)
+	}
+
+	sErr := uc.service.DeleteGraph(*userId, *projectId, *chapterId, *sectionId)
+
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return nil, NewMessageBasedError[model.GraphDeleteErrorResponse](
+			NotFoundError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil {
+		return nil, NewMessageBasedError[model.GraphDeleteErrorResponse](
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
+		)
+	}
+
+	return &model.ApplicationSuccessResponse{Message: "graph successfully deleted"}, nil
 }
 
 func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
