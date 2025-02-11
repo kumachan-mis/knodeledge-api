@@ -1,0 +1,35 @@
+post:
+  tags:
+    - Chapters
+  operationId: chapters-delete
+  summary: Delete chapter
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/interface/chapters/delete/ChapterDeleteRequest.yaml
+  responses:
+    "200":
+      description: OK - Returns success message
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationSuccessResponse.yaml
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/chapters/delete/ChapterDeleteErrorResponse.yaml
+    "404":
+      description: Not Found - Chapter not found or not authorized
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/chapters/delete/ChapterDeleteErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml
