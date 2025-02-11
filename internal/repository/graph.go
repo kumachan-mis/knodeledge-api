@@ -255,18 +255,14 @@ func (r graphRepository) DeleteGraph(
 		return rErr
 	}
 
-	ref := r.client.Collection(ProjectCollection).
+	_, err := r.client.Collection(ProjectCollection).
 		Doc(projectId).
 		Collection(ChapterCollection).
 		Doc(chapterId).
 		Collection(GraphCollection).
-		Doc(sectionId)
+		Doc(sectionId).
+		Delete(db.FirestoreContext())
 
-	if _, err := ref.Get(db.FirestoreContext()); err != nil {
-		return Errorf(NotFoundError, "failed to fetch graph")
-	}
-
-	_, err := ref.Delete(db.FirestoreContext())
 	if err != nil {
 		return Errorf(WriteFailurePanic, "failed to delete graph: %v", err)
 	}

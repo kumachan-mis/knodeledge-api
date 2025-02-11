@@ -1014,73 +1014,26 @@ func TestGraphUpdateInvalidRequestFormat(t *testing.T) {
 }
 
 func TestGraphDelete(t *testing.T) {
-	router := setupGraphRouter()
-
-	ecorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ModifyOnlyUserId(),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
-		},
-		"chapter": map[string]any{
-			"id": "CHAPTER_ONE",
-		},
-		"section": map[string]any{
-			"id": "SECTION_ONE",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/graphs/delete", strings.NewReader(string(requestBody)))
-
-	router.ServeHTTP(ecorder, req)
-
-	assert.Equal(t, http.StatusOK, ecorder.Code)
-
-	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
-	assert.Nil(t, err)
-
-	assert.Equal(t, map[string]any{
-		"message": "graph successfully deleted",
-	}, responseBody)
-}
-
-func TestGraphDeleteNotFound(t *testing.T) {
 	tt := []struct {
 		name      string
 		userId    string
 		projectId string
 		chapterId string
-		graphId   string
+		sectionId string
 	}{
 		{
-			name:      "should return error when project not found",
-			userId:    testutil.ModifyOnlyUserId(),
-			projectId: "UNKNOWN_PROJECT",
-			chapterId: "CHAPTER_ONE",
-			graphId:   "SECTION_ONE",
-		},
-		{
-			name:      "should return not found when user is not author of the project",
-			userId:    testutil.ReadOnlyUserId(),
-			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
-			chapterId: "CHAPTER_ONE",
-			graphId:   "SECTION_ONE",
-		},
-		{
-			name:      "should return error when chapter not found",
+			name:      "should delete graph",
 			userId:    testutil.ModifyOnlyUserId(),
 			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
-			chapterId: "UNKNOWN_CHAPTER",
-			graphId:   "SECTION_ONE",
+			chapterId: "CHAPTER_ONE",
+			sectionId: "SECTION_ONE",
 		},
 		{
 			name:      "should return error when section not found",
 			userId:    testutil.ModifyOnlyUserId(),
 			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
 			chapterId: "CHAPTER_ONE",
-			graphId:   "UNKNOWN_SECTION",
+			sectionId: "UNKNOWN_SECTION",
 		},
 	}
 
@@ -1100,7 +1053,74 @@ func TestGraphDeleteNotFound(t *testing.T) {
 					"id": tc.chapterId,
 				},
 				"section": map[string]any{
-					"id": tc.graphId,
+					"id": tc.sectionId,
+				},
+			})
+			req, _ := http.NewRequest("POST", "/api/graphs/delete", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(ecorder, req)
+
+			assert.Equal(t, http.StatusOK, ecorder.Code)
+
+			var responseBody map[string]any
+			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			assert.Nil(t, err)
+
+			assert.Equal(t, map[string]any{
+				"message": "graph successfully deleted",
+			}, responseBody)
+		})
+	}
+}
+
+func TestGraphDeleteNotFound(t *testing.T) {
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		chapterId string
+		sectionId string
+	}{
+		{
+			name:      "should return error when project not found",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "UNKNOWN_PROJECT",
+			chapterId: "CHAPTER_ONE",
+			sectionId: "SECTION_ONE",
+		},
+		{
+			name:      "should return not found when user is not author of the project",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
+			chapterId: "CHAPTER_ONE",
+			sectionId: "SECTION_ONE",
+		},
+		{
+			name:      "should return error when chapter not found",
+			userId:    testutil.ModifyOnlyUserId(),
+			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
+			chapterId: "UNKNOWN_CHAPTER",
+			sectionId: "SECTION_ONE",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupGraphRouter()
+
+			ecorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(map[string]any{
+				"user": map[string]any{
+					"id": tc.userId,
+				},
+				"project": map[string]any{
+					"id": tc.projectId,
+				},
+				"chapter": map[string]any{
+					"id": tc.chapterId,
+				},
+				"section": map[string]any{
+					"id": tc.sectionId,
 				},
 			})
 			req, _ := http.NewRequest("POST", "/api/graphs/delete", strings.NewReader(string(requestBody)))
