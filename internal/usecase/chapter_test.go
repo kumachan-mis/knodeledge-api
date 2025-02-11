@@ -753,3 +753,168 @@ func TestUpdateChapterServiceError(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteChapterValidEntity(t *testing.T) {
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		chapterId string
+	}{
+		{
+			name:      "should delete chapter",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			s := mock_service.NewMockChapterService(ctrl)
+
+			s.EXPECT().
+				DeleteChapter(gomock.Any(), gomock.Any(), gomock.Any()).
+				Do(func(userId domain.UserIdObject, projectId domain.ProjectIdObject, chapterId domain.ChapterIdObject) {
+					assert.Equal(t, tc.userId, userId.Value())
+					assert.Equal(t, tc.projectId, projectId.Value())
+					assert.Equal(t, tc.chapterId, chapterId.Value())
+				}).
+				Return(nil)
+
+			uc := usecase.NewChapterUseCase(s)
+
+			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
+			})
+
+			assert.Nil(t, ucErr)
+		})
+	}
+}
+
+func TestDeleteChapterDomainValidationError(t *testing.T) {
+	tt := []struct {
+		name      string
+		userId    string
+		projectId string
+		chapterId string
+		expected  model.ChapterDeleteErrorResponse
+	}{
+		{
+			name:      "should return error when user id is empty",
+			userId:    "",
+			projectId: "0000000000000001",
+			chapterId: "1000000000000001",
+			expected: model.ChapterDeleteErrorResponse{
+				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+			},
+		},
+		{
+			name:      "should return error when project id is empty",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "",
+			chapterId: "1000000000000001",
+			expected: model.ChapterDeleteErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: model.ChapterOnlyIdError{Id: ""},
+			},
+		},
+		{
+			name:      "should return error when chapter id is empty",
+			userId:    testutil.ReadOnlyUserId(),
+			projectId: "0000000000000001",
+			chapterId: "",
+			expected: model.ChapterDeleteErrorResponse{
+				User:    model.UserOnlyIdError{Id: ""},
+				Project: model.ProjectOnlyIdError{Id: ""},
+				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			s := mock_service.NewMockChapterService(ctrl)
+
+			uc := usecase.NewChapterUseCase(s)
+
+			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
+				User:    model.UserOnlyId{Id: tc.userId},
+				Project: model.ProjectOnlyId{Id: tc.projectId},
+				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
+			})
+
+			expectedJson, _ := json.Marshal(tc.expected)
+			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
+			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
+			assert.Equal(t, tc.expected, *ucErr.Response())
+		})
+	}
+}
+
+func TestDeleteChapterServiceError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     service.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  usecase.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     service.NotFoundError,
+			errorMessage:  "failed to delete chapter",
+			expectedError: "not found: failed to delete chapter",
+			expectedCode:  usecase.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns failure panic",
+			errorCode:     service.RepositoryFailurePanic,
+			errorMessage:  "service error",
+			expectedError: "internal error: service error",
+			expectedCode:  usecase.InternalErrorPanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			s := mock_service.NewMockChapterService(ctrl)
+
+			s.EXPECT().
+				DeleteChapter(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(service.Errorf(tc.errorCode, "%s", tc.errorMessage))
+
+			uc := usecase.NewChapterUseCase(s)
+
+			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
+				User: model.UserOnlyId{
+					Id: testutil.ReadOnlyUserId(),
+				},
+				Project: model.ProjectOnlyId{
+					Id: "0000000000000001",
+				},
+				Chapter: model.ChapterOnlyId{
+					Id: "1000000000000001",
+				},
+			})
+
+			assert.Equal(t, tc.expectedError, ucErr.Error())
+			assert.Equal(t, tc.expectedCode, ucErr.Code())
+		})
+	}
+}

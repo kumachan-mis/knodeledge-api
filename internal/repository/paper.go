@@ -29,6 +29,11 @@ type PaperRepository interface {
 		chapterId string,
 		entry record.PaperWithoutAutofieldEntry,
 	) (*record.PaperEntry, *Error)
+	DeletePaper(
+		userId string,
+		projectId string,
+		chapterId string,
+	) *Error
 }
 
 type paperRepository struct {
@@ -147,6 +152,29 @@ func (r paperRepository) UpdatePaper(
 	}
 
 	return r.valuesToEntry(values, userId), nil
+}
+
+func (r paperRepository) DeletePaper(
+	userId string,
+	projectId string,
+	chapterId string,
+) *Error {
+	_, rErr := r.chapterRepository.FetchChapter(userId, projectId, chapterId)
+	if rErr != nil {
+		return rErr
+	}
+
+	_, err := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(PaperCollection).
+		Doc(chapterId).
+		Delete(db.FirestoreContext())
+
+	if err != nil {
+		return Errorf(WriteFailurePanic, "failed to delete paper: %w", err)
+	}
+
+	return nil
 }
 
 func (r paperRepository) valuesToEntry(

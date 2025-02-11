@@ -41,6 +41,11 @@ type ChapterRepository interface {
 		chapterId string,
 		entries []record.SectionWithoutAutofieldEntry,
 	) ([]record.SectionEntry, *Error)
+	DeleteChapter(
+		userId string,
+		projectId string,
+		chapterId string,
+	) *Error
 }
 
 type chapterRepository struct {
@@ -321,6 +326,51 @@ func (r chapterRepository) UpdateChapterSections(
 	}
 
 	return sectionEntries, nil
+}
+
+func (r chapterRepository) DeleteChapter(
+	userId string,
+	projectId string,
+	chapterId string,
+) *Error {
+	projectValues, rErr := r.projectValues(userId, projectId)
+	if rErr != nil {
+		return rErr
+	}
+
+	ref := r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Collection(ChapterCollection).
+		Doc(chapterId)
+
+	if _, err := ref.Get(db.FirestoreContext()); err != nil {
+		return Errorf(NotFoundError, "failed to fetch chapter")
+	}
+
+	_, err := ref.Delete(db.FirestoreContext())
+
+	if err != nil {
+		return Errorf(WriteFailurePanic, "failed to delete chapter: %w", err)
+	}
+
+	updatedChapterIds := []string{}
+	for _, id := range projectValues.ChapterIds {
+		if id == chapterId {
+			continue
+		}
+		updatedChapterIds = append(updatedChapterIds, id)
+	}
+
+	_, err = r.client.Collection(ProjectCollection).
+		Doc(projectId).
+		Update(db.FirestoreContext(), []firestore.Update{
+			{Path: "chapterIds", Value: updatedChapterIds},
+		})
+	if err != nil {
+		return Errorf(WriteFailurePanic, "failed to update chapter ids: %w", err)
+	}
+
+	return nil
 }
 
 func (r chapterRepository) projectValues(userId string, projectId string) (*document.ProjectValues, *Error) {

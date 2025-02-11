@@ -1,13 +1,13 @@
 post:
   tags:
-    - Graphs
-  operationId: graphs-delete
-  summary: Delete graph
+    - Chapters
+  operationId: chapters-delete
+  summary: Delete chapter
   requestBody:
     content:
       application/json:
         schema:
-          $ref: ../../schemas/interface/graphs/delete/GraphDeleteRequest.yaml
+          $ref: ../../schemas/interface/chapters/delete/ChapterDeleteRequest.yaml
   responses:
     "204":
       description: No Content - Returns no content
@@ -16,13 +16,13 @@ post:
       content:
         application/json:
           schema:
-            $ref: ../../schemas/interface/graphs/delete/GraphDeleteErrorResponse.yaml
+            $ref: ../../schemas/interface/chapters/delete/ChapterDeleteErrorResponse.yaml
     "404":
-      description: Not Found - Graph not found or not authorized
+      description: Not Found - Chapter not found or not authorized
       content:
         application/json:
           schema:
-            $ref: ../../schemas/interface/graphs/delete/GraphDeleteErrorResponse.yaml
+            $ref: ../../schemas/interface/chapters/delete/ChapterDeleteErrorResponse.yaml
     "500":
       description: Internal Server Error - Server error
       content:

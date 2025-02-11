@@ -112,7 +112,7 @@ func (api graphApi) HandleDelete(c *gin.Context) {
 		return
 	}
 
-	res, ucErr := api.usecase.DeleteGraph(request)
+	ucErr := api.usecase.DeleteGraph(request)
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
@@ -140,7 +140,7 @@ func (api graphApi) HandleDelete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusNoContent, nil)
 }
 
 func (api graphApi) HandleSectionalize(c *gin.Context) {

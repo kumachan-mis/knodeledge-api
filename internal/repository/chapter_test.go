@@ -882,3 +882,96 @@ func TestUpdateChapterSectionsInvalidDocument(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteChapterValidEntry(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewChapterRepository(*client)
+
+	userId := testutil.ModifyOnlyUserId()
+	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_REPOSITORY"
+	chapterId := "CHAPTER_TWO"
+
+	rErr := r.DeleteChapter(userId, projectId, chapterId)
+
+	assert.Nil(t, rErr)
+
+}
+
+func TestDeleteChapterNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project is not found",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			chapterId:     "CHAPTER_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return not found when user is not author of the project",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_REPOSITORY",
+			chapterId:     "CHAPTER_ONE",
+			expectedError: "failed to fetch project",
+		},
+		{
+			name:          "should return error when chapter is not found",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_REPOSITORY",
+			chapterId:     "UNKNOWN_CHAPTER",
+			expectedError: "failed to fetch chapter",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewChapterRepository(*client)
+
+			rErr := r.DeleteChapter(tc.userId, tc.projectId, tc.chapterId)
+
+			assert.NotNil(t, rErr)
+
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %v", tc.expectedError), rErr.Error())
+		})
+	}
+}
+
+func TestDeleteChapterInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		chapterId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when chapter ids are invalid",
+			userId:    testutil.ErrorUserId(3),
+			projectId: "PROJECT_WITH_INVALID_CHAPTER_IDS",
+			chapterId: "CHAPTER",
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.chapterIds: " +
+				"firestore: cannot set type []string to string",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewChapterRepository(*client)
+
+			rErr := r.DeleteChapter(tc.userId, tc.projectId, tc.chapterId)
+
+			assert.NotNil(t, rErr)
+
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %v", tc.expectedError), rErr.Error())
+		})
+	}
+}

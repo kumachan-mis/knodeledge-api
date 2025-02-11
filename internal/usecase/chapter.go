@@ -15,6 +15,7 @@ type ChapterUseCase interface {
 		*model.ChapterCreateResponse, *Error[model.ChapterCreateErrorResponse])
 	UpdateChapter(req model.ChapterUpdateRequest) (
 		*model.ChapterUpdateResponse, *Error[model.ChapterUpdateErrorResponse])
+	DeleteChapter(req model.ChapterDeleteRequest) *Error[model.ChapterDeleteErrorResponse]
 }
 
 type chapterUseCase struct {
@@ -237,4 +238,56 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 			Sections: []model.SectionOfChapter{},
 		},
 	}, nil
+}
+
+func (uc chapterUseCase) DeleteChapter(req model.ChapterDeleteRequest) *Error[model.ChapterDeleteErrorResponse] {
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
+
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
+	}
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
+	}
+	chapterIdMsg := ""
+	if chapterIdErr != nil {
+		chapterIdMsg = chapterIdErr.Error()
+	}
+
+	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil {
+		return NewModelBasedError(
+			DomainValidationError,
+			model.ChapterDeleteErrorResponse{
+				User: model.UserOnlyIdError{
+					Id: userIdMsg,
+				},
+				Project: model.ProjectOnlyIdError{
+					Id: projectIdMsg,
+				},
+				Chapter: model.ChapterOnlyIdError{
+					Id: chapterIdMsg,
+				},
+			},
+		)
+	}
+
+	sErr := uc.service.DeleteChapter(*userId, *projectId, *chapterId)
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return NewMessageBasedError[model.ChapterDeleteErrorResponse](
+			NotFoundError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil {
+		return NewMessageBasedError[model.ChapterDeleteErrorResponse](
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
+		)
+	}
+
+	return nil
 }

@@ -21,7 +21,7 @@ import (
 func TestGraphFind(t *testing.T) {
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ReadOnlyUserId(),
@@ -38,12 +38,12 @@ func TestGraphFind(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, ecorder.Code)
+	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -124,7 +124,7 @@ func TestGraphFindNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
 				"user": map[string]any{
 					"id": tc.user,
@@ -141,12 +141,12 @@ func TestGraphFindNotFound(t *testing.T) {
 			})
 			req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusNotFound, ecorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -290,16 +290,16 @@ func TestGraphFindDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
 			req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -316,15 +316,15 @@ func TestGraphFindDomainValidationError(t *testing.T) {
 func TestGraphFindInvalidRequestFormat(t *testing.T) {
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(""))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -339,7 +339,7 @@ func TestGraphFindInvalidRequestFormat(t *testing.T) {
 func TestGraphFindInternalError(t *testing.T) {
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ErrorUserId(7),
@@ -356,12 +356,12 @@ func TestGraphFindInternalError(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusInternalServerError, ecorder.Code)
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -372,7 +372,7 @@ func TestGraphFindInternalError(t *testing.T) {
 func TestGraphUpdate(t *testing.T) {
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ModifyOnlyUserId(),
@@ -423,12 +423,12 @@ func TestGraphUpdate(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, ecorder.Code)
+	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -516,7 +516,7 @@ func TestGraphUpdateNotFound(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			router := setupGraphRouter()
 
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
 				"user": map[string]any{
 					"id": tc.userId,
@@ -535,12 +535,12 @@ func TestGraphUpdateNotFound(t *testing.T) {
 			})
 			req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusNotFound, ecorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -965,16 +965,16 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			router := setupGraphRouter()
 
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
 			req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -991,15 +991,15 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 func TestGraphUpdateInvalidRequestFormat(t *testing.T) {
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(""))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -1016,7 +1016,7 @@ func TestGraphUpdateInvalidRequestFormat(t *testing.T) {
 func TestGraphDelete(t *testing.T) {
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ModifyOnlyUserId(),
@@ -1028,22 +1028,14 @@ func TestGraphDelete(t *testing.T) {
 			"id": "CHAPTER_ONE",
 		},
 		"section": map[string]any{
-			"id": "SECTION_ONE",
+			"id": "SECTION_TWO",
 		},
 	})
 	req, _ := http.NewRequest("POST", "/api/graphs/delete", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, ecorder.Code)
-
-	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
-	assert.Nil(t, err)
-
-	assert.Equal(t, map[string]any{
-		"message": "graph successfully deleted",
-	}, responseBody)
+	assert.Equal(t, http.StatusNoContent, recorder.Code)
 }
 
 func TestGraphDeleteNotFound(t *testing.T) {
@@ -1052,35 +1044,35 @@ func TestGraphDeleteNotFound(t *testing.T) {
 		userId    string
 		projectId string
 		chapterId string
-		graphId   string
+		sectionId string
 	}{
 		{
 			name:      "should return error when project not found",
 			userId:    testutil.ModifyOnlyUserId(),
 			projectId: "UNKNOWN_PROJECT",
 			chapterId: "CHAPTER_ONE",
-			graphId:   "SECTION_ONE",
+			sectionId: "SECTION_ONE",
 		},
 		{
 			name:      "should return not found when user is not author of the project",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
 			chapterId: "CHAPTER_ONE",
-			graphId:   "SECTION_ONE",
+			sectionId: "SECTION_ONE",
 		},
 		{
 			name:      "should return error when chapter not found",
 			userId:    testutil.ModifyOnlyUserId(),
 			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
 			chapterId: "UNKNOWN_CHAPTER",
-			graphId:   "SECTION_ONE",
+			sectionId: "SECTION_ONE",
 		},
 		{
 			name:      "should return error when section not found",
 			userId:    testutil.ModifyOnlyUserId(),
 			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
 			chapterId: "CHAPTER_ONE",
-			graphId:   "UNKNOWN_SECTION",
+			sectionId: "UNKNOWN_SECTION",
 		},
 	}
 
@@ -1088,7 +1080,7 @@ func TestGraphDeleteNotFound(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			router := setupGraphRouter()
 
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
 				"user": map[string]any{
 					"id": tc.userId,
@@ -1100,17 +1092,17 @@ func TestGraphDeleteNotFound(t *testing.T) {
 					"id": tc.chapterId,
 				},
 				"section": map[string]any{
-					"id": tc.graphId,
+					"id": tc.sectionId,
 				},
 			})
 			req, _ := http.NewRequest("POST", "/api/graphs/delete", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusNotFound, ecorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -1254,16 +1246,16 @@ func TestGraphDeleteDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
 			req, _ := http.NewRequest("POST", "/api/graphs/delete", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -1280,15 +1272,15 @@ func TestGraphDeleteDomainValidationError(t *testing.T) {
 func TestGraphDeleteInvalidRequestFormat(t *testing.T) {
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/graphs/delete", strings.NewReader(""))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -1306,7 +1298,7 @@ func TestGraphSectionalize(t *testing.T) {
 
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ModifyOnlyUserId(),
@@ -1330,12 +1322,12 @@ func TestGraphSectionalize(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", "/api/graphs/sectionalize", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusCreated, ecorder.Code)
+	assert.Equal(t, http.StatusCreated, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	//graphId is generated by firestore and it's not predictable
@@ -1393,7 +1385,7 @@ func TestGraphSectionalizeNotFound(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			router := setupGraphRouter()
 
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
 				"user": map[string]any{
 					"id": tc.userId,
@@ -1413,12 +1405,12 @@ func TestGraphSectionalizeNotFound(t *testing.T) {
 			})
 			req, _ := http.NewRequest("POST", "/api/graphs/sectionalize", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusNotFound, ecorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 
 			assert.Nil(t, err)
 
@@ -1436,7 +1428,7 @@ func TestGraphSectionalizeNotFound(t *testing.T) {
 func TestGraphSectionalizeGraphAlreadyExists(t *testing.T) {
 	router := setupGraphRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ModifyOnlyUserId(),
@@ -1456,12 +1448,12 @@ func TestGraphSectionalizeGraphAlreadyExists(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", "/api/graphs/sectionalize", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 
 	assert.Nil(t, err)
 

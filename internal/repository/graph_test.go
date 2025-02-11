@@ -493,18 +493,18 @@ func TestUpdateGraphContentNotFound(t *testing.T) {
 }
 
 func TestDeleteGraphValidEntry(t *testing.T) {
-
-	userId := testutil.ModifyOnlyUserId()
-	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_REPOSITORY"
-	chapterId := "CHAPTER_ONE"
-	sectionId := "SECTION_ONE"
-
 	client := db.FirestoreClient()
 	r := repository.NewGraphRepository(*client)
+
+	userId := testutil.ModifyOnlyUserId()
+	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
+	chapterId := "CHAPTER_ONE"
+	sectionId := "SECTION_TWO"
 
 	rErr := r.DeleteGraph(userId, projectId, chapterId, sectionId)
 
 	assert.Nil(t, rErr)
+
 }
 
 func TestDeleteGraphNotFound(t *testing.T) {

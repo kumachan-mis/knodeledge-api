@@ -267,6 +267,7 @@ func (r graphRepository) DeleteGraph(
 	}
 
 	_, err := ref.Delete(db.FirestoreContext())
+
 	if err != nil {
 		return Errorf(WriteFailurePanic, "failed to delete graph: %v", err)
 	}

@@ -26,6 +26,11 @@ type ChapterService interface {
 		chapterId domain.ChapterIdObject,
 		chapter domain.ChapterWithoutAutofieldEntity,
 	) (*domain.ChapterEntity, *Error)
+	DeleteChapter(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+		chapterId domain.ChapterIdObject,
+	) *Error
 }
 
 type chapterService struct {
@@ -96,10 +101,10 @@ func (s chapterService) CreateChapter(
 
 	_, _, rErr = s.paperRepository.InsertPaper(userId.Value(), projectId.Value(), key, paperEntryWithoutAutofield)
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
-		return nil, Errorf(NotFoundError, "failed to create initial paper: %w", rErr.Unwrap())
+		return nil, Errorf(NotFoundError, "failed to create paper: %w", rErr.Unwrap())
 	}
 	if rErr != nil {
-		return nil, Errorf(RepositoryFailurePanic, "failed to create initial paper: %w", rErr.Unwrap())
+		return nil, Errorf(RepositoryFailurePanic, "failed to create paper: %w", rErr.Unwrap())
 	}
 
 	return s.entryToEntity(key, *entry)
@@ -133,6 +138,30 @@ func (s chapterService) UpdateChapter(
 	}
 
 	return s.entryToEntity(chapterId.Value(), *entry)
+}
+
+func (s chapterService) DeleteChapter(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+	chapterId domain.ChapterIdObject,
+) *Error {
+	rErr := s.paperRepository.DeletePaper(userId.Value(), projectId.Value(), chapterId.Value())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return Errorf(NotFoundError, "failed to delete paper: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return Errorf(RepositoryFailurePanic, "failed to delete paper: %w", rErr.Unwrap())
+	}
+
+	rErr = s.repository.DeleteChapter(userId.Value(), projectId.Value(), chapterId.Value())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return Errorf(NotFoundError, "failed to delete chapter: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return Errorf(RepositoryFailurePanic, "failed to delete chapter: %w", rErr.Unwrap())
+	}
+
+	return nil
 }
 
 func (s chapterService) entryToEntity(key string, entry record.ChapterEntry) (*domain.ChapterEntity, *Error) {
