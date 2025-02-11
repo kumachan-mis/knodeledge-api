@@ -27,6 +27,10 @@ type ProjectService interface {
 		projectId domain.ProjectIdObject,
 		project domain.ProjectWithoutAutofieldEntity,
 	) (*domain.ProjectEntity, *Error)
+	DeleteProject(
+		userId domain.UserIdObject,
+		projectId domain.ProjectIdObject,
+	) *Error
 }
 
 type projectService struct {
@@ -120,6 +124,21 @@ func (s projectService) UpdateProject(
 	}
 
 	return s.entryToEntity(projectId.Value(), *entry)
+}
+
+func (s projectService) DeleteProject(
+	userId domain.UserIdObject,
+	projectId domain.ProjectIdObject,
+) *Error {
+	rErr := s.repository.DeleteProject(userId.Value(), projectId.Value())
+	if rErr != nil && rErr.Code() == repository.NotFoundError {
+		return Errorf(NotFoundError, "failed to delete project: %w", rErr.Unwrap())
+	}
+	if rErr != nil {
+		return Errorf(RepositoryFailurePanic, "failed to delete project: %w", rErr.Unwrap())
+	}
+
+	return nil
 }
 
 func (s projectService) entryToEntity(key string, entry record.ProjectEntry) (*domain.ProjectEntity, *Error) {

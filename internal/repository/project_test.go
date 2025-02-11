@@ -374,3 +374,87 @@ func TestUpdateProjectInvalidDocument(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteProjectValidDocument(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewProjectRepository(*client)
+
+	userId := testutil.ModifyOnlyUserId()
+	projectId := "PROJECT_WITH_DESCRIPTION_TO_DELETE_FROM_REPOSITORY"
+
+	rErr := r.DeleteProject(userId, projectId)
+
+	assert.Nil(t, rErr)
+}
+
+func TestDeleteProjectNotFound(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		expectedError string
+	}{
+		{
+			name:          "should return error when project is not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "UNKNOWN_PROJECT",
+			expectedError: "failed to delete project",
+		},
+		{
+			name:          "should return error when user is not author of the project",
+			userId:        testutil.ModifyOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			expectedError: "failed to delete project",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
+
+			rErr := r.DeleteProject(tc.userId, tc.projectId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.NotFoundError, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("not found: %v", tc.expectedError), rErr.Error())
+		})
+	}
+}
+
+func TestDeleteProjectInvalidDocument(t *testing.T) {
+	tt := []struct {
+		name          string
+		userId        string
+		projectId     string
+		expectedError string
+	}{
+		{
+			name:      "should return error when project name is invalid",
+			userId:    testutil.ErrorUserId(0),
+			projectId: "PROJECT_WITH_INVALID_NAME",
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.name: " +
+				"firestore: cannot set type string to int",
+		},
+		{
+			name:      "should return error when project description is invalid",
+			userId:    testutil.ErrorUserId(1),
+			projectId: "PROJECT_WITH_INVALID_DESCRIPTION",
+			expectedError: "failed to convert snapshot to values: document.ProjectValues.description: " +
+				"firestore: cannot set type string to bool",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			client := db.FirestoreClient()
+			r := repository.NewProjectRepository(*client)
+
+			rErr := r.DeleteProject(tc.userId, tc.projectId)
+
+			assert.NotNil(t, rErr)
+			assert.Equal(t, repository.ReadFailurePanic, rErr.Code())
+			assert.Equal(t, fmt.Sprintf("read failure: %v", tc.expectedError), rErr.Error())
+		})
+	}
+}

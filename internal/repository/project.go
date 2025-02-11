@@ -28,6 +28,10 @@ type ProjectRepository interface {
 		projectId string,
 		entry record.ProjectWithoutAutofieldEntry,
 	) (*record.ProjectEntry, *Error)
+	DeleteProject(
+		userId string,
+		projectId string,
+	) *Error
 }
 
 type projectRepository struct {
@@ -163,6 +167,36 @@ func (r projectRepository) UpdateProject(
 	}
 
 	return r.valuesToEntry(values), nil
+}
+
+func (r projectRepository) DeleteProject(
+	userId string,
+	projectId string,
+) *Error {
+	ref := r.client.Collection(ProjectCollection).
+		Doc(projectId)
+
+	snapshot, err := ref.Get(db.FirestoreContext())
+	if err != nil {
+		return Errorf(NotFoundError, "failed to delete project")
+	}
+
+	var values document.ProjectValues
+	err = snapshot.DataTo(&values)
+	if err != nil {
+		return Errorf(ReadFailurePanic, "failed to convert snapshot to values: %w", err)
+	}
+
+	if values.UserId != userId {
+		return Errorf(NotFoundError, "failed to delete project")
+	}
+
+	_, err = ref.Delete(db.FirestoreContext())
+	if err != nil {
+		return Errorf(WriteFailurePanic, "failed to delete project: %w", err)
+	}
+
+	return nil
 }
 
 func (r projectRepository) valuesToEntry(

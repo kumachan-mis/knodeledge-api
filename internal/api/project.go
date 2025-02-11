@@ -13,6 +13,7 @@ type ProjectApi interface {
 	HandleFind(c *gin.Context)
 	HandleCreate(c *gin.Context)
 	HandleUpdate(c *gin.Context)
+	HandleDelete(c *gin.Context)
 }
 
 type projectApi struct {
@@ -158,4 +159,42 @@ func (api projectApi) HandleUpdate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (api projectApi) HandleDelete(c *gin.Context) {
+	var request model.ProjectDeleteRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, model.ProjectDeleteErrorResponse{
+			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	ucErr := api.usecase.DeleteProject(request)
+
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
+		resErr := UseCaseErrorToResponse(ucErr)
+		c.JSON(http.StatusBadRequest, model.ProjectDeleteErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+			User:    resErr.User,
+			Project: resErr.Project,
+		})
+		return
+	}
+
+	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
+		c.JSON(http.StatusNotFound, model.ProjectDeleteErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	if ucErr != nil {
+		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }

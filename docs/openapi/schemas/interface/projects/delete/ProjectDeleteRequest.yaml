@@ -1,0 +1,10 @@
+type: object
+description: Request Body for Project Delete API
+properties:
+  user:
+    $ref: ../../../entity/user/UserOnlyId.yaml
+  project:
+    $ref: ../../../entity/project/ProjectOnlyId.yaml
+required:
+  - user
+  - project

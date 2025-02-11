@@ -793,6 +793,182 @@ func TestProjectUpdateInternalError(t *testing.T) {
 	}, responseBody)
 }
 
+func TestProjectDelete(t *testing.T) {
+	router := setupProjectRouter()
+
+	recorder := httptest.NewRecorder()
+	requestBody, _ := json.Marshal(map[string]any{
+		"user": map[string]any{
+			"id": testutil.ModifyOnlyUserId(),
+		},
+		"project": map[string]any{
+			"id": "PROJECT_WITH_DESCRIPTION_TO_DELETE_FROM_API",
+		},
+	})
+	req, _ := http.NewRequest("POST", "/api/projects/delete", strings.NewReader(string(requestBody)))
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusNoContent, recorder.Code)
+}
+
+func TestProjectDeleteNotFound(t *testing.T) {
+	tt := []struct {
+		name    string
+		request map[string]any
+	}{
+		{
+			name: "should return not found when project is not found",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "UNKNOWN_PROJECT",
+				},
+			},
+		},
+		{
+			name: "should return not found when user is not author of the project",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ReadOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITH_DESCRIPTION_TO_DELETE_FROM_API",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/projects/delete", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "not found",
+				"user":    map[string]any{},
+				"project": map[string]any{},
+			}, responseBody)
+		})
+	}
+}
+
+func TestProjectDeleteDomainValidationError(t *testing.T) {
+	tt := []struct {
+		name             string
+		request          map[string]any
+		expectedResponse map[string]any
+	}{
+		{
+			name: "should return error when user id is empty",
+			request: map[string]any{
+				"user":    map[string]any{"id": ""},
+				"project": map[string]any{"id": "PROJECT_WITHOUT_DESCRIPTION"},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when project id is empty",
+			request: map[string]any{
+				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
+				"project": map[string]any{"id": ""},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{},
+				"project": map[string]any{
+					"id": "project id is required, but got ''",
+				},
+			},
+		},
+		{
+			name:    "should return error when empty object is passed",
+			request: map[string]any{},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{
+					"id": "project id is required, but got ''",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupProjectRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/projects/delete", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+			var responseBody map[string]any
+			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+			assert.Equal(t, map[string]any{
+				"message": "invalid request value",
+				"user":    tc.expectedResponse["user"],
+				"project": tc.expectedResponse["project"],
+			}, responseBody)
+		})
+	}
+}
+
+func TestProjectDeleteInvalidRequestFormat(t *testing.T) {
+	router := setupProjectRouter()
+
+	recorder := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/projects/delete", strings.NewReader(""))
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+}
+
+func TestProjectDeleteInternalError(t *testing.T) {
+	router := setupProjectRouter()
+
+	recorder := httptest.NewRecorder()
+	requestBody, _ := json.Marshal(map[string]any{
+		"user": map[string]any{
+			"id": testutil.ErrorUserId(0),
+		},
+		"project": map[string]any{
+			"id": "PROJECT_WITH_INVALID_NAME",
+		},
+	})
+	req, _ := http.NewRequest("POST", "/api/projects/delete", strings.NewReader(string(requestBody)))
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+
+	var responseBody map[string]any
+	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
+	assert.Equal(t, map[string]any{
+		"message": "internal error",
+	}, responseBody)
+}
+
 func setupProjectRouter() *gin.Engine {
 	router := gin.Default()
 
@@ -806,5 +982,6 @@ func setupProjectRouter() *gin.Engine {
 	router.POST("/api/projects/create", a.HandleCreate)
 	router.POST("/api/projects/find", a.HandleFind)
 	router.POST("/api/projects/update", a.HandleUpdate)
+	router.POST("/api/projects/delete", a.HandleDelete)
 	return router
 }

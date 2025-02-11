@@ -814,3 +814,81 @@ func TestUpdateProjectRepositoryError(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteProjectValidEntry(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockProjectRepository(ctrl)
+	r.EXPECT().
+		DeleteProject(testutil.ModifyOnlyUserId(), "0000000000000001").
+		Return(nil)
+
+	s := service.NewProjectService(r)
+
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+	assert.NoError(t, err)
+
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.NoError(t, err)
+
+	sErr := s.DeleteProject(*userId, *projectId)
+	assert.Nil(t, sErr)
+}
+
+func TestDeleteProjectRepositoryError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "failed to delete project",
+			expectedError: "not found: failed to delete project: failed to delete project",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns read failure error",
+			errorCode:     repository.ReadFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "repository failure: failed to delete project: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+		{
+			name:          "should return error when repository returns write failure error",
+			errorCode:     repository.WriteFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "repository failure: failed to delete project: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockProjectRepository(ctrl)
+			r.EXPECT().
+				DeleteProject(testutil.ModifyOnlyUserId(), "0000000000000001").
+				Return(repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
+
+			s := service.NewProjectService(r)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.NoError(t, err)
+
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.NoError(t, err)
+
+			sErr := s.DeleteProject(*userId, *projectId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, tc.expectedError, sErr.Error())
+		})
+	}
+}
