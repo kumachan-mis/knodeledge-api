@@ -787,13 +787,12 @@ func TestDeleteChapterValidEntity(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
+			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: model.ProjectOnlyId{Id: tc.projectId},
 				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
 			})
 
-			assert.Equal(t, "chapter successfully deleted", res.Message)
 			assert.Nil(t, ucErr)
 		})
 	}
@@ -851,7 +850,7 @@ func TestDeleteChapterDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
+			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: model.ProjectOnlyId{Id: tc.projectId},
 				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
@@ -861,8 +860,6 @@ func TestDeleteChapterDomainValidationError(t *testing.T) {
 			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
 			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
 			assert.Equal(t, tc.expected, *ucErr.Response())
-
-			assert.Nil(t, res)
 		})
 	}
 }
@@ -904,7 +901,7 @@ func TestDeleteChapterServiceError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
+			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
 				User: model.UserOnlyId{
 					Id: testutil.ReadOnlyUserId(),
 				},
@@ -918,7 +915,6 @@ func TestDeleteChapterServiceError(t *testing.T) {
 
 			assert.Equal(t, tc.expectedError, ucErr.Error())
 			assert.Equal(t, tc.expectedCode, ucErr.Code())
-			assert.Nil(t, res)
 		})
 	}
 }

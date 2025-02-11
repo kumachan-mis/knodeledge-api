@@ -169,7 +169,7 @@ func (api chapterApi) HandleDelete(c *gin.Context) {
 		return
 	}
 
-	res, ucErr := api.usecase.DeleteChapter(request)
+	ucErr := api.usecase.DeleteChapter(request)
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
@@ -196,5 +196,5 @@ func (api chapterApi) HandleDelete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusNoContent, res)
+	c.JSON(http.StatusNoContent, nil)
 }

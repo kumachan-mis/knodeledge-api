@@ -869,7 +869,7 @@ func TestDeleteGraphValidEntity(t *testing.T) {
 
 	uc := usecase.NewGraphUseCase(s)
 
-	res, ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
+	ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
 		User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
 		Project: model.ProjectOnlyId{Id: "0000000000000001"},
 		Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
@@ -877,7 +877,6 @@ func TestDeleteGraphValidEntity(t *testing.T) {
 	})
 
 	assert.Nil(t, ucErr)
-	assert.Equal(t, "graph successfully deleted", res.Message)
 }
 
 func TestDeleteGraphDomainValidationError(t *testing.T) {
@@ -965,7 +964,7 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewGraphUseCase(s)
 
-			res, ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
+			ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
 				User:    model.UserOnlyId{Id: tc.userId},
 				Project: model.ProjectOnlyId{Id: tc.projectId},
 				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
@@ -976,8 +975,6 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 			assert.Equal(t, fmt.Sprintf("domain validation error: %s", expectedJson), ucErr.Error())
 			assert.Equal(t, usecase.DomainValidationError, ucErr.Code())
 			assert.Equal(t, tc.expected, *ucErr.Response())
-
-			assert.Nil(t, res)
 		})
 	}
 }
@@ -1019,14 +1016,13 @@ func TestDeleteGraphServiceError(t *testing.T) {
 				DeleteGraph(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			res, ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
+			ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
 				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
 				Project: model.ProjectOnlyId{Id: "0000000000000001"},
 				Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
 				Section: model.SectionOnlyId{Id: "2000000000000001"},
 			})
 
-			assert.Nil(t, res)
 			assert.Equal(t, tc.expectedError, ucErr.Error())
 			assert.Equal(t, tc.expectedCode, ucErr.Code())
 		})

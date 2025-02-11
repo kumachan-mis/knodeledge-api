@@ -10,11 +10,7 @@ post:
           $ref: ../../schemas/interface/graphs/delete/GraphDeleteRequest.yaml
   responses:
     "204":
-      description: No Content - Returns success message
-      content:
-        application/json:
-          schema:
-            $ref: ../../schemas/interface/app/ApplicationSuccessResponse.yaml
+      description: No Content - Returns no content
     "400":
       description: Bad Request - Invalid request
       content:

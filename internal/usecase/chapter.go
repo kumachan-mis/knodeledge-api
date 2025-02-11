@@ -15,8 +15,7 @@ type ChapterUseCase interface {
 		*model.ChapterCreateResponse, *Error[model.ChapterCreateErrorResponse])
 	UpdateChapter(req model.ChapterUpdateRequest) (
 		*model.ChapterUpdateResponse, *Error[model.ChapterUpdateErrorResponse])
-	DeleteChapter(req model.ChapterDeleteRequest) (
-		*model.ApplicationSuccessResponse, *Error[model.ChapterDeleteErrorResponse])
+	DeleteChapter(req model.ChapterDeleteRequest) *Error[model.ChapterDeleteErrorResponse]
 }
 
 type chapterUseCase struct {
@@ -241,8 +240,7 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 	}, nil
 }
 
-func (uc chapterUseCase) DeleteChapter(req model.ChapterDeleteRequest) (
-	*model.ApplicationSuccessResponse, *Error[model.ChapterDeleteErrorResponse]) {
+func (uc chapterUseCase) DeleteChapter(req model.ChapterDeleteRequest) *Error[model.ChapterDeleteErrorResponse] {
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
@@ -261,7 +259,7 @@ func (uc chapterUseCase) DeleteChapter(req model.ChapterDeleteRequest) (
 	}
 
 	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil {
-		return nil, NewModelBasedError(
+		return NewModelBasedError(
 			DomainValidationError,
 			model.ChapterDeleteErrorResponse{
 				User: model.UserOnlyIdError{
@@ -279,17 +277,17 @@ func (uc chapterUseCase) DeleteChapter(req model.ChapterDeleteRequest) (
 
 	sErr := uc.service.DeleteChapter(*userId, *projectId, *chapterId)
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.ChapterDeleteErrorResponse](
+		return NewMessageBasedError[model.ChapterDeleteErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return nil, NewMessageBasedError[model.ChapterDeleteErrorResponse](
+		return NewMessageBasedError[model.ChapterDeleteErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
 	}
 
-	return &model.ApplicationSuccessResponse{Message: "chapter successfully deleted"}, nil
+	return nil
 }

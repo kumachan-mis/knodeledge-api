@@ -930,7 +930,6 @@ func TestChapterDelete(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 
 	assert.Equal(t, http.StatusNoContent, recorder.Code)
-
 }
 
 func TestChapterDeleteNotFound(t *testing.T) {

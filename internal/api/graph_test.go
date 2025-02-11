@@ -1036,15 +1036,6 @@ func TestGraphDelete(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 
 	assert.Equal(t, http.StatusNoContent, recorder.Code)
-
-	var responseBody map[string]any
-	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
-	assert.Nil(t, err)
-
-	assert.Equal(t, map[string]any{
-		"message": "graph successfully deleted",
-	}, responseBody)
-
 }
 
 func TestGraphDeleteNotFound(t *testing.T) {
