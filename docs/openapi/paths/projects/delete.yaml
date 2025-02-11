@@ -1,0 +1,31 @@
+post:
+  tags:
+    - Projects
+  operationId: projects-delete
+  summary: Delete project
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: ../../schemas/interface/projects/delete/ProjectDeleteRequest.yaml
+  responses:
+    "204":
+      description: No Content - Returns no content
+    "400":
+      description: Bad Request - Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/projects/delete/ProjectDeleteErrorResponse.yaml
+    "404":
+      description: Not Found - Project not found or not authorized
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/projects/delete/ProjectDeleteErrorResponse.yaml
+    "500":
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/interface/app/ApplicationErrorResponse.yaml

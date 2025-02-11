@@ -6,6 +6,8 @@
   $ref: ./projects/create.yaml
 /api/projects/update:
   $ref: ./projects/update.yaml
+/api/projects/delete:
+  $ref: ./projects/delete.yaml
 /api/chapters/list:
   $ref: ./chapters/list.yaml
 /api/chapters/create:

@@ -17,6 +17,7 @@ type ProjectUseCase interface {
 		*model.ProjectCreateResponse, *Error[model.ProjectCreateErrorResponse])
 	UpdateProject(req model.ProjectUpdateRequest) (
 		*model.ProjectUpdateResponse, *Error[model.ProjectUpdateErrorResponse])
+	DeleteProject(req model.ProjectDeleteRequest) *Error[model.ProjectDeleteErrorResponse]
 }
 
 type projectUseCase struct {
@@ -219,4 +220,44 @@ func (uc projectUseCase) UpdateProject(req model.ProjectUpdateRequest) (
 			Description: entity.Description().Value(),
 		},
 	}, nil
+}
+
+func (uc projectUseCase) DeleteProject(req model.ProjectDeleteRequest) *Error[model.ProjectDeleteErrorResponse] {
+	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+
+	userIdMsg := ""
+	if userIdErr != nil {
+		userIdMsg = userIdErr.Error()
+	}
+	projectIdMsg := ""
+	if projectIdErr != nil {
+		projectIdMsg = projectIdErr.Error()
+	}
+
+	if userIdErr != nil || projectIdErr != nil {
+		return NewModelBasedError(
+			DomainValidationError,
+			model.ProjectDeleteErrorResponse{
+				User:    model.UserOnlyIdError{Id: userIdMsg},
+				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
+			},
+		)
+	}
+
+	sErr := uc.service.DeleteProject(*userId, *projectId)
+	if sErr != nil && sErr.Code() == service.NotFoundError {
+		return NewMessageBasedError[model.ProjectDeleteErrorResponse](
+			NotFoundError,
+			sErr.Unwrap().Error(),
+		)
+	}
+	if sErr != nil {
+		return NewMessageBasedError[model.ProjectDeleteErrorResponse](
+			InternalErrorPanic,
+			sErr.Unwrap().Error(),
+		)
+	}
+
+	return nil
 }
