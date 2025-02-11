@@ -140,7 +140,7 @@ func (api graphApi) HandleDelete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusNoContent, res)
 }
 
 func (api graphApi) HandleSectionalize(c *gin.Context) {

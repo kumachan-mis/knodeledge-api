@@ -493,38 +493,18 @@ func TestUpdateGraphContentNotFound(t *testing.T) {
 }
 
 func TestDeleteGraphValidEntry(t *testing.T) {
+	client := db.FirestoreClient()
+	r := repository.NewGraphRepository(*client)
 
-	tt := []struct {
-		name      string
-		userId    string
-		projectId string
-		chapterId string
-		sectionId string
-	}{
-		{
-			name:      "should delete graph",
-			userId:    testutil.ModifyOnlyUserId(),
-			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_REPOSITORY",
-			chapterId: "CHAPTER_ONE",
-			sectionId: "SECTION_ONE",
-		},
-		{
-			name:      "should return nil when section not found",
-			userId:    testutil.ModifyOnlyUserId(),
-			projectId: "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_REPOSITORY",
-			chapterId: "CHAPTER_ONE",
-			sectionId: "UNKNOWN_SECTION",
-		},
-	}
+	userId := testutil.ModifyOnlyUserId()
+	projectId := "PROJECT_WITHOUT_DESCRIPTION_TO_UPDATE_FROM_REPOSITORY"
+	chapterId := "CHAPTER_ONE"
+	sectionId := "SECTION_TWO"
 
-	for _, tc := range tt {
-		client := db.FirestoreClient()
-		r := repository.NewGraphRepository(*client)
+	rErr := r.DeleteGraph(userId, projectId, chapterId, sectionId)
 
-		rErr := r.DeleteGraph(tc.userId, tc.projectId, tc.chapterId, tc.sectionId)
+	assert.Nil(t, rErr)
 
-		assert.Nil(t, rErr)
-	}
 }
 
 func TestDeleteGraphNotFound(t *testing.T) {
@@ -559,6 +539,14 @@ func TestDeleteGraphNotFound(t *testing.T) {
 			chapterId:     "UNKNOWN_CHAPTER",
 			sectionId:     "SECTION_ONE",
 			expectedError: "failed to fetch chapter",
+		},
+		{
+			name:          "should return error when section not found",
+			userId:        testutil.ReadOnlyUserId(),
+			projectId:     "PROJECT_WITHOUT_DESCRIPTION",
+			chapterId:     "CHAPTER_ONE",
+			sectionId:     "UNKNOWN_SECTION",
+			expectedError: "failed to fetch graph",
 		},
 	}
 

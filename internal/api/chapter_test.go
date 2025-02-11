@@ -910,6 +910,216 @@ func TestChapterUpdateInvalidRequestFormat(t *testing.T) {
 	}, responseBody)
 }
 
+func TestChapterDelete(t *testing.T) {
+	router := setupChapterRouter()
+
+	recorder := httptest.NewRecorder()
+	requestBody, _ := json.Marshal(map[string]any{
+		"user": map[string]any{
+			"id": testutil.ModifyOnlyUserId(),
+		},
+		"project": map[string]any{
+			"id": "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
+		},
+		"chapter": map[string]any{
+			"id": "CHAPTER_TWO",
+		},
+	})
+	req, _ := http.NewRequest("POST", "/api/chapters/delete", strings.NewReader(string(requestBody)))
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusNoContent, recorder.Code)
+
+}
+
+func TestChapterDeleteNotFound(t *testing.T) {
+	tt := []struct {
+		name    string
+		request map[string]any
+	}{
+		{
+			name: "should return not found when project is not found",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "UNKNOWN_PROJECT",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+			},
+		},
+		{
+			name: "should return not found when user is not author of the project",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ReadOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_TWO",
+				},
+			},
+		},
+		{
+			name: "should return not found when chapter is not found",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ModifyOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION_TO_DELETE_FROM_API",
+				},
+				"chapter": map[string]any{
+					"id": "UNKNOWN_CHAPTER",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupChapterRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/chapters/delete", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
+
+			var responseBody map[string]any
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
+			assert.Nil(t, err)
+
+			assert.Equal(t, map[string]any{
+				"message": "not found",
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+			}, responseBody)
+		})
+	}
+}
+
+func TestChapterDeleteDomainValidationError(t *testing.T) {
+	tt := []struct {
+		name             string
+		request          map[string]any
+		expectedResponse map[string]any
+	}{
+		{
+			name: "should return error when user id is empty",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": "",
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{},
+				"chapter": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when project id is empty",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ReadOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "",
+				},
+				"chapter": map[string]any{
+					"id": "CHAPTER_ONE",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user": map[string]any{},
+				"project": map[string]any{
+					"id": "project id is required, but got ''",
+				},
+				"chapter": map[string]any{},
+			},
+		},
+		{
+			name: "should return error when chapter id is empty",
+			request: map[string]any{
+				"user": map[string]any{
+					"id": testutil.ReadOnlyUserId(),
+				},
+				"project": map[string]any{
+					"id": "PROJECT_WITHOUT_DESCRIPTION",
+				},
+				"chapter": map[string]any{
+					"id": "",
+				},
+			},
+			expectedResponse: map[string]any{
+				"user":    map[string]any{},
+				"project": map[string]any{},
+				"chapter": map[string]any{
+					"id": "chapter id is required, but got ''",
+				},
+			},
+		},
+		{
+			name:    "should return error when empty object is passed",
+			request: map[string]any{},
+			expectedResponse: map[string]any{
+				"user": map[string]any{
+					"id": "user id is required, but got ''",
+				},
+				"project": map[string]any{
+					"id": "project id is required, but got ''",
+				},
+				"chapter": map[string]any{
+					"id": "chapter id is required, but got ''",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			router := setupChapterRouter()
+
+			recorder := httptest.NewRecorder()
+			requestBody, _ := json.Marshal(tc.request)
+			req, _ := http.NewRequest("POST", "/api/chapters/delete", strings.NewReader(string(requestBody)))
+
+			router.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+			var responseBody map[string]any
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
+			assert.Nil(t, err)
+
+			assert.Equal(t, map[string]any{
+				"message": "invalid request value",
+				"user":    tc.expectedResponse["user"],
+				"project": tc.expectedResponse["project"],
+				"chapter": tc.expectedResponse["chapter"],
+			}, responseBody)
+		})
+	}
+}
+
 func setupChapterRouter() *gin.Engine {
 	router := gin.Default()
 
@@ -924,6 +1134,7 @@ func setupChapterRouter() *gin.Engine {
 	router.POST("/api/chapters/list", api.HandleList)
 	router.POST("/api/chapters/create", api.HandleCreate)
 	router.POST("/api/chapters/update", api.HandleUpdate)
+	router.POST("/api/chapters/delete", api.HandleDelete)
 
 	return router
 }

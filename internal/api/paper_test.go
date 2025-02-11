@@ -20,7 +20,7 @@ import (
 func TestPaperFind(t *testing.T) {
 	router := setupPaperRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ReadOnlyUserId(),
@@ -34,12 +34,12 @@ func TestPaperFind(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, ecorder.Code)
+	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	content := strings.Join([]string{
@@ -90,7 +90,7 @@ func TestPaperFindNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
 				"user": map[string]any{
 					"id": tc.user,
@@ -104,12 +104,12 @@ func TestPaperFindNotFound(t *testing.T) {
 			})
 			req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusNotFound, ecorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -212,16 +212,16 @@ func TestPaperFindDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
 			req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -237,15 +237,15 @@ func TestPaperFindDomainValidationError(t *testing.T) {
 func TestPaperFindInvalidRequestFormat(t *testing.T) {
 	router := setupPaperRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(""))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -259,7 +259,7 @@ func TestPaperFindInvalidRequestFormat(t *testing.T) {
 func TestPaperFindInternalError(t *testing.T) {
 	router := setupPaperRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ErrorUserId(6),
@@ -273,12 +273,12 @@ func TestPaperFindInternalError(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusInternalServerError, ecorder.Code)
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -298,7 +298,7 @@ func TestPaperUpdate(t *testing.T) {
 		"",
 	}, "\n")
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
 		"user": map[string]any{
 			"id": testutil.ModifyOnlyUserId(),
@@ -313,12 +313,12 @@ func TestPaperUpdate(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", "/api/papers/update", strings.NewReader(string(requestBody)))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, ecorder.Code)
+	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{
@@ -360,7 +360,7 @@ func TestPaperUpdateNotFound(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			router := setupPaperRouter()
 
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
 				"user": map[string]any{
 					"id": tc.userId,
@@ -375,12 +375,12 @@ func TestPaperUpdateNotFound(t *testing.T) {
 			})
 			req, _ := http.NewRequest("POST", "/api/papers/update", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusNotFound, ecorder.Code)
+			assert.Equal(t, http.StatusNotFound, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -510,16 +510,16 @@ func TestPaperUpdateDomainValidationError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			router := setupPaperRouter()
 
-			ecorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
 			req, _ := http.NewRequest("POST", "/api/papers/update", strings.NewReader(string(requestBody)))
 
-			router.ServeHTTP(ecorder, req)
+			router.ServeHTTP(recorder, req)
 
-			assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 			var responseBody map[string]any
-			err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
 			assert.Equal(t, map[string]any{
@@ -535,15 +535,15 @@ func TestPaperUpdateDomainValidationError(t *testing.T) {
 func TestPaperUpdateInvalidRequestFormat(t *testing.T) {
 	router := setupPaperRouter()
 
-	ecorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/papers/update", strings.NewReader(""))
 
-	router.ServeHTTP(ecorder, req)
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, ecorder.Code)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 
 	var responseBody map[string]any
-	err := json.Unmarshal(ecorder.Body.Bytes(), &responseBody)
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, map[string]any{

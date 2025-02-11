@@ -720,14 +720,14 @@ func TestCreateChapterPaperRepositoryError(t *testing.T) {
 			name:          "should return error when repository returns not found error",
 			errorCode:     repository.NotFoundError,
 			errorMessage:  "failed to fetch project",
-			expectedError: "failed to create initial paper: failed to fetch project",
+			expectedError: "failed to create paper: failed to fetch project",
 			expectedCode:  service.NotFoundError,
 		},
 		{
 			name:          "should return error when repository returns write failure error",
 			errorCode:     repository.WriteFailurePanic,
 			errorMessage:  "repository error",
-			expectedError: "failed to create initial paper: repository error",
+			expectedError: "failed to create paper: repository error",
 			expectedCode:  service.RepositoryFailurePanic,
 		},
 	}
@@ -1123,6 +1123,142 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 			assert.Equal(t, tc.expectedCode, sErr.Code())
 			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
 			assert.Nil(t, updatedChapter)
+		})
+	}
+}
+
+func TestDeleteChapterValidEntry(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := mock_repository.NewMockChapterRepository(ctrl)
+	r.EXPECT().
+		DeleteChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+		Return(nil)
+
+	pr := mock_repository.NewMockPaperRepository(ctrl)
+	pr.EXPECT().
+		DeletePaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+		Return(nil)
+
+	s := service.NewChapterService(r, pr)
+
+	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+	assert.Nil(t, err)
+	projectId, err := domain.NewProjectIdObject("0000000000000001")
+	assert.Nil(t, err)
+	chapterId, err := domain.NewChapterIdObject("1000000000000001")
+	assert.Nil(t, err)
+
+	sErr := s.DeleteChapter(*userId, *projectId, *chapterId)
+	assert.Nil(t, sErr)
+}
+
+func TestDeleteChapterRepositoryError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "failed to delete chapter",
+			expectedError: "failed to delete chapter: failed to delete chapter",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns write failure error",
+			errorCode:     repository.WriteFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to delete chapter: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockChapterRepository(ctrl)
+			r.EXPECT().
+				DeleteChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+				Return(repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
+
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+			pr.EXPECT().
+				DeletePaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+				Return(nil)
+
+			s := service.NewChapterService(r, pr)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+
+			sErr := s.DeleteChapter(*userId, *projectId, *chapterId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
+		})
+	}
+}
+
+func TestDeletePaperRepositoryError(t *testing.T) {
+	tt := []struct {
+		name          string
+		errorCode     repository.ErrorCode
+		errorMessage  string
+		expectedError string
+		expectedCode  service.ErrorCode
+	}{
+		{
+			name:          "should return error when repository returns not found error",
+			errorCode:     repository.NotFoundError,
+			errorMessage:  "failed to delete paper",
+			expectedError: "failed to delete paper: failed to delete paper",
+			expectedCode:  service.NotFoundError,
+		},
+		{
+			name:          "should return error when repository returns write failure error",
+			errorCode:     repository.WriteFailurePanic,
+			errorMessage:  "repository error",
+			expectedError: "failed to delete paper: repository error",
+			expectedCode:  service.RepositoryFailurePanic,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := mock_repository.NewMockChapterRepository(ctrl)
+
+			pr := mock_repository.NewMockPaperRepository(ctrl)
+			pr.EXPECT().
+				DeletePaper(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
+				Return(repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
+
+			s := service.NewChapterService(r, pr)
+
+			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
+			assert.Nil(t, err)
+			projectId, err := domain.NewProjectIdObject("0000000000000001")
+			assert.Nil(t, err)
+			chapterId, err := domain.NewChapterIdObject("1000000000000001")
+			assert.Nil(t, err)
+
+			sErr := s.DeleteChapter(*userId, *projectId, *chapterId)
+			assert.NotNil(t, sErr)
+			assert.Equal(t, tc.expectedCode, sErr.Code())
+			assert.Equal(t, fmt.Sprintf("%v: %v", tc.expectedCode, tc.expectedError), sErr.Error())
 		})
 	}
 }

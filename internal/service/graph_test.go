@@ -366,8 +366,8 @@ func TestDeleteGraphValidEntry(t *testing.T) {
 		DeleteGraph(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
 		Return(nil)
 
-	chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
-	chapterRepository.EXPECT().
+	cr := mock_repository.NewMockChapterRepository(ctrl)
+	cr.EXPECT().
 		FetchChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
 		Return(&record.ChapterEntry{
 			Name:   "Chapter",
@@ -386,7 +386,7 @@ func TestDeleteGraphValidEntry(t *testing.T) {
 			CreatedAt: testutil.Date(),
 			UpdatedAt: testutil.Date(),
 		}, nil)
-	chapterRepository.EXPECT().
+	cr.EXPECT().
 		UpdateChapterSections(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001",
 			[]record.SectionWithoutAutofieldEntry{
 				{
@@ -404,7 +404,7 @@ func TestDeleteGraphValidEntry(t *testing.T) {
 			},
 		}, nil)
 
-	s := service.NewGraphService(r, chapterRepository)
+	s := service.NewGraphService(r, cr)
 
 	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 	assert.NoError(t, err)
@@ -457,8 +457,8 @@ func TestDeleteGraphRepositoryDeleteGraphError(t *testing.T) {
 				DeleteGraph(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
 				Return(repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
-			chapterRepository.EXPECT().
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+			cr.EXPECT().
 				FetchChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
 				Return(&record.ChapterEntry{
 					Name:   "Chapter",
@@ -478,7 +478,7 @@ func TestDeleteGraphRepositoryDeleteGraphError(t *testing.T) {
 					UpdatedAt: testutil.Date(),
 				}, nil)
 
-			s := service.NewGraphService(r, chapterRepository)
+			s := service.NewGraphService(r, cr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.NoError(t, err)
@@ -532,12 +532,12 @@ func TestDeleteGraphRepositoryFetchChapterError(t *testing.T) {
 
 			r := mock_repository.NewMockGraphRepository(ctrl)
 
-			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
-			chapterRepository.EXPECT().
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+			cr.EXPECT().
 				FetchChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
 				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			s := service.NewGraphService(r, chapterRepository)
+			s := service.NewGraphService(r, cr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.NoError(t, err)
@@ -594,8 +594,8 @@ func TestDeleteGraphRepositoryUpdateChapterSectionsError(t *testing.T) {
 				DeleteGraph(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001", "2000000000000001").
 				Return(nil)
 
-			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
-			chapterRepository.EXPECT().
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+			cr.EXPECT().
 				FetchChapter(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
 				Return(&record.ChapterEntry{
 					Name:   "Chapter",
@@ -614,7 +614,7 @@ func TestDeleteGraphRepositoryUpdateChapterSectionsError(t *testing.T) {
 					CreatedAt: testutil.Date(),
 					UpdatedAt: testutil.Date(),
 				}, nil)
-			chapterRepository.EXPECT().
+			cr.EXPECT().
 				UpdateChapterSections(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001",
 					[]record.SectionWithoutAutofieldEntry{
 						{
@@ -624,7 +624,7 @@ func TestDeleteGraphRepositoryUpdateChapterSectionsError(t *testing.T) {
 					}).
 				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			s := service.NewGraphService(r, chapterRepository)
+			s := service.NewGraphService(r, cr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.NoError(t, err)
@@ -693,8 +693,8 @@ func TestSectionalizeIntoGraphsValidEntry(t *testing.T) {
 			},
 		}, nil)
 
-	chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
-	chapterRepository.EXPECT().
+	cr := mock_repository.NewMockChapterRepository(ctrl)
+	cr.EXPECT().
 		UpdateChapterSections(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001",
 			[]record.SectionWithoutAutofieldEntry{
 				{
@@ -722,7 +722,7 @@ func TestSectionalizeIntoGraphsValidEntry(t *testing.T) {
 				UpdatedAt: testutil.Date(),
 			},
 		}, nil)
-	s := service.NewGraphService(r, chapterRepository)
+	s := service.NewGraphService(r, cr)
 
 	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 	assert.NoError(t, err)
@@ -780,9 +780,9 @@ func TestSectionalizeIntoGraphsGraphExists(t *testing.T) {
 		GraphExists(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
 		Return(true, nil)
 
-	chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
+	cr := mock_repository.NewMockChapterRepository(ctrl)
 
-	s := service.NewGraphService(r, chapterRepository)
+	s := service.NewGraphService(r, cr)
 
 	userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 	assert.NoError(t, err)
@@ -997,9 +997,9 @@ func TestSectionalizeIntoGraphsInvalidInsertedGraph(t *testing.T) {
 					}).
 				Return([]string{"2000000000000001"}, []record.GraphEntry{tc.insertedGraph}, nil)
 
-			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
+			cr := mock_repository.NewMockChapterRepository(ctrl)
 
-			s := service.NewGraphService(r, chapterRepository)
+			s := service.NewGraphService(r, cr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.NoError(t, err)
@@ -1067,9 +1067,9 @@ func TestSectionalizeIntoGraphsRepositoryGraphExistsError(t *testing.T) {
 				GraphExists(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001").
 				Return(false, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
+			cr := mock_repository.NewMockChapterRepository(ctrl)
 
-			s := service.NewGraphService(r, chapterRepository)
+			s := service.NewGraphService(r, cr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.NoError(t, err)
@@ -1146,9 +1146,9 @@ func TestSectionalizeIntoGraphsRepotoryInsertGraphsError(t *testing.T) {
 					}).
 				Return(nil, nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
+			cr := mock_repository.NewMockChapterRepository(ctrl)
 
-			s := service.NewGraphService(r, chapterRepository)
+			s := service.NewGraphService(r, cr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.NoError(t, err)
@@ -1234,8 +1234,8 @@ func TestSectionalizeIntoGraphsChapterRepositoryError(t *testing.T) {
 					},
 				}, nil)
 
-			chapterRepository := mock_repository.NewMockChapterRepository(ctrl)
-			chapterRepository.EXPECT().
+			cr := mock_repository.NewMockChapterRepository(ctrl)
+			cr.EXPECT().
 				UpdateChapterSections(testutil.ModifyOnlyUserId(), "0000000000000001", "1000000000000001",
 					[]record.SectionWithoutAutofieldEntry{
 						{
@@ -1245,7 +1245,7 @@ func TestSectionalizeIntoGraphsChapterRepositoryError(t *testing.T) {
 					}).
 				Return(nil, repository.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			s := service.NewGraphService(r, chapterRepository)
+			s := service.NewGraphService(r, cr)
 
 			userId, err := domain.NewUserIdObject(testutil.ModifyOnlyUserId())
 			assert.NoError(t, err)

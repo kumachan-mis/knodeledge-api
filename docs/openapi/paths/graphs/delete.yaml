@@ -9,8 +9,8 @@ post:
         schema:
           $ref: ../../schemas/interface/graphs/delete/GraphDeleteRequest.yaml
   responses:
-    "200":
-      description: OK - Returns success message
+    "204":
+      description: No Content - Returns success message
       content:
         application/json:
           schema:

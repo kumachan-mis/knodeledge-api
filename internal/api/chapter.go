@@ -12,6 +12,7 @@ type ChapterApi interface {
 	HandleList(c *gin.Context)
 	HandleCreate(c *gin.Context)
 	HandleUpdate(c *gin.Context)
+	HandleDelete(c *gin.Context)
 }
 
 type chapterApi struct {
@@ -157,4 +158,43 @@ func (api chapterApi) HandleUpdate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (api chapterApi) HandleDelete(c *gin.Context) {
+	var request model.ChapterDeleteRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, model.ChapterDeleteErrorResponse{
+			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	res, ucErr := api.usecase.DeleteChapter(request)
+
+	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
+		resErr := UseCaseErrorToResponse(ucErr)
+		c.JSON(http.StatusBadRequest, model.ChapterDeleteErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+			User:    resErr.User,
+			Project: resErr.Project,
+			Chapter: resErr.Chapter,
+		})
+		return
+	}
+
+	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
+		c.JSON(http.StatusNotFound, model.ChapterDeleteErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	if ucErr != nil {
+		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: UseCaseErrorToMessage(ucErr),
+		})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, res)
 }

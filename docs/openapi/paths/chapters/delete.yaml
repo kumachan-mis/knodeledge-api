@@ -9,8 +9,8 @@ post:
         schema:
           $ref: ../../schemas/interface/chapters/delete/ChapterDeleteRequest.yaml
   responses:
-    "200":
-      description: OK - Returns success message
+    "204":
+      description: No Content - Returns success message
       content:
         application/json:
           schema:

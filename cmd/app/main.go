@@ -79,6 +79,7 @@ func main() {
 	router.POST("/api/chapters/list", chapterApi.HandleList)
 	router.POST("/api/chapters/create", chapterApi.HandleCreate)
 	router.POST("/api/chapters/update", chapterApi.HandleUpdate)
+	router.POST("/api/chapters/delete", chapterApi.HandleDelete)
 
 	paperApi := api.NewPaperApi(paperUseCase)
 	router.POST("/api/papers/find", paperApi.HandleFind)
