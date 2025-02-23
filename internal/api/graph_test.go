@@ -15,11 +15,13 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
+	mock_middleware "github.com/kumachan-mis/knodeledge-api/mock/middleware"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestGraphFind(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -83,7 +85,7 @@ func TestGraphFind(t *testing.T) {
 }
 
 func TestGraphFindNotFound(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	tt := []struct {
 		name    string
@@ -161,7 +163,7 @@ func TestGraphFindNotFound(t *testing.T) {
 }
 
 func TestGraphFindDomainValidationError(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	tt := []struct {
 		name             string
@@ -314,7 +316,7 @@ func TestGraphFindDomainValidationError(t *testing.T) {
 }
 
 func TestGraphFindInvalidRequestFormat(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(""))
@@ -337,7 +339,7 @@ func TestGraphFindInvalidRequestFormat(t *testing.T) {
 }
 
 func TestGraphFindInternalError(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -370,7 +372,7 @@ func TestGraphFindInternalError(t *testing.T) {
 }
 
 func TestGraphUpdate(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -514,7 +516,7 @@ func TestGraphUpdateNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupGraphRouter()
+			router := setupGraphRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
@@ -963,7 +965,7 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupGraphRouter()
+			router := setupGraphRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -989,7 +991,7 @@ func TestGraphUpdateDomainValidationError(t *testing.T) {
 }
 
 func TestGraphUpdateInvalidRequestFormat(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/graphs/update", strings.NewReader(""))
@@ -1014,7 +1016,7 @@ func TestGraphUpdateInvalidRequestFormat(t *testing.T) {
 }
 
 func TestGraphDelete(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -1078,7 +1080,7 @@ func TestGraphDeleteNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupGraphRouter()
+			router := setupGraphRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
@@ -1117,7 +1119,7 @@ func TestGraphDeleteNotFound(t *testing.T) {
 }
 
 func TestGraphDeleteDomainValidationError(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	tt := []struct {
 		name             string
@@ -1270,7 +1272,7 @@ func TestGraphDeleteDomainValidationError(t *testing.T) {
 }
 
 func TestGraphDeleteInvalidRequestFormat(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/graphs/delete", strings.NewReader(""))
@@ -1296,7 +1298,7 @@ func TestGraphSectionalize(t *testing.T) {
 	maxLengthSectionName := testutil.RandomString(100)
 	maxLengthSectionContent := testutil.RandomString(40000)
 
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -1383,7 +1385,7 @@ func TestGraphSectionalizeNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupGraphRouter()
+			router := setupGraphRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
@@ -1426,7 +1428,7 @@ func TestGraphSectionalizeNotFound(t *testing.T) {
 }
 
 func TestGraphSectionalizeGraphAlreadyExists(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -1758,7 +1760,7 @@ func TestGraphSectionalizeDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupGraphRouter()
+			router := setupGraphRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -1782,7 +1784,7 @@ func TestGraphSectionalizeDomainValidationError(t *testing.T) {
 }
 
 func TestGraphSectionalizeInvalidRequestFormat(t *testing.T) {
-	router := setupGraphRouter()
+	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/graphs/sectionalize", strings.NewReader(""))
@@ -1802,15 +1804,25 @@ func TestGraphSectionalizeInvalidRequestFormat(t *testing.T) {
 	}, responseBody)
 }
 
-func setupGraphRouter() *gin.Engine {
+func setupGraphRouter(t *testing.T) *gin.Engine {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	router := gin.Default()
+
 	client := db.FirestoreClient()
 	r := repository.NewGraphRepository(*client)
 	cr := repository.NewChapterRepository(*client)
 	s := service.NewGraphService(r, cr)
 
+	v := mock_middleware.NewMockUserVerifier(ctrl)
+	v.EXPECT().
+		Verify(gomock.Any(), gomock.Any()).
+		Return(nil).
+		AnyTimes()
+
 	uc := usecase.NewGraphUseCase(s)
-	api := api.NewGraphApi(uc)
+	api := api.NewGraphApi(v, uc)
 
 	router.POST("/api/graphs/find", api.HandleFind)
 	router.POST("/api/graphs/update", api.HandleUpdate)

@@ -15,11 +15,13 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
+	mock_middleware "github.com/kumachan-mis/knodeledge-api/mock/middleware"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestChapterList(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -66,7 +68,7 @@ func TestChapterList(t *testing.T) {
 }
 
 func TestChapterListEmpty(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -121,7 +123,7 @@ func TestChapterListNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -198,7 +200,7 @@ func TestChapterListDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -220,7 +222,7 @@ func TestChapterListDomainValidationError(t *testing.T) {
 }
 
 func TestChapterListInvalidRequestFormat(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(""))
@@ -239,7 +241,7 @@ func TestChapterListInvalidRequestFormat(t *testing.T) {
 }
 
 func TestChapterListInternalError(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -264,7 +266,7 @@ func TestChapterListInternalError(t *testing.T) {
 }
 
 func TestChapterCreate(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -341,7 +343,7 @@ func TestChapterCreateNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -364,7 +366,7 @@ func TestChapterCreateNotFound(t *testing.T) {
 }
 
 func TestChapterCreateTooLargeChapterNumber(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -535,7 +537,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -558,7 +560,7 @@ func TestChapterCreateDomainValidationError(t *testing.T) {
 }
 
 func TestChapterCreateInvalidRequestFormat(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/chapters/create", strings.NewReader(""))
@@ -578,7 +580,7 @@ func TestChapterCreateInvalidRequestFormat(t *testing.T) {
 }
 
 func TestChapterUpdate(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -670,7 +672,7 @@ func TestChapterUpdateNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -693,7 +695,7 @@ func TestChapterUpdateNotFound(t *testing.T) {
 }
 
 func TestChapterUpdateTooLargeChapterNumber(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -868,7 +870,7 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -891,7 +893,7 @@ func TestChapterUpdateDomainValidationError(t *testing.T) {
 }
 
 func TestChapterUpdateInvalidRequestFormat(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/chapters/update", strings.NewReader(""))
@@ -911,7 +913,7 @@ func TestChapterUpdateInvalidRequestFormat(t *testing.T) {
 }
 
 func TestChapterDelete(t *testing.T) {
-	router := setupChapterRouter()
+	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -983,7 +985,7 @@ func TestChapterDeleteNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -1095,7 +1097,7 @@ func TestChapterDeleteDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupChapterRouter()
+			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -1119,7 +1121,10 @@ func TestChapterDeleteDomainValidationError(t *testing.T) {
 	}
 }
 
-func setupChapterRouter() *gin.Engine {
+func setupChapterRouter(t *testing.T) *gin.Engine {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	router := gin.Default()
 
 	client := db.FirestoreClient()
@@ -1127,8 +1132,14 @@ func setupChapterRouter() *gin.Engine {
 	pr := repository.NewPaperRepository(*client)
 	s := service.NewChapterService(r, pr)
 
+	v := mock_middleware.NewMockUserVerifier(ctrl)
+	v.EXPECT().
+		Verify(gomock.Any(), gomock.Any()).
+		Return(nil).
+		AnyTimes()
+
 	uc := usecase.NewChapterUseCase(s)
-	api := api.NewChapterApi(uc)
+	api := api.NewChapterApi(v, uc)
 
 	router.POST("/api/chapters/list", api.HandleList)
 	router.POST("/api/chapters/create", api.HandleCreate)

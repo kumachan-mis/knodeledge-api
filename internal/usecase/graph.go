@@ -247,7 +247,7 @@ func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
 	}
 
 	entities, sErr := uc.service.SectionalizeIntoGraphs(*userId, *projectId, *chapterId, *sections)
-	if sErr != nil && sErr.Code() == service.InvalidArgument {
+	if sErr != nil && sErr.Code() == service.InvalidArgumentError {
 		return nil, NewMessageBasedError[model.GraphSectionalizeErrorResponse](
 			InvalidArgumentError,
 			sErr.Unwrap().Error(),

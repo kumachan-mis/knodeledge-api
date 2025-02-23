@@ -3,12 +3,23 @@ package api
 import (
 	"fmt"
 
+	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 	"github.com/sirupsen/logrus"
 )
 
 func JsonBindErrorToMessage(err error) string {
 	return "invalid request format"
+}
+
+func MiddlewareErrorToMessage(err *middleware.Error) string {
+	switch err.Code() {
+	case middleware.AuthorizationError:
+		return "authorization error"
+	default:
+		logrus.WithError(err).Error("internal error")
+		return "internal error"
+	}
 }
 
 func UseCaseErrorToMessage[ErrorResponse any](err *usecase.Error[ErrorResponse]) string {

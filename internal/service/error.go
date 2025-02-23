@@ -7,7 +7,7 @@ import (
 type ErrorCode string
 
 const (
-	InvalidArgument        ErrorCode = "invalid argument"
+	InvalidArgumentError   ErrorCode = "invalid argument"
 	NotFoundError          ErrorCode = "not found"
 	DomainFailurePanic     ErrorCode = "domain failure"
 	RepositoryFailurePanic ErrorCode = "repository failure"

@@ -447,7 +447,7 @@ func TestInsertChapterInvalidArgument(t *testing.T) {
 			assert.NotNil(t, rErr)
 
 			assert.Empty(t, id)
-			assert.Equal(t, repository.InvalidArgument, rErr.Code())
+			assert.Equal(t, repository.InvalidArgumentError, rErr.Code())
 			assert.Equal(t, fmt.Sprintf("invalid argument: %v", tc.expectedError), rErr.Error())
 			assert.Nil(t, createdChapter)
 		})
@@ -657,7 +657,7 @@ func TestUpdateChapterInvalidArgument(t *testing.T) {
 			assert.NotNil(t, rErr)
 
 			assert.Nil(t, updatedChapter)
-			assert.Equal(t, repository.InvalidArgument, rErr.Code())
+			assert.Equal(t, repository.InvalidArgumentError, rErr.Code())
 			assert.Equal(t, fmt.Sprintf("invalid argument: %v", tc.expectedError), rErr.Error())
 		})
 	}

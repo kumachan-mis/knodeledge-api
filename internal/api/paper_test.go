@@ -14,11 +14,13 @@ import (
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
+	mock_middleware "github.com/kumachan-mis/knodeledge-api/mock/middleware"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestPaperFind(t *testing.T) {
-	router := setupPaperRouter()
+	router := setupPaperRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -60,7 +62,7 @@ func TestPaperFind(t *testing.T) {
 }
 
 func TestPaperFindNotFound(t *testing.T) {
-	router := setupPaperRouter()
+	router := setupPaperRouter(t)
 
 	tt := []struct {
 		name    string
@@ -123,7 +125,7 @@ func TestPaperFindNotFound(t *testing.T) {
 }
 
 func TestPaperFindDomainValidationError(t *testing.T) {
-	router := setupPaperRouter()
+	router := setupPaperRouter(t)
 
 	tt := []struct {
 		name             string
@@ -235,7 +237,7 @@ func TestPaperFindDomainValidationError(t *testing.T) {
 }
 
 func TestPaperFindInvalidRequestFormat(t *testing.T) {
-	router := setupPaperRouter()
+	router := setupPaperRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(""))
@@ -257,7 +259,7 @@ func TestPaperFindInvalidRequestFormat(t *testing.T) {
 }
 
 func TestPaperFindInternalError(t *testing.T) {
-	router := setupPaperRouter()
+	router := setupPaperRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -287,7 +289,7 @@ func TestPaperFindInternalError(t *testing.T) {
 }
 
 func TestPaperUpdate(t *testing.T) {
-	router := setupPaperRouter()
+	router := setupPaperRouter(t)
 
 	content := strings.Join([]string{
 		"## Introduction",
@@ -358,7 +360,7 @@ func TestPaperUpdateNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupPaperRouter()
+			router := setupPaperRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
@@ -508,7 +510,7 @@ func TestPaperUpdateDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupPaperRouter()
+			router := setupPaperRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -533,7 +535,7 @@ func TestPaperUpdateDomainValidationError(t *testing.T) {
 }
 
 func TestPaperUpdateInvalidRequestFormat(t *testing.T) {
-	router := setupPaperRouter()
+	router := setupPaperRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/papers/update", strings.NewReader(""))
@@ -554,14 +556,24 @@ func TestPaperUpdateInvalidRequestFormat(t *testing.T) {
 	}, responseBody)
 }
 
-func setupPaperRouter() *gin.Engine {
+func setupPaperRouter(t *testing.T) *gin.Engine {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	router := gin.Default()
 
 	client := db.FirestoreClient()
 	r := repository.NewPaperRepository(*client)
 	s := service.NewPaperService(r)
+
+	v := mock_middleware.NewMockUserVerifier(ctrl)
+	v.EXPECT().
+		Verify(gomock.Any(), gomock.Any()).
+		Return(nil).
+		AnyTimes()
+
 	uc := usecase.NewPaperUseCase(s)
-	api := api.NewPaperApi(uc)
+	api := api.NewPaperApi(v, uc)
 
 	router.POST("/api/papers/find", api.HandleFind)
 	router.POST("/api/papers/update", api.HandleUpdate)

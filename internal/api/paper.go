@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 )
@@ -14,18 +15,35 @@ type PaperApi interface {
 }
 
 type paperApi struct {
-	usecase usecase.PaperUseCase
+	verifier middleware.UserVerifier
+	usecase  usecase.PaperUseCase
 }
 
-func NewPaperApi(usecase usecase.PaperUseCase) PaperApi {
-	return paperApi{usecase: usecase}
+func NewPaperApi(verifier middleware.UserVerifier, usecase usecase.PaperUseCase) PaperApi {
+	return paperApi{verifier: verifier, usecase: usecase}
 }
 
 func (api paperApi) HandleFind(c *gin.Context) {
 	var request model.PaperFindRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.PaperFindErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.PaperFindErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -34,7 +52,7 @@ func (api paperApi) HandleFind(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.PaperFindErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.PaperFindErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -44,14 +62,14 @@ func (api paperApi) HandleFind(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.PaperFindErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.PaperFindErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -63,8 +81,24 @@ func (api paperApi) HandleFind(c *gin.Context) {
 func (api paperApi) HandleUpdate(c *gin.Context) {
 	var request model.PaperUpdateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.PaperUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.PaperUpdateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -73,7 +107,7 @@ func (api paperApi) HandleUpdate(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.PaperUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.PaperUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -83,14 +117,14 @@ func (api paperApi) HandleUpdate(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.PaperUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.PaperUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return

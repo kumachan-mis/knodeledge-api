@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 )
@@ -16,18 +17,35 @@ type ChapterApi interface {
 }
 
 type chapterApi struct {
-	usecase usecase.ChapterUseCase
+	verifier middleware.UserVerifier
+	usecase  usecase.ChapterUseCase
 }
 
-func NewChapterApi(usecase usecase.ChapterUseCase) ChapterApi {
-	return chapterApi{usecase: usecase}
+func NewChapterApi(verifier middleware.UserVerifier, usecase usecase.ChapterUseCase) ChapterApi {
+	return chapterApi{verifier: verifier, usecase: usecase}
 }
 
 func (api chapterApi) HandleList(c *gin.Context) {
 	var request model.ChapterListRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.ChapterListErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterListErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -36,7 +54,7 @@ func (api chapterApi) HandleList(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.ChapterListErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterListErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -45,21 +63,21 @@ func (api chapterApi) HandleList(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
-		c.JSON(http.StatusBadRequest, model.ChapterListErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterListErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.ChapterListErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.ChapterListErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -71,8 +89,24 @@ func (api chapterApi) HandleList(c *gin.Context) {
 func (api chapterApi) HandleCreate(c *gin.Context) {
 	var request model.ChapterCreateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.ChapterCreateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterCreateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -81,7 +115,7 @@ func (api chapterApi) HandleCreate(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.ChapterCreateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterCreateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -91,21 +125,21 @@ func (api chapterApi) HandleCreate(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
-		c.JSON(http.StatusBadRequest, model.ChapterCreateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterCreateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.ChapterCreateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.ChapterCreateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -117,8 +151,24 @@ func (api chapterApi) HandleCreate(c *gin.Context) {
 func (api chapterApi) HandleUpdate(c *gin.Context) {
 	var request model.ChapterUpdateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -127,7 +177,7 @@ func (api chapterApi) HandleUpdate(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -137,21 +187,21 @@ func (api chapterApi) HandleUpdate(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
-		c.JSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.ChapterUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.ChapterUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -163,8 +213,24 @@ func (api chapterApi) HandleUpdate(c *gin.Context) {
 func (api chapterApi) HandleDelete(c *gin.Context) {
 	var request model.ChapterDeleteRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.ChapterDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterDeleteErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -173,7 +239,7 @@ func (api chapterApi) HandleDelete(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.ChapterDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.ChapterDeleteErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -183,14 +249,14 @@ func (api chapterApi) HandleDelete(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.ChapterDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.ChapterDeleteErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return

@@ -1458,7 +1458,7 @@ func TestSectionalizeGraphServiceError(t *testing.T) {
 	}{
 		{
 			name:          "should return error when repository returns invalid argument error",
-			errorCode:     service.InvalidArgument,
+			errorCode:     service.InvalidArgumentError,
 			errorMessage:  "graph already exists",
 			expectedError: "invalid argument: graph already exists",
 			expectedCode:  usecase.InvalidArgumentError,

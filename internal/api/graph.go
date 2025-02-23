@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/model"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 )
@@ -16,18 +17,35 @@ type GraphApi interface {
 }
 
 type graphApi struct {
-	usecase usecase.GraphUseCase
+	verifier middleware.UserVerifier
+	usecase  usecase.GraphUseCase
 }
 
-func NewGraphApi(usecase usecase.GraphUseCase) GraphApi {
-	return graphApi{usecase: usecase}
+func NewGraphApi(verifier middleware.UserVerifier, usecase usecase.GraphUseCase) GraphApi {
+	return graphApi{verifier: verifier, usecase: usecase}
 }
 
 func (api graphApi) HandleFind(c *gin.Context) {
 	var request model.GraphFindRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.GraphFindErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphFindErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -36,7 +54,7 @@ func (api graphApi) HandleFind(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.GraphFindErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphFindErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -47,14 +65,14 @@ func (api graphApi) HandleFind(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.GraphFindErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.GraphFindErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -66,8 +84,24 @@ func (api graphApi) HandleFind(c *gin.Context) {
 func (api graphApi) HandleUpdate(c *gin.Context) {
 	var request model.GraphUpdateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.GraphUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphUpdateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -76,7 +110,7 @@ func (api graphApi) HandleUpdate(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.GraphUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -87,14 +121,14 @@ func (api graphApi) HandleUpdate(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.GraphUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.GraphUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -106,8 +140,24 @@ func (api graphApi) HandleUpdate(c *gin.Context) {
 func (api graphApi) HandleDelete(c *gin.Context) {
 	var request model.GraphDeleteRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.GraphDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphDeleteErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -116,7 +166,7 @@ func (api graphApi) HandleDelete(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.GraphDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphDeleteErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -127,14 +177,14 @@ func (api graphApi) HandleDelete(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.GraphDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.GraphDeleteErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -146,8 +196,24 @@ func (api graphApi) HandleDelete(c *gin.Context) {
 func (api graphApi) HandleSectionalize(c *gin.Context) {
 	var request model.GraphSectionalizeRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, model.GraphSectionalizeErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphSectionalizeErrorResponse{
 			Message: JsonBindErrorToMessage(err),
+		})
+		return
+	}
+
+	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+
+	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
+		})
+		return
+	}
+
+	if vErr != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
@@ -156,7 +222,7 @@ func (api graphApi) HandleSectionalize(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.JSON(http.StatusBadRequest, model.GraphSectionalizeErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphSectionalizeErrorResponse{
 			Message:  UseCaseErrorToMessage(ucErr),
 			User:     resErr.User,
 			Project:  resErr.Project,
@@ -167,21 +233,21 @@ func (api graphApi) HandleSectionalize(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.InvalidArgumentError {
-		c.JSON(http.StatusBadRequest, model.GraphSectionalizeErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, model.GraphSectionalizeErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.JSON(http.StatusNotFound, model.GraphSectionalizeErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, model.GraphSectionalizeErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.JSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return

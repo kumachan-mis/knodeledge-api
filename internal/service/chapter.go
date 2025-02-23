@@ -85,8 +85,8 @@ func (s chapterService) CreateChapter(
 	}
 
 	key, entry, rErr := s.repository.InsertChapter(userId.Value(), projectId.Value(), entryWithoutAutofield)
-	if rErr != nil && rErr.Code() == repository.InvalidArgument {
-		return nil, Errorf(InvalidArgument, "failed to create chapter: %w", rErr.Unwrap())
+	if rErr != nil && rErr.Code() == repository.InvalidArgumentError {
+		return nil, Errorf(InvalidArgumentError, "failed to create chapter: %w", rErr.Unwrap())
 	}
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return nil, Errorf(NotFoundError, "failed to create chapter: %w", rErr.Unwrap())
@@ -127,8 +127,8 @@ func (s chapterService) UpdateChapter(
 		chapterId.Value(),
 		entryWithoutAutofield,
 	)
-	if rErr != nil && rErr.Code() == repository.InvalidArgument {
-		return nil, Errorf(InvalidArgument, "failed to update chapter: %w", rErr.Unwrap())
+	if rErr != nil && rErr.Code() == repository.InvalidArgumentError {
+		return nil, Errorf(InvalidArgumentError, "failed to update chapter: %w", rErr.Unwrap())
 	}
 	if rErr != nil && rErr.Code() == repository.NotFoundError {
 		return nil, Errorf(NotFoundError, "failed to update chapter: %w", rErr.Unwrap())

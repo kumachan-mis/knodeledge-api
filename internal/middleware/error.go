@@ -1,4 +1,4 @@
-package repository
+package middleware
 
 import (
 	"fmt"
@@ -7,10 +7,8 @@ import (
 type ErrorCode string
 
 const (
-	InvalidArgumentError ErrorCode = "invalid argument"
-	NotFoundError        ErrorCode = "not found"
-	ReadFailurePanic     ErrorCode = "read failure"
-	WriteFailurePanic    ErrorCode = "write failure"
+	AuthorizationError        ErrorCode = "authorization error"
+	VerificationFailurepPanic ErrorCode = "verification failure"
 )
 
 type Error struct {
