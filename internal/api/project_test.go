@@ -11,16 +11,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
-	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
+	mock_middleware "github.com/kumachan-mis/knodeledge-api/mock/middleware"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestProjectList(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -81,7 +82,7 @@ func TestProjectListDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -102,7 +103,7 @@ func TestProjectListDomainValidationError(t *testing.T) {
 }
 
 func TestProjectListInvalidRequestFormat(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(""))
@@ -120,7 +121,7 @@ func TestProjectListInvalidRequestFormat(t *testing.T) {
 }
 
 func TestProjectListInternalError(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -178,7 +179,7 @@ func TestProjectFind(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -219,7 +220,7 @@ func TestProjectFindNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -288,7 +289,7 @@ func TestProjectFindDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -310,7 +311,7 @@ func TestProjectFindDomainValidationError(t *testing.T) {
 }
 
 func TestProjectFindInvalidRequestFormat(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(""))
@@ -329,7 +330,7 @@ func TestProjectFindInvalidRequestFormat(t *testing.T) {
 }
 
 func TestProjectFindInternalError(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -385,7 +386,7 @@ func TestProjectCreate(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
@@ -494,7 +495,7 @@ func TestProjectCreateDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -516,7 +517,7 @@ func TestProjectCreateDomainValidationError(t *testing.T) {
 }
 
 func TestProjectCreateInvalidRequestFormat(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/projects/create", strings.NewReader(""))
@@ -558,7 +559,7 @@ func TestProjectUpdate(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
@@ -604,7 +605,7 @@ func TestProjectUpdateNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(map[string]any{
@@ -728,7 +729,7 @@ func TestProjectUpdateDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -750,7 +751,7 @@ func TestProjectUpdateDomainValidationError(t *testing.T) {
 }
 
 func TestProjectUpdateInvalidRequestFormat(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/projects/update", strings.NewReader(""))
@@ -769,7 +770,7 @@ func TestProjectUpdateInvalidRequestFormat(t *testing.T) {
 }
 
 func TestProjectUpdateInternalError(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -795,7 +796,7 @@ func TestProjectUpdateInternalError(t *testing.T) {
 }
 
 func TestProjectDelete(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -844,7 +845,7 @@ func TestProjectDeleteNotFound(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -913,7 +914,7 @@ func TestProjectDeleteDomainValidationError(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			router := setupProjectRouter()
+			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
 			requestBody, _ := json.Marshal(tc.request)
@@ -935,7 +936,7 @@ func TestProjectDeleteDomainValidationError(t *testing.T) {
 }
 
 func TestProjectDeleteInvalidRequestFormat(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/projects/delete", strings.NewReader(""))
@@ -946,7 +947,7 @@ func TestProjectDeleteInvalidRequestFormat(t *testing.T) {
 }
 
 func TestProjectDeleteInternalError(t *testing.T) {
-	router := setupProjectRouter()
+	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
 	requestBody, _ := json.Marshal(map[string]any{
@@ -970,14 +971,22 @@ func TestProjectDeleteInternalError(t *testing.T) {
 	}, responseBody)
 }
 
-func setupProjectRouter() *gin.Engine {
+func setupProjectRouter(t *testing.T) *gin.Engine {
 	router := gin.Default()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 	s := service.NewProjectService(r)
 
-	v := middleware.NewMockUserVerifier()
+	v := mock_middleware.NewMockUserVerifier(ctrl)
+	v.EXPECT().
+		Verify(gomock.Any(), gomock.Any()).
+		Return(nil).
+		AnyTimes()
+
 	uc := usecase.NewProjectUseCase(s)
 	a := api.NewProjectApi(v, uc)
 

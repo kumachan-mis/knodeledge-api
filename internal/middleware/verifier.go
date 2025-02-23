@@ -7,6 +7,8 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
+
 type UserVerifier interface {
 	Verify(ctx context.Context, userId string) *Error
 }
@@ -34,16 +36,5 @@ func (v userVerifier) Verify(ctx context.Context, userId string) *Error {
 		return Errorf(AuthorizationError, "user id in request does not match the user id in JWT")
 	}
 
-	return nil
-}
-
-type mockUserVerifier struct {
-}
-
-func NewMockUserVerifier() UserVerifier {
-	return mockUserVerifier{}
-}
-
-func (v mockUserVerifier) Verify(ctx context.Context, userId string) *Error {
 	return nil
 }
