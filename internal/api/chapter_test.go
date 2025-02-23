@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
+	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
@@ -1127,8 +1128,9 @@ func setupChapterRouter() *gin.Engine {
 	pr := repository.NewPaperRepository(*client)
 	s := service.NewChapterService(r, pr)
 
+	v := middleware.NewMockUserVerifier()
 	uc := usecase.NewChapterUseCase(s)
-	api := api.NewChapterApi(uc)
+	api := api.NewChapterApi(v, uc)
 
 	router.POST("/api/chapters/list", api.HandleList)
 	router.POST("/api/chapters/create", api.HandleCreate)

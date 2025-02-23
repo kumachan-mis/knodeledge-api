@@ -805,7 +805,7 @@ func TestSectionalizeIntoGraphsGraphExists(t *testing.T) {
 	insertedGraphs, sErr := s.SectionalizeIntoGraphs(*userId, *projectId, *chapterId, *sections)
 
 	assert.NotNil(t, sErr)
-	assert.Equal(t, service.InvalidArgument, sErr.Code())
+	assert.Equal(t, service.InvalidArgumentError, sErr.Code())
 	assert.Equal(t, "invalid argument: failed to sectionalize into graphs: graph already exists", sErr.Error())
 	assert.Nil(t, insertedGraphs)
 }

@@ -160,7 +160,7 @@ func (s graphService) SectionalizeIntoGraphs(
 	}
 	if exists {
 		err := errors.New("graph already exists")
-		return nil, Errorf(InvalidArgument, "failed to sectionalize into graphs: %w", err)
+		return nil, Errorf(InvalidArgumentError, "failed to sectionalize into graphs: %w", err)
 	}
 
 	entriesWithoutAutofield := make([]record.GraphWithoutAutofieldEntry, sections.Len())

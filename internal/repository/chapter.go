@@ -159,7 +159,7 @@ func (r chapterRepository) InsertChapter(
 	}
 
 	if entry.Number > len(projectValues.ChapterIds)+1 {
-		return "", nil, Errorf(InvalidArgument, "chapter number is too large")
+		return "", nil, Errorf(InvalidArgumentError, "chapter number is too large")
 	}
 
 	ref, _, err := r.client.Collection(ProjectCollection).
@@ -215,7 +215,7 @@ func (r chapterRepository) UpdateChapter(
 	}
 
 	if entry.Number > len(projectValues.ChapterIds) {
-		return nil, Errorf(InvalidArgument, "chapter number is too large")
+		return nil, Errorf(InvalidArgumentError, "chapter number is too large")
 	}
 
 	_, err := r.client.Collection(ProjectCollection).

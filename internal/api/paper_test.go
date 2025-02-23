@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
+	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
@@ -560,8 +561,10 @@ func setupPaperRouter() *gin.Engine {
 	client := db.FirestoreClient()
 	r := repository.NewPaperRepository(*client)
 	s := service.NewPaperService(r)
+
+	v := middleware.NewMockUserVerifier()
 	uc := usecase.NewPaperUseCase(s)
-	api := api.NewPaperApi(uc)
+	api := api.NewPaperApi(v, uc)
 
 	router.POST("/api/papers/find", api.HandleFind)
 	router.POST("/api/papers/update", api.HandleUpdate)

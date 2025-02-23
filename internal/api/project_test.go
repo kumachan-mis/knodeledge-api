@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
+	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
@@ -975,8 +976,10 @@ func setupProjectRouter() *gin.Engine {
 	client := db.FirestoreClient()
 	r := repository.NewProjectRepository(*client)
 	s := service.NewProjectService(r)
+
+	v := middleware.NewMockUserVerifier()
 	uc := usecase.NewProjectUseCase(s)
-	a := api.NewProjectApi(uc)
+	a := api.NewProjectApi(v, uc)
 
 	router.POST("/api/projects/list", a.HandleList)
 	router.POST("/api/projects/create", a.HandleCreate)

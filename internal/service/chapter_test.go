@@ -649,10 +649,10 @@ func TestCreateChapterRepositoryError(t *testing.T) {
 	}{
 		{
 			name:          "should return error when repository returns invalid argument error",
-			errorCode:     repository.InvalidArgument,
+			errorCode:     repository.InvalidArgumentError,
 			errorMessage:  "chapter number is too large",
 			expectedError: "failed to create chapter: chapter number is too large",
-			expectedCode:  service.InvalidArgument,
+			expectedCode:  service.InvalidArgumentError,
 		},
 		{
 			name:          "should return error when repository returns not found error",
@@ -1067,10 +1067,10 @@ func TestUpdateChapterRepositoryError(t *testing.T) {
 		},
 		{
 			name:          "should return error when repository returns invalid argument error",
-			errorCode:     repository.InvalidArgument,
+			errorCode:     repository.InvalidArgumentError,
 			errorMessage:  "chapter number is too large",
 			expectedError: "failed to update chapter: chapter number is too large",
-			expectedCode:  service.InvalidArgument,
+			expectedCode:  service.InvalidArgumentError,
 		},
 		{
 			name:          "should return error when repository returns write failure error",

@@ -131,7 +131,7 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 	chapter := domain.NewChapterWithoutAutofieldEntity(*chapterName, *chapterNumber)
 
 	chapterEntity, sErr := uc.service.CreateChapter(*userId, *projectId, *chapter)
-	if sErr != nil && sErr.Code() == service.InvalidArgument {
+	if sErr != nil && sErr.Code() == service.InvalidArgumentError {
 		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
 			InvalidArgumentError,
 			sErr.Unwrap().Error(),
@@ -211,7 +211,7 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 	chapter := domain.NewChapterWithoutAutofieldEntity(*chapterName, *chapterNumber)
 
 	entity, sErr := uc.service.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
-	if sErr != nil && sErr.Code() == service.InvalidArgument {
+	if sErr != nil && sErr.Code() == service.InvalidArgumentError {
 		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
 			InvalidArgumentError,
 			sErr.Unwrap().Error(),

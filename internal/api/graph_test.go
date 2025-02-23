@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/api"
 	"github.com/kumachan-mis/knodeledge-api/internal/db"
+	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
 	"github.com/kumachan-mis/knodeledge-api/internal/repository"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
@@ -1809,8 +1810,9 @@ func setupGraphRouter() *gin.Engine {
 	cr := repository.NewChapterRepository(*client)
 	s := service.NewGraphService(r, cr)
 
+	v := middleware.NewMockUserVerifier()
 	uc := usecase.NewGraphUseCase(s)
-	api := api.NewGraphApi(uc)
+	api := api.NewGraphApi(v, uc)
 
 	router.POST("/api/graphs/find", api.HandleFind)
 	router.POST("/api/graphs/update", api.HandleUpdate)
