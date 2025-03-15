@@ -19,15 +19,19 @@ OPEN_API_GO_DST       := internal/${OPEN_API_GO_PACKAGE}
 OPEN_API_NODE_GENERATOR := typescript-fetch
 OPEN_API_NODE_DST       := src/openapi
 
-.PHONY: setup dependencies
+.PHONY: setup install-deps update-deps
 
-setup: dependencies generate
+setup: install-deps generate
 	cp .pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 
-dependencies:
+install-deps:
 	go get -v ./...
 	go install go.uber.org/mock/mockgen@latest
+
+update-deps:
+	go get -u -v ./...
+	go mod tidy
 
 .PHONY: run format lint build test generate
 
