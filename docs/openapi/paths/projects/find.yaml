@@ -1,13 +1,11 @@
-post:
+get:
   tags:
     - Projects
   operationId: projects-find
   summary: Find project
-  requestBody:
-    content:
-      application/json:
-        schema:
-          $ref: ../../schemas/interface/projects/find/ProjectFindRequest.yaml
+  parameters:
+    - $ref: ../../schemas/parameter/user/userId.yaml
+    - $ref: ../../schemas/parameter/project/projectId.yaml
   responses:
     "200":
       description: OK - Returns found project

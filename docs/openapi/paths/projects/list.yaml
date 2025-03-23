@@ -1,13 +1,10 @@
-post:
+get:
   tags:
     - Projects
   operationId: projects-list
   summary: Get list of projects
-  requestBody:
-    content:
-      application/json:
-        schema:
-          $ref: ../../schemas/interface/projects/list/ProjectListRequest.yaml
+  parameters:
+    - $ref: ../../schemas/parameter/user/userId.yaml
   responses:
     "200":
       description: OK - Returns list of projects

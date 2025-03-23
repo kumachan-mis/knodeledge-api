@@ -24,12 +24,10 @@ func TestProjectList(t *testing.T) {
 	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ReadOnlyUserId(),
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/projects/list", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ReadOnlyUserId())
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -55,27 +53,23 @@ func TestProjectList(t *testing.T) {
 func TestProjectListDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name             string
-		request          map[string]any
+		query            map[string]string
 		expectedResponse map[string]any
 	}{
 		{
 			name: "should return error when user id is empty",
-			request: map[string]any{
-				"user": map[string]any{"id": ""},
+			query: map[string]string{
+				"userId": "",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
+				"userId": "user id is required, but got ''",
 			},
 		},
 		{
-			name:    "should return error when empty object is passed",
-			request: map[string]any{},
+			name:  "should return error when empty parameter is passed",
+			query: map[string]string{},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
+				"userId": "user id is required, but got ''",
 			},
 		},
 	}
@@ -85,8 +79,12 @@ func TestProjectListDomainValidationError(t *testing.T) {
 			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tc.request)
-			req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/projects/list", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -94,42 +92,22 @@ func TestProjectListDomainValidationError(t *testing.T) {
 
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-			assert.Equal(t, map[string]any{
-				"message": "invalid request value",
-				"user":    tc.expectedResponse["user"],
-			}, responseBody)
+
+			expectedResponse := tc.expectedResponse
+			expectedResponse["message"] = "invalid request value"
+			assert.Equal(t, expectedResponse, responseBody)
 		})
 	}
-}
-
-func TestProjectListInvalidRequestFormat(t *testing.T) {
-	router := setupProjectRouter(t)
-
-	recorder := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(""))
-
-	router.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-	var responseBody map[string]any
-	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-	assert.Equal(t, map[string]any{
-		"message": "invalid request format",
-		"user":    map[string]any{},
-	}, responseBody)
 }
 
 func TestProjectListInternalError(t *testing.T) {
 	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ErrorUserId(0),
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/projects/list", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/projects/list", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ErrorUserId(0))
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -145,14 +123,14 @@ func TestProjectListInternalError(t *testing.T) {
 func TestProjectFind(t *testing.T) {
 	tt := []struct {
 		name             string
-		request          map[string]any
+		query            map[string]string
 		expectedResponse map[string]any
 	}{
 		{
 			name: "should find project without description",
-			request: map[string]any{
-				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
-				"project": map[string]any{"id": "PROJECT_WITHOUT_DESCRIPTION"},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
 			},
 			expectedResponse: map[string]any{
 				"project": map[string]any{
@@ -163,9 +141,9 @@ func TestProjectFind(t *testing.T) {
 		},
 		{
 			name: "should find project with description",
-			request: map[string]any{
-				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
-				"project": map[string]any{"id": "PROJECT_WITH_DESCRIPTION"},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "PROJECT_WITH_DESCRIPTION",
 			},
 			expectedResponse: map[string]any{
 				"project": map[string]any{
@@ -182,8 +160,12 @@ func TestProjectFind(t *testing.T) {
 			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tc.request)
-			req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/projects/find", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -199,21 +181,21 @@ func TestProjectFind(t *testing.T) {
 
 func TestProjectFindNotFound(t *testing.T) {
 	tt := []struct {
-		name    string
-		request map[string]any
+		name  string
+		query map[string]string
 	}{
 		{
 			name: "should return not found when project is not found",
-			request: map[string]any{
-				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
-				"project": map[string]any{"id": "NOT_FOUND_PROJECT"},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "NOT_FOUND_PROJECT",
 			},
 		},
 		{
 			name: "should return not found when user is not author of the project",
-			request: map[string]any{
-				"user":    map[string]any{"id": testutil.ModifyOnlyUserId()},
-				"project": map[string]any{"id": "PROJECT_WITHOUT_DESCRIPTION"},
+			query: map[string]string{
+				"userId":    testutil.ModifyOnlyUserId(),
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
 			},
 		},
 	}
@@ -223,8 +205,12 @@ func TestProjectFindNotFound(t *testing.T) {
 			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tc.request)
-			req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/projects/find", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -234,8 +220,6 @@ func TestProjectFindNotFound(t *testing.T) {
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
 			assert.Equal(t, map[string]any{
 				"message": "not found",
-				"user":    map[string]any{},
-				"project": map[string]any{},
 			}, responseBody)
 		})
 	}
@@ -244,45 +228,35 @@ func TestProjectFindNotFound(t *testing.T) {
 func TestProjectFindDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name             string
-		request          map[string]any
+		query            map[string]string
 		expectedResponse map[string]any
 	}{
 		{
 			name: "should return error when user id is empty",
-			request: map[string]any{
-				"user":    map[string]any{"id": ""},
-				"project": map[string]any{"id": "PROJECT_WITHOUT_DESCRIPTION"},
+			query: map[string]string{
+				"userId":    "",
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
-				"project": map[string]any{},
+				"userId": "user id is required, but got ''",
 			},
 		},
 		{
 			name: "should return error when project id is empty",
-			request: map[string]any{
-				"user":    map[string]any{"id": testutil.ReadOnlyUserId()},
-				"project": map[string]any{"id": ""},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{},
-				"project": map[string]any{
-					"id": "project id is required, but got ''",
-				},
+				"projectId": "project id is required, but got ''",
 			},
 		},
 		{
-			name:    "should return error when empty object is passed",
-			request: map[string]any{},
+			name:  "should return error when empty parameter is passed",
+			query: map[string]string{},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
-				"project": map[string]any{
-					"id": "project id is required, but got ''",
-				},
+				"userId":    "user id is required, but got ''",
+				"projectId": "project id is required, but got ''",
 			},
 		},
 	}
@@ -292,8 +266,12 @@ func TestProjectFindDomainValidationError(t *testing.T) {
 			router := setupProjectRouter(t)
 
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tc.request)
-			req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/projects/find", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -301,47 +279,23 @@ func TestProjectFindDomainValidationError(t *testing.T) {
 
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-			assert.Equal(t, map[string]any{
-				"message": "invalid request value",
-				"user":    tc.expectedResponse["user"],
-				"project": tc.expectedResponse["project"],
-			}, responseBody)
+
+			expectedResponse := tc.expectedResponse
+			expectedResponse["message"] = "invalid request value"
+			assert.Equal(t, expectedResponse, responseBody)
 		})
 	}
-}
-
-func TestProjectFindInvalidRequestFormat(t *testing.T) {
-	router := setupProjectRouter(t)
-
-	recorder := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(""))
-
-	router.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-	var responseBody map[string]any
-	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-	assert.Equal(t, map[string]any{
-		"message": "invalid request format",
-		"user":    map[string]any{},
-		"project": map[string]any{},
-	}, responseBody)
 }
 
 func TestProjectFindInternalError(t *testing.T) {
 	router := setupProjectRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ErrorUserId(0),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITH_INVALID_NAME",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/projects/find", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/projects/find", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ErrorUserId(0))
+	query.Add("projectId", "PROJECT_WITH_INVALID_NAME")
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -988,12 +942,12 @@ func setupProjectRouter(t *testing.T) *gin.Engine {
 		AnyTimes()
 
 	uc := usecase.NewProjectUseCase(s)
-	a := api.NewProjectApi(v, uc)
+	a := api.NewProjectsApi(v, uc)
 
-	router.POST("/api/projects/list", a.HandleList)
-	router.POST("/api/projects/create", a.HandleCreate)
-	router.POST("/api/projects/find", a.HandleFind)
-	router.POST("/api/projects/update", a.HandleUpdate)
-	router.POST("/api/projects/delete", a.HandleDelete)
+	router.GET("/api/projects/list", a.ProjectsList)
+	router.POST("/api/projects/create", a.ProjectsCreate)
+	router.GET("/api/projects/find", a.ProjectsFind)
+	router.POST("/api/projects/update", a.ProjectsUpdate)
+	router.POST("/api/projects/delete", a.ProjectsDelete)
 	return router
 }

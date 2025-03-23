@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
@@ -81,9 +81,9 @@ func TestListChaptersValidEntity(t *testing.T) {
 
 	uc := usecase.NewChapterUseCase(s)
 
-	res, ucErr := uc.ListChapters(model.ChapterListRequest{
-		User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-		Project: model.ProjectOnlyId{Id: "0000000000000001"},
+	res, ucErr := uc.ListChapters(openapi.ChapterListRequest{
+		UserId:    testutil.ReadOnlyUserId(),
+		ProjectId: "0000000000000001",
 	})
 
 	assert.Nil(t, ucErr)
@@ -117,24 +117,24 @@ func TestListChaptersDomainValidationError(t *testing.T) {
 		name      string
 		userId    string
 		projectId string
-		expected  model.ChapterListErrorResponse
+		expected  openapi.ChapterListErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
-			expected: model.ChapterListErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
+			expected: openapi.ChapterListErrorResponse{
+				UserId:    "user id is required, but got ''",
+				ProjectId: "",
 			},
 		},
 		{
 			name:      "should return error when project id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
-			expected: model.ChapterListErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+			expected: openapi.ChapterListErrorResponse{
+				UserId:    "",
+				ProjectId: "project id is required, but got ''",
 			},
 		},
 	}
@@ -148,9 +148,9 @@ func TestListChaptersDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.ListChapters(model.ChapterListRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.ListChapters(openapi.ChapterListRequest{
+				UserId:    tc.userId,
+				ProjectId: tc.projectId,
 			})
 
 			expectedJson, _ := json.Marshal(tc.expected)
@@ -200,9 +200,9 @@ func TestListChaptersServiceError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.ListChapters(model.ChapterListRequest{
-				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
+			res, ucErr := uc.ListChapters(openapi.ChapterListRequest{
+				UserId:    testutil.ReadOnlyUserId(),
+				ProjectId: "0000000000000001",
 			})
 
 			assert.Equal(t, tc.expectedError, ucErr.Error())
@@ -219,13 +219,13 @@ func TestCreateChapterValidEntity(t *testing.T) {
 		name      string
 		userId    string
 		projectId string
-		chapter   model.ChapterWithoutAutofield
+		chapter   openapi.ChapterWithoutAutofield
 	}{
 		{
 			name:      "should create chapter",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
@@ -234,7 +234,7 @@ func TestCreateChapterValidEntity(t *testing.T) {
 			name:      "should create chapter with max length name",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   maxLengthChapterName,
 				Number: int32(1),
 			},
@@ -274,9 +274,9 @@ func TestCreateChapterValidEntity(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.CreateChapter(openapi.ChapterCreateRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
 				Chapter: tc.chapter,
 			})
 
@@ -297,63 +297,63 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 		name      string
 		userId    string
 		projectId string
-		chapter   model.ChapterWithoutAutofield
-		expected  model.ChapterCreateErrorResponse
+		chapter   openapi.ChapterWithoutAutofield
+		expected  openapi.ChapterCreateErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
-			expected: model.ChapterCreateErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterWithoutAutofieldError{Name: "", Number: ""},
+			expected: openapi.ChapterCreateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterWithoutAutofieldError{Name: "", Number: ""},
 			},
 		},
 		{
 			name:      "should return error when project id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
-			expected: model.ChapterCreateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterWithoutAutofieldError{Name: "", Number: ""},
+			expected: openapi.ChapterCreateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: openapi.ChapterWithoutAutofieldError{Name: "", Number: ""},
 			},
 		},
 		{
 			name:      "should return error when chapter name is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   "",
 				Number: int32(1),
 			},
-			expected: model.ChapterCreateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterWithoutAutofieldError{Name: "chapter name is required, but got ''"},
+			expected: openapi.ChapterCreateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterWithoutAutofieldError{Name: "chapter name is required, but got ''"},
 			},
 		},
 		{
 			name:      "should return error when chapter name is too long",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   tooLongChapterName,
 				Number: int32(1),
 			},
-			expected: model.ChapterCreateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterWithoutAutofieldError{
+			expected: openapi.ChapterCreateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterWithoutAutofieldError{
 					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%v'",
 						tooLongChapterName),
 				},
@@ -363,14 +363,14 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 			name:      "should return error when chapter number is zero",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   "Chapter 1",
 				Number: int32(0),
 			},
-			expected: model.ChapterCreateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterWithoutAutofieldError{Number: "chapter number must be greater than 0, but got 0"},
+			expected: openapi.ChapterCreateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterWithoutAutofieldError{Number: "chapter number must be greater than 0, but got 0"},
 			},
 		},
 	}
@@ -384,9 +384,9 @@ func TestCreateChapterDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.CreateChapter(openapi.ChapterCreateRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
 				Chapter: tc.chapter,
 			})
 
@@ -444,14 +444,14 @@ func TestCreateChapterChapterServiceError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.CreateChapter(model.ChapterCreateRequest{
-				User: model.UserOnlyId{
+			res, ucErr := uc.CreateChapter(openapi.ChapterCreateRequest{
+				User: openapi.UserOnlyId{
 					Id: testutil.ReadOnlyUserId(),
 				},
-				Project: model.ProjectOnlyId{
+				Project: openapi.ProjectOnlyId{
 					Id: "0000000000000001",
 				},
-				Chapter: model.ChapterWithoutAutofield{
+				Chapter: openapi.ChapterWithoutAutofield{
 					Name:   "Chapter 1",
 					Number: int32(1),
 				},
@@ -472,14 +472,14 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 		userId    string
 		projectId string
 		chapterId string
-		chapter   model.ChapterWithoutAutofield
+		chapter   openapi.ChapterWithoutAutofield
 	}{
 		{
 			name:      "should update chapter",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
@@ -489,7 +489,7 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
-			chapter: model.ChapterWithoutAutofield{
+			chapter: openapi.ChapterWithoutAutofield{
 				Name:   maxLengthChapterName,
 				Number: int32(1),
 			},
@@ -530,10 +530,10 @@ func TestUpdateChapterValidEntity(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
-				Chapter: model.Chapter{
+			res, ucErr := uc.UpdateChapter(openapi.ChapterUpdateRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
+				Chapter: openapi.Chapter{
 					Id:     tc.chapterId,
 					Name:   tc.chapter.Name,
 					Number: tc.chapter.Number,
@@ -558,23 +558,23 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 		userId    string
 		projectId string
 		chapterId string
-		chapter   model.Chapter
-		expected  model.ChapterUpdateErrorResponse
+		chapter   openapi.Chapter
+		expected  openapi.ChapterUpdateErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
-			chapter: model.Chapter{
+			chapter: openapi.Chapter{
 				Id:     "1000000000000001",
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
-			expected: model.ChapterUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterError{Id: "", Name: "", Number: ""},
+			expected: openapi.ChapterUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterError{Id: "", Name: "", Number: ""},
 			},
 		},
 		{
@@ -582,15 +582,15 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			chapterId: "1000000000000001",
-			chapter: model.Chapter{
+			chapter: openapi.Chapter{
 				Id:     "1000000000000001",
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
-			expected: model.ChapterUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterError{Id: "", Name: "", Number: ""},
+			expected: openapi.ChapterUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: openapi.ChapterError{Id: "", Name: "", Number: ""},
 			},
 		},
 		{
@@ -598,15 +598,15 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "",
-			chapter: model.Chapter{
+			chapter: openapi.Chapter{
 				Id:     "",
 				Name:   "Chapter 1",
 				Number: int32(1),
 			},
-			expected: model.ChapterUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterError{Id: "chapter id is required, but got ''", Name: "", Number: ""},
+			expected: openapi.ChapterUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterError{Id: "chapter id is required, but got ''", Name: "", Number: ""},
 			},
 		},
 		{
@@ -614,15 +614,15 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
-			chapter: model.Chapter{
+			chapter: openapi.Chapter{
 				Id:     "1000000000000001",
 				Name:   "",
 				Number: int32(1),
 			},
-			expected: model.ChapterUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterError{Id: "", Name: "chapter name is required, but got ''", Number: ""},
+			expected: openapi.ChapterUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterError{Id: "", Name: "chapter name is required, but got ''", Number: ""},
 			},
 		},
 		{
@@ -630,15 +630,15 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
-			chapter: model.Chapter{
+			chapter: openapi.Chapter{
 				Id:     "1000000000000001",
 				Name:   tooLongChapterName,
 				Number: int32(1),
 			},
-			expected: model.ChapterUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterError{
+			expected: openapi.ChapterUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterError{
 					Id: "",
 					Name: fmt.Sprintf("chapter name cannot be longer than 100 characters, but got '%v'",
 						tooLongChapterName),
@@ -651,15 +651,15 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
-			chapter: model.Chapter{
+			chapter: openapi.Chapter{
 				Id:     "1000000000000001",
 				Name:   "Chapter 1",
 				Number: int32(0),
 			},
-			expected: model.ChapterUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterError{Id: "", Name: "", Number: "chapter number must be greater than 0, but got 0"},
+			expected: openapi.ChapterUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterError{Id: "", Name: "", Number: "chapter number must be greater than 0, but got 0"},
 			},
 		},
 	}
@@ -673,9 +673,9 @@ func TestUpdateChapterDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.UpdateChapter(openapi.ChapterUpdateRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
 				Chapter: tc.chapter,
 			})
 
@@ -733,14 +733,14 @@ func TestUpdateChapterServiceError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			res, ucErr := uc.UpdateChapter(model.ChapterUpdateRequest{
-				User: model.UserOnlyId{
+			res, ucErr := uc.UpdateChapter(openapi.ChapterUpdateRequest{
+				User: openapi.UserOnlyId{
 					Id: testutil.ReadOnlyUserId(),
 				},
-				Project: model.ProjectOnlyId{
+				Project: openapi.ProjectOnlyId{
 					Id: "0000000000000001",
 				},
-				Chapter: model.Chapter{
+				Chapter: openapi.Chapter{
 					Id:     "1000000000000001",
 					Name:   "Chapter 1",
 					Number: int32(1),
@@ -787,10 +787,10 @@ func TestDeleteChapterValidEntity(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
-				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
+			ucErr := uc.DeleteChapter(openapi.ChapterDeleteRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
+				Chapter: openapi.ChapterOnlyId{Id: tc.chapterId},
 			})
 
 			assert.Nil(t, ucErr)
@@ -804,17 +804,17 @@ func TestDeleteChapterDomainValidationError(t *testing.T) {
 		userId    string
 		projectId string
 		chapterId string
-		expected  model.ChapterDeleteErrorResponse
+		expected  openapi.ChapterDeleteErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
-			expected: model.ChapterDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
+			expected: openapi.ChapterDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
 			},
 		},
 		{
@@ -822,10 +822,10 @@ func TestDeleteChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			chapterId: "1000000000000001",
-			expected: model.ChapterDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
+			expected: openapi.ChapterDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
 			},
 		},
 		{
@@ -833,10 +833,10 @@ func TestDeleteChapterDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "",
-			expected: model.ChapterDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+			expected: openapi.ChapterDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
 			},
 		},
 	}
@@ -850,10 +850,10 @@ func TestDeleteChapterDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
-				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
+			ucErr := uc.DeleteChapter(openapi.ChapterDeleteRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
+				Chapter: openapi.ChapterOnlyId{Id: tc.chapterId},
 			})
 
 			expectedJson, _ := json.Marshal(tc.expected)
@@ -901,14 +901,14 @@ func TestDeleteChapterServiceError(t *testing.T) {
 
 			uc := usecase.NewChapterUseCase(s)
 
-			ucErr := uc.DeleteChapter(model.ChapterDeleteRequest{
-				User: model.UserOnlyId{
+			ucErr := uc.DeleteChapter(openapi.ChapterDeleteRequest{
+				User: openapi.UserOnlyId{
 					Id: testutil.ReadOnlyUserId(),
 				},
-				Project: model.ProjectOnlyId{
+				Project: openapi.ProjectOnlyId{
 					Id: "0000000000000001",
 				},
-				Chapter: model.ChapterOnlyId{
+				Chapter: openapi.ChapterOnlyId{
 					Id: "1000000000000001",
 				},
 			})

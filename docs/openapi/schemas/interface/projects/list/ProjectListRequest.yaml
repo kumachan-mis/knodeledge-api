@@ -1,7 +1,10 @@
 type: object
-description: Request Body for Project List API
+description: Request Parameters for Project List API
 properties:
-  user:
-    $ref: ../../../entity/user/UserOnlyId.yaml
+  userId:
+    type: string
+    description: User ID
+    example: auth0|65a3d656ca600978b0f9501b
+    x-go-custom-tag: form:"userId"
 required:
-  - user
+  - userId

@@ -13,7 +13,7 @@ OPEN_API_BUNDLE_DST  := ${OPEN_API_DST}/index.yaml
 OPEN_API_DOCS_DST    := ${OPEN_API_DST}/index.html
 
 OPEN_API_GO_GENERATOR := go-gin-server
-OPEN_API_GO_PACKAGE   := model
+OPEN_API_GO_PACKAGE   := openapi
 OPEN_API_GO_DST       := internal/${OPEN_API_GO_PACKAGE}
 
 OPEN_API_NODE_GENERATOR := typescript-fetch
@@ -100,8 +100,8 @@ gen-openapi-go:
 		openapitools/openapi-generator-cli generate \
 		--input-spec /api/${OPEN_API_BUNDLE_DST} \
 		--generator-name ${OPEN_API_GO_GENERATOR} \
-		--global-property models,modelDocs=false \
-		--additional-properties apiPath="",packageName=${OPEN_API_GO_PACKAGE} \
+		--global-property apis,apiDocs=false,models,modelDocs=false \
+		--additional-properties apiPath="",interfaceOnly=true,packageName=${OPEN_API_GO_PACKAGE} \
 		--output /api/${OPEN_API_GO_DST}
 
 gen-openapi-node:

@@ -23,18 +23,12 @@ func TestPaperFind(t *testing.T) {
 	router := setupPaperRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ReadOnlyUserId(),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITHOUT_DESCRIPTION",
-		},
-		"chapter": map[string]any{
-			"id": "CHAPTER_ONE",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/papers/find", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ReadOnlyUserId())
+	query.Add("projectId", "PROJECT_WITHOUT_DESCRIPTION")
+	query.Add("chapterId", "CHAPTER_ONE")
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -65,46 +59,44 @@ func TestPaperFindNotFound(t *testing.T) {
 	router := setupPaperRouter(t)
 
 	tt := []struct {
-		name    string
-		user    string
-		project string
-		chapter string
+		name  string
+		query map[string]string
 	}{
 		{
-			name:    "should return error when project not found",
-			user:    testutil.ReadOnlyUserId(),
-			project: "UNKNOWN_PROJECT",
-			chapter: "CHAPTER_ONE",
+			name: "should return error when project not found",
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "UNKNOWN_PROJECT",
+				"chapterId": "CHAPTER_ONE",
+			},
 		},
 		{
-			name:    "should return not found when user is not author of the project",
-			user:    testutil.ModifyOnlyUserId(),
-			project: "PROJECT_WITH_DESCRIPTION",
-			chapter: "CHAPTER_ONE",
+			name: "should return not found when user is not author of the project",
+			query: map[string]string{
+				"userId":    testutil.ModifyOnlyUserId(),
+				"projectId": "PROJECT_WITH_DESCRIPTION",
+				"chapterId": "CHAPTER_ONE",
+			},
 		},
 		{
-			name:    "should return error when chapter not found",
-			user:    testutil.ReadOnlyUserId(),
-			project: "PROJECT_WITH_DESCRIPTION",
-			chapter: "UNKNOWN_CHAPTER",
+			name: "should return error when chapter not found",
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "PROJECT_WITH_DESCRIPTION",
+				"chapterId": "UNKNOWN_CHAPTER",
+			},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(map[string]any{
-				"user": map[string]any{
-					"id": tc.user,
-				},
-				"project": map[string]any{
-					"id": tc.project,
-				},
-				"chapter": map[string]any{
-					"id": tc.chapter,
-				},
-			})
-			req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/papers/find", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -116,9 +108,6 @@ func TestPaperFindNotFound(t *testing.T) {
 
 			assert.Equal(t, map[string]any{
 				"message": "not found",
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"chapter": map[string]any{},
 			}, responseBody)
 		})
 	}
@@ -129,85 +118,49 @@ func TestPaperFindDomainValidationError(t *testing.T) {
 
 	tt := []struct {
 		name             string
-		request          map[string]any
+		query            map[string]string
 		expectedResponse map[string]any
 	}{
 		{
 			name: "should return error when user id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": "",
-				},
-				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION",
-				},
-				"chapter": map[string]any{
-					"id": "CHAPTER_ONE",
-				},
+			query: map[string]string{
+				"userId":    "",
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
+				"chapterId": "CHAPTER_ONE",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
-				"project": map[string]any{},
-				"chapter": map[string]any{},
+				"userId": "user id is required, but got ''",
 			},
 		},
 		{
 			name: "should return error when project id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": testutil.ReadOnlyUserId(),
-				},
-				"project": map[string]any{
-					"id": "",
-				},
-				"chapter": map[string]any{
-					"id": "CHAPTER_ONE",
-				},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "",
+				"chapterId": "CHAPTER_ONE",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{},
-				"project": map[string]any{
-					"id": "project id is required, but got ''",
-				},
-				"chapter": map[string]any{},
+				"projectId": "project id is required, but got ''",
 			},
 		},
 		{
 			name: "should return error when chapter id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": testutil.ReadOnlyUserId(),
-				},
-				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION",
-				},
-				"chapter": map[string]any{
-					"id": "",
-				},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
+				"chapterId": "",
 			},
 			expectedResponse: map[string]any{
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"chapter": map[string]any{
-					"id": "chapter id is required, but got ''",
-				},
+				"chapterId": "chapter id is required, but got ''",
 			},
 		},
 		{
-			name:    "should return error when empty object is passed",
-			request: map[string]any{},
+			name:  "should return error when empty parameter is passed",
+			query: map[string]string{},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
-				"project": map[string]any{
-					"id": "project id is required, but got ''",
-				},
-				"chapter": map[string]any{
-					"id": "chapter id is required, but got ''",
-				},
+				"userId":    "user id is required, but got ''",
+				"projectId": "project id is required, but got ''",
+				"chapterId": "chapter id is required, but got ''",
 			},
 		},
 	}
@@ -215,8 +168,12 @@ func TestPaperFindDomainValidationError(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tc.request)
-			req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/papers/find", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -226,54 +183,23 @@ func TestPaperFindDomainValidationError(t *testing.T) {
 			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
-			assert.Equal(t, map[string]any{
-				"message": "invalid request value",
-				"user":    tc.expectedResponse["user"],
-				"project": tc.expectedResponse["project"],
-				"chapter": tc.expectedResponse["chapter"],
-			}, responseBody)
+			expectedResponse := tc.expectedResponse
+			expectedResponse["message"] = "invalid request value"
+			assert.Equal(t, expectedResponse, responseBody)
 		})
 	}
-}
-
-func TestPaperFindInvalidRequestFormat(t *testing.T) {
-	router := setupPaperRouter(t)
-
-	recorder := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(""))
-
-	router.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-	var responseBody map[string]any
-	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
-	assert.Nil(t, err)
-
-	assert.Equal(t, map[string]any{
-		"message": "invalid request format",
-		"user":    map[string]any{},
-		"project": map[string]any{},
-		"chapter": map[string]any{},
-	}, responseBody)
 }
 
 func TestPaperFindInternalError(t *testing.T) {
 	router := setupPaperRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ErrorUserId(6),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITH_INVALID_PAPER_CONTENT",
-		},
-		"chapter": map[string]any{
-			"id": "CHAPTER_WITH_INVALID_PAPER_CONTENT",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/papers/find", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/papers/find", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ErrorUserId(6))
+	query.Add("projectId", "PROJECT_WITH_INVALID_PAPER_CONTENT")
+	query.Add("chapterId", "CHAPTER_WITH_INVALID_PAPER_CONTENT")
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -573,10 +499,10 @@ func setupPaperRouter(t *testing.T) *gin.Engine {
 		AnyTimes()
 
 	uc := usecase.NewPaperUseCase(s)
-	api := api.NewPaperApi(v, uc)
+	api := api.NewPapersApi(v, uc)
 
-	router.POST("/api/papers/find", api.HandleFind)
-	router.POST("/api/papers/update", api.HandleUpdate)
+	router.GET("/api/papers/find", api.PapersFind)
+	router.POST("/api/papers/update", api.PapersUpdate)
 
 	return router
 }

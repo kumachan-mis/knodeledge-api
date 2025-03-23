@@ -1,13 +1,13 @@
-post:
+get:
   tags:
     - Graphs
   operationId: graphs-find
   summary: Find graph
-  requestBody:
-    content:
-      application/json:
-        schema:
-          $ref: ../../schemas/interface/graphs/find/GraphFindRequest.yaml
+  parameters:
+    - $ref: ../../schemas/parameter/user/userId.yaml
+    - $ref: ../../schemas/parameter/project/projectId.yaml
+    - $ref: ../../schemas/parameter/chapter/chapterId.yaml
+    - $ref: ../../schemas/parameter/section/sectionId.yaml
   responses:
     "200":
       description: OK - Returns found graph

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
@@ -75,11 +75,11 @@ func TestFindGraphValidEntity(t *testing.T) {
 
 	uc := usecase.NewGraphUseCase(s)
 
-	res, ucErr := uc.FindGraph(model.GraphFindRequest{
-		User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-		Project: model.ProjectOnlyId{Id: "0000000000000001"},
-		Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
-		Section: model.SectionOnlyId{Id: "2000000000000001"},
+	res, ucErr := uc.FindGraph(openapi.GraphFindRequest{
+		UserId:    testutil.ReadOnlyUserId(),
+		ProjectId: "0000000000000001",
+		ChapterId: "1000000000000001",
+		SectionId: "2000000000000001",
 	})
 
 	assert.Nil(t, ucErr)
@@ -107,7 +107,7 @@ func TestFindGraphDomainValidationError(t *testing.T) {
 		projectId string
 		chapterId string
 		sectionId string
-		expected  model.GraphFindErrorResponse
+		expected  openapi.GraphFindErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
@@ -115,10 +115,10 @@ func TestFindGraphDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
 			sectionId: "2000000000000001",
-			expected: model.GraphFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
+			expected: openapi.GraphFindErrorResponse{
+				UserId:    "user id is required, but got ''",
+				ProjectId: "",
+				ChapterId: "",
 			},
 		},
 		{
@@ -127,10 +127,10 @@ func TestFindGraphDomainValidationError(t *testing.T) {
 			projectId: "",
 			chapterId: "1000000000000001",
 			sectionId: "2000000000000001",
-			expected: model.GraphFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
+			expected: openapi.GraphFindErrorResponse{
+				UserId:    "",
+				ProjectId: "project id is required, but got ''",
+				ChapterId: "",
 			},
 		},
 		{
@@ -139,10 +139,10 @@ func TestFindGraphDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			chapterId: "",
 			sectionId: "2000000000000001",
-			expected: model.GraphFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+			expected: openapi.GraphFindErrorResponse{
+				UserId:    "",
+				ProjectId: "",
+				ChapterId: "chapter id is required, but got ''",
 			},
 		},
 		{
@@ -151,11 +151,11 @@ func TestFindGraphDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
 			sectionId: "",
-			expected: model.GraphFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Section: model.SectionOnlyIdError{Id: "section id is required, but got ''"},
+			expected: openapi.GraphFindErrorResponse{
+				UserId:    "",
+				ProjectId: "",
+				ChapterId: "",
+				SectionId: "section id is required, but got ''",
 			},
 		},
 		{
@@ -164,11 +164,11 @@ func TestFindGraphDomainValidationError(t *testing.T) {
 			projectId: "",
 			chapterId: "",
 			sectionId: "",
-			expected: model.GraphFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
-				Section: model.SectionOnlyIdError{Id: "section id is required, but got ''"},
+			expected: openapi.GraphFindErrorResponse{
+				UserId:    "user id is required, but got ''",
+				ProjectId: "project id is required, but got ''",
+				ChapterId: "chapter id is required, but got ''",
+				SectionId: "section id is required, but got ''",
 			},
 		},
 	}
@@ -182,11 +182,11 @@ func TestFindGraphDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewGraphUseCase(s)
 
-			res, ucErr := uc.FindGraph(model.GraphFindRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
-				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
-				Section: model.SectionOnlyId{Id: tc.sectionId},
+			res, ucErr := uc.FindGraph(openapi.GraphFindRequest{
+				UserId:    tc.userId,
+				ProjectId: tc.projectId,
+				ChapterId: tc.chapterId,
+				SectionId: tc.sectionId,
 			})
 
 			expectedJson, _ := json.Marshal(tc.expected)
@@ -236,11 +236,11 @@ func TestFindGraphServiceError(t *testing.T) {
 				FindGraph(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			res, ucErr := uc.FindGraph(model.GraphFindRequest{
-				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
-				Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
-				Section: model.SectionOnlyId{Id: "2000000000000001"},
+			res, ucErr := uc.FindGraph(openapi.GraphFindRequest{
+				UserId:    testutil.ReadOnlyUserId(),
+				ProjectId: "0000000000000001",
+				ChapterId: "1000000000000001",
+				SectionId: "2000000000000001",
 			})
 
 			assert.Nil(t, res)
@@ -343,24 +343,24 @@ func TestUpdateGraphContentValidEntity(t *testing.T) {
 
 			uc := usecase.NewGraphUseCase(s)
 
-			res, ucErr := uc.UpdateGraph(model.GraphUpdateRequest{
-				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
-				Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
-				Graph: model.GraphContent{
+			res, ucErr := uc.UpdateGraph(openapi.GraphUpdateRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+				Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
+				Chapter: openapi.ChapterOnlyId{Id: "1000000000000001"},
+				Graph: openapi.GraphContent{
 					Id:        "2000000000000001",
 					Paragraph: tc.paragraph,
-					Children: []model.GraphChild{
+					Children: []openapi.GraphChild{
 						{
 							Name:        tc.childName,
 							Relation:    tc.relation,
 							Description: tc.description,
-							Children: []model.GraphChild{
+							Children: []openapi.GraphChild{
 								{
 									Name:        tc.childName,
 									Relation:    tc.relation,
 									Description: tc.description,
-									Children:    []model.GraphChild{},
+									Children:    []openapi.GraphChild{},
 								},
 							},
 						},
@@ -390,8 +390,8 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 		chapterId string
 		graphId   string
 		paragraph string
-		children  []model.GraphChild
-		expected  model.GraphUpdateErrorResponse
+		children  []openapi.GraphChild
+		expected  openapi.GraphUpdateErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
@@ -400,17 +400,17 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
-			children:  []model.GraphChild{},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			children:  []openapi.GraphChild{},
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id:        "",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items:   []model.GraphChildError{},
+						Items:   []openapi.GraphChildError{},
 					},
 				},
 			},
@@ -422,17 +422,17 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
-			children:  []model.GraphChild{},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			children:  []openapi.GraphChild{},
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id:        "",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items:   []model.GraphChildError{},
+						Items:   []openapi.GraphChildError{},
 					},
 				},
 			},
@@ -444,17 +444,17 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
-			children:  []model.GraphChild{},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
-				Graph: model.GraphContentError{
+			children:  []openapi.GraphChild{},
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+				Graph: openapi.GraphContentError{
 					Id:        "",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items:   []model.GraphChildError{},
+						Items:   []openapi.GraphChildError{},
 					},
 				},
 			},
@@ -466,31 +466,31 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "",
 			paragraph: "This is updated graph paragraph",
-			children: []model.GraphChild{
+			children: []openapi.GraphChild{
 				{
 					Name:        "Child",
 					Relation:    "child relation",
 					Description: "child description",
-					Children:    []model.GraphChild{},
+					Children:    []openapi.GraphChild{},
 				},
 			},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id:        "graph id is required, but got ''",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items: []model.GraphChildError{
+						Items: []openapi.GraphChildError{
 							{
 								Name:        "",
 								Relation:    "",
 								Description: "",
-								Children: model.GraphChildrenError{
+								Children: openapi.GraphChildrenError{
 									Message: "",
-									Items:   []model.GraphChildError{},
+									Items:   []openapi.GraphChildError{},
 								},
 							},
 						},
@@ -505,19 +505,19 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: tooLongParagraph,
-			children:  []model.GraphChild{},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			children:  []openapi.GraphChild{},
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id: "",
 					Paragraph: fmt.Sprintf(
 						"graph paragraph must be less than or equal to 40000 bytes, but got %d bytes",
 						len(tooLongParagraph)),
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items:   []model.GraphChildError{},
+						Items:   []openapi.GraphChildError{},
 					},
 				},
 			},
@@ -529,33 +529,33 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
-			children: []model.GraphChild{
+			children: []openapi.GraphChild{
 				{
 					Name:        tooLongChildName,
 					Relation:    "child relation",
 					Description: "child description",
-					Children:    []model.GraphChild{},
+					Children:    []openapi.GraphChild{},
 				},
 			},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id:        "",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items: []model.GraphChildError{
+						Items: []openapi.GraphChildError{
 							{
 								Name: fmt.Sprintf(
 									"graph name cannot be longer than 100 characters, but got '%v'",
 									tooLongChildName),
 								Relation:    "",
 								Description: "",
-								Children: model.GraphChildrenError{
+								Children: openapi.GraphChildrenError{
 									Message: "",
-									Items:   []model.GraphChildError{},
+									Items:   []openapi.GraphChildError{},
 								},
 							},
 						},
@@ -570,33 +570,33 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
-			children: []model.GraphChild{
+			children: []openapi.GraphChild{
 				{
 					Name:        "Child",
 					Relation:    tooLongRelation,
 					Description: "child description",
-					Children:    []model.GraphChild{},
+					Children:    []openapi.GraphChild{},
 				},
 			},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id:        "",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items: []model.GraphChildError{
+						Items: []openapi.GraphChildError{
 							{
 								Name: "",
 								Relation: fmt.Sprintf(
 									"graph relation cannot be longer than 100 characters, but got '%v'",
 									tooLongRelation),
 								Description: "",
-								Children: model.GraphChildrenError{
+								Children: openapi.GraphChildrenError{
 									Message: "",
-									Items:   []model.GraphChildError{},
+									Items:   []openapi.GraphChildError{},
 								},
 							},
 						},
@@ -611,33 +611,33 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
-			children: []model.GraphChild{
+			children: []openapi.GraphChild{
 				{
 					Name:        "Child",
 					Relation:    "child relation",
 					Description: tooLongDescription,
-					Children:    []model.GraphChild{},
+					Children:    []openapi.GraphChild{},
 				},
 			},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id:        "",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items: []model.GraphChildError{
+						Items: []openapi.GraphChildError{
 							{
 								Name:     "",
 								Relation: "",
 								Description: fmt.Sprintf(
 									"graph description cannot be longer than 400 characters, but got '%v'",
 									tooLongDescription),
-								Children: model.GraphChildrenError{
+								Children: openapi.GraphChildrenError{
 									Message: "",
-									Items:   []model.GraphChildError{},
+									Items:   []openapi.GraphChildError{},
 								},
 							},
 						},
@@ -652,46 +652,46 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
-			children: []model.GraphChild{
+			children: []openapi.GraphChild{
 				{
 					Name:        "Child",
 					Relation:    "child relation",
 					Description: "child description",
-					Children:    []model.GraphChild{},
+					Children:    []openapi.GraphChild{},
 				},
 				{
 					Name:        "Child",
 					Relation:    "child relation",
 					Description: "child description",
-					Children:    []model.GraphChild{},
+					Children:    []openapi.GraphChild{},
 				},
 			},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id:        "",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "names of children must be unique, but got 'Child' duplicated",
-						Items: []model.GraphChildError{
+						Items: []openapi.GraphChildError{
 							{
 								Name:        "",
 								Relation:    "",
 								Description: "",
-								Children: model.GraphChildrenError{
+								Children: openapi.GraphChildrenError{
 									Message: "",
-									Items:   []model.GraphChildError{},
+									Items:   []openapi.GraphChildError{},
 								},
 							},
 							{
 								Name:        "",
 								Relation:    "",
 								Description: "",
-								Children: model.GraphChildrenError{
+								Children: openapi.GraphChildrenError{
 									Message: "",
-									Items:   []model.GraphChildError{},
+									Items:   []openapi.GraphChildError{},
 								},
 							},
 						},
@@ -706,38 +706,38 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 			chapterId: "1000000000000001",
 			graphId:   "2000000000000001",
 			paragraph: "This is updated graph paragraph",
-			children: []model.GraphChild{
+			children: []openapi.GraphChild{
 				{
 					Name:        "Child",
 					Relation:    "child relation",
 					Description: "child description",
-					Children: []model.GraphChild{
+					Children: []openapi.GraphChild{
 						{
 							Name:        tooLongChildName,
 							Relation:    tooLongRelation,
 							Description: tooLongDescription,
-							Children:    []model.GraphChild{},
+							Children:    []openapi.GraphChild{},
 						},
 					},
 				},
 			},
-			expected: model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Graph: model.GraphContentError{
+			expected: openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Graph: openapi.GraphContentError{
 					Id:        "",
 					Paragraph: "",
-					Children: model.GraphChildrenError{
+					Children: openapi.GraphChildrenError{
 						Message: "",
-						Items: []model.GraphChildError{
+						Items: []openapi.GraphChildError{
 							{
 								Name:        "",
 								Relation:    "",
 								Description: "",
-								Children: model.GraphChildrenError{
+								Children: openapi.GraphChildrenError{
 									Message: "",
-									Items: []model.GraphChildError{
+									Items: []openapi.GraphChildError{
 										{
 											Name: fmt.Sprintf(
 												"graph name cannot be longer than 100 characters, but got '%v'",
@@ -748,9 +748,9 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 											Description: fmt.Sprintf(
 												"graph description cannot be longer than 400 characters, but got '%v'",
 												tooLongDescription),
-											Children: model.GraphChildrenError{
+											Children: openapi.GraphChildrenError{
 												Message: "",
-												Items:   []model.GraphChildError{},
+												Items:   []openapi.GraphChildError{},
 											},
 										},
 									},
@@ -772,11 +772,11 @@ func TestUpdateGraphContentDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewGraphUseCase(s)
 
-			res, ucErr := uc.UpdateGraph(model.GraphUpdateRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
-				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
-				Graph: model.GraphContent{
+			res, ucErr := uc.UpdateGraph(openapi.GraphUpdateRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
+				Chapter: openapi.ChapterOnlyId{Id: tc.chapterId},
+				Graph: openapi.GraphContent{
 					Id:        tc.graphId,
 					Paragraph: tc.paragraph,
 					Children:  tc.children,
@@ -830,11 +830,11 @@ func TestUpdateGraphContentServiceError(t *testing.T) {
 				UpdateGraphContent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			res, ucErr := uc.UpdateGraph(model.GraphUpdateRequest{
-				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
-				Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
-				Graph: model.GraphContent{
+			res, ucErr := uc.UpdateGraph(openapi.GraphUpdateRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+				Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
+				Chapter: openapi.ChapterOnlyId{Id: "1000000000000001"},
+				Graph: openapi.GraphContent{
 					Id:        "2000000000000001",
 					Paragraph: "This is updated graph paragraph",
 				},
@@ -869,11 +869,11 @@ func TestDeleteGraphValidEntity(t *testing.T) {
 
 	uc := usecase.NewGraphUseCase(s)
 
-	ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
-		User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-		Project: model.ProjectOnlyId{Id: "0000000000000001"},
-		Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
-		Section: model.SectionOnlyId{Id: "2000000000000001"},
+	ucErr := uc.DeleteGraph(openapi.GraphDeleteRequest{
+		User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+		Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
+		Chapter: openapi.ChapterOnlyId{Id: "1000000000000001"},
+		Section: openapi.SectionOnlyId{Id: "2000000000000001"},
 	})
 
 	assert.Nil(t, ucErr)
@@ -886,7 +886,7 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 		projectId string
 		chapterId string
 		sectionId string
-		expected  model.GraphDeleteErrorResponse
+		expected  openapi.GraphDeleteErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
@@ -894,11 +894,11 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
 			sectionId: "2000000000000001",
-			expected: model.GraphDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Section: model.SectionOnlyIdError{Id: ""},
+			expected: openapi.GraphDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Section: openapi.SectionOnlyIdError{Id: ""},
 			},
 		},
 		{
@@ -907,11 +907,11 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 			projectId: "",
 			chapterId: "1000000000000001",
 			sectionId: "2000000000000001",
-			expected: model.GraphDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Section: model.SectionOnlyIdError{Id: ""},
+			expected: openapi.GraphDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Section: openapi.SectionOnlyIdError{Id: ""},
 			},
 		},
 		{
@@ -920,11 +920,11 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			chapterId: "",
 			sectionId: "2000000000000001",
-			expected: model.GraphDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
-				Section: model.SectionOnlyIdError{Id: ""},
+			expected: openapi.GraphDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+				Section: openapi.SectionOnlyIdError{Id: ""},
 			},
 		},
 		{
@@ -933,11 +933,11 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
 			sectionId: "",
-			expected: model.GraphDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
-				Section: model.SectionOnlyIdError{Id: "section id is required, but got ''"},
+			expected: openapi.GraphDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Chapter: openapi.ChapterOnlyIdError{Id: ""},
+				Section: openapi.SectionOnlyIdError{Id: "section id is required, but got ''"},
 			},
 		},
 		{
@@ -946,11 +946,11 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 			projectId: "",
 			chapterId: "",
 			sectionId: "",
-			expected: model.GraphDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
-				Section: model.SectionOnlyIdError{Id: "section id is required, but got ''"},
+			expected: openapi.GraphDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Chapter: openapi.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+				Section: openapi.SectionOnlyIdError{Id: "section id is required, but got ''"},
 			},
 		},
 	}
@@ -964,11 +964,11 @@ func TestDeleteGraphDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewGraphUseCase(s)
 
-			ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
-				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
-				Section: model.SectionOnlyId{Id: tc.sectionId},
+			ucErr := uc.DeleteGraph(openapi.GraphDeleteRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
+				Chapter: openapi.ChapterOnlyId{Id: tc.chapterId},
+				Section: openapi.SectionOnlyId{Id: tc.sectionId},
 			})
 
 			expectedJson, _ := json.Marshal(tc.expected)
@@ -1016,11 +1016,11 @@ func TestDeleteGraphServiceError(t *testing.T) {
 				DeleteGraph(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			ucErr := uc.DeleteGraph(model.GraphDeleteRequest{
-				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
-				Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
-				Section: model.SectionOnlyId{Id: "2000000000000001"},
+			ucErr := uc.DeleteGraph(openapi.GraphDeleteRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+				Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
+				Chapter: openapi.ChapterOnlyId{Id: "1000000000000001"},
+				Section: openapi.SectionOnlyId{Id: "2000000000000001"},
 			})
 
 			assert.Equal(t, tc.expectedError, ucErr.Error())
@@ -1037,9 +1037,9 @@ func TestSectionalizeGraphValidEntity(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		maxLengthSectionIds[i] = testutil.RandomString(16)
 	}
-	maxLengthSections := make([]model.SectionWithoutAutofield, 20)
+	maxLengthSections := make([]openapi.SectionWithoutAutofield, 20)
 	for i := 0; i < 20; i++ {
-		maxLengthSections[i] = model.SectionWithoutAutofield{
+		maxLengthSections[i] = openapi.SectionWithoutAutofield{
 			Name:    testutil.RandomString(10),
 			Content: testutil.RandomString(100),
 		}
@@ -1051,7 +1051,7 @@ func TestSectionalizeGraphValidEntity(t *testing.T) {
 		projectId  string
 		chapterId  string
 		sectionIds []string
-		sections   []model.SectionWithoutAutofield
+		sections   []openapi.SectionWithoutAutofield
 	}{
 		{
 			name:      "should sectionalize into graphs",
@@ -1062,7 +1062,7 @@ func TestSectionalizeGraphValidEntity(t *testing.T) {
 				"2000000000000001",
 				"2000000000000002",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    "Section 1",
 					Content: "This is the content of section 1. This is the content of section 1.",
@@ -1081,7 +1081,7 @@ func TestSectionalizeGraphValidEntity(t *testing.T) {
 			sectionIds: []string{
 				"2000000000000001",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    maxLengthSectionName,
 					Content: "This is the content of section. This is the content of section.",
@@ -1096,7 +1096,7 @@ func TestSectionalizeGraphValidEntity(t *testing.T) {
 			sectionIds: []string{
 				"2000000000000001",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    "Section",
 					Content: maxLengthSectionContent,
@@ -1156,10 +1156,10 @@ func TestSectionalizeGraphValidEntity(t *testing.T) {
 
 			uc := usecase.NewGraphUseCase(s)
 
-			res, err := uc.SectionalizeGraph(model.GraphSectionalizeRequest{
-				User:     model.UserOnlyId{Id: tc.userId},
-				Project:  model.ProjectOnlyId{Id: tc.projectId},
-				Chapter:  model.ChapterOnlyId{Id: tc.chapterId},
+			res, err := uc.SectionalizeGraph(openapi.GraphSectionalizeRequest{
+				User:     openapi.UserOnlyId{Id: tc.userId},
+				Project:  openapi.ProjectOnlyId{Id: tc.projectId},
+				Chapter:  openapi.ChapterOnlyId{Id: tc.chapterId},
 				Sections: tc.sections,
 			})
 
@@ -1183,16 +1183,16 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 	for i := 0; i < 21; i++ {
 		tooLongSectionIds[i] = testutil.RandomString(16)
 	}
-	tooLongSections := make([]model.SectionWithoutAutofield, 21)
+	tooLongSections := make([]openapi.SectionWithoutAutofield, 21)
 	for i := 0; i < 21; i++ {
-		tooLongSections[i] = model.SectionWithoutAutofield{
+		tooLongSections[i] = openapi.SectionWithoutAutofield{
 			Name:    testutil.RandomString(10),
 			Content: testutil.RandomString(100),
 		}
 	}
-	tooLongSectionItemsError := make([]model.SectionWithoutAutofieldError, 21)
+	tooLongSectionItemsError := make([]openapi.SectionWithoutAutofieldError, 21)
 	for i := 0; i < 21; i++ {
-		tooLongSectionItemsError[i] = model.SectionWithoutAutofieldError{}
+		tooLongSectionItemsError[i] = openapi.SectionWithoutAutofieldError{}
 	}
 
 	tt := []struct {
@@ -1201,8 +1201,8 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 		projectId  string
 		chapterId  string
 		sectionIds []string
-		sections   []model.SectionWithoutAutofield
-		expected   model.GraphSectionalizeErrorResponse
+		sections   []openapi.SectionWithoutAutofield
+		expected   openapi.GraphSectionalizeErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
@@ -1212,18 +1212,18 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 			sectionIds: []string{
 				"2000000000000001",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    "Section",
 					Content: "This is the content of section. This is the content of section.",
 				},
 			},
-			expected: model.GraphSectionalizeErrorResponse{
-				User: model.UserOnlyIdError{
+			expected: openapi.GraphSectionalizeErrorResponse{
+				User: openapi.UserOnlyIdError{
 					Id: "user id is required, but got ''",
 				},
-				Sections: model.SectionWithoutAutofieldListError{
-					Items: []model.SectionWithoutAutofieldError{
+				Sections: openapi.SectionWithoutAutofieldListError{
+					Items: []openapi.SectionWithoutAutofieldError{
 						{
 							Name:    "",
 							Content: "",
@@ -1240,18 +1240,18 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 			sectionIds: []string{
 				"2000000000000001",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    "Section",
 					Content: "This is the content of section. This is the content of section.",
 				},
 			},
-			expected: model.GraphSectionalizeErrorResponse{
-				Project: model.ProjectOnlyIdError{
+			expected: openapi.GraphSectionalizeErrorResponse{
+				Project: openapi.ProjectOnlyIdError{
 					Id: "project id is required, but got ''",
 				},
-				Sections: model.SectionWithoutAutofieldListError{
-					Items: []model.SectionWithoutAutofieldError{
+				Sections: openapi.SectionWithoutAutofieldListError{
+					Items: []openapi.SectionWithoutAutofieldError{
 						{
 							Name:    "",
 							Content: "",
@@ -1268,18 +1268,18 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 			sectionIds: []string{
 				"2000000000000001",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    "Section",
 					Content: "This is the content of section. This is the content of section.",
 				},
 			},
-			expected: model.GraphSectionalizeErrorResponse{
-				Chapter: model.ChapterOnlyIdError{
+			expected: openapi.GraphSectionalizeErrorResponse{
+				Chapter: openapi.ChapterOnlyIdError{
 					Id: "chapter id is required, but got ''",
 				},
-				Sections: model.SectionWithoutAutofieldListError{
-					Items: []model.SectionWithoutAutofieldError{
+				Sections: openapi.SectionWithoutAutofieldListError{
+					Items: []openapi.SectionWithoutAutofieldError{
 						{
 							Name:    "",
 							Content: "",
@@ -1294,11 +1294,11 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 			projectId:  "0000000000000001",
 			chapterId:  "1000000000000001",
 			sectionIds: []string{},
-			sections:   []model.SectionWithoutAutofield{},
-			expected: model.GraphSectionalizeErrorResponse{
-				Sections: model.SectionWithoutAutofieldListError{
+			sections:   []openapi.SectionWithoutAutofield{},
+			expected: openapi.GraphSectionalizeErrorResponse{
+				Sections: openapi.SectionWithoutAutofieldListError{
 					Message: "sections are required, but got []",
-					Items:   []model.SectionWithoutAutofieldError{},
+					Items:   []openapi.SectionWithoutAutofieldError{},
 				},
 			},
 		},
@@ -1309,8 +1309,8 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 			chapterId:  "1000000000000001",
 			sectionIds: tooLongSectionIds,
 			sections:   tooLongSections,
-			expected: model.GraphSectionalizeErrorResponse{
-				Sections: model.SectionWithoutAutofieldListError{
+			expected: openapi.GraphSectionalizeErrorResponse{
+				Sections: openapi.SectionWithoutAutofieldListError{
 					Message: "sections length must be less than or equal to 20, but got 21",
 					Items:   tooLongSectionItemsError,
 				},
@@ -1325,7 +1325,7 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 				"2000000000000001",
 				"2000000000000002",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    "Section 1",
 					Content: "This is the content of section 1. This is the content of section 1.",
@@ -1335,9 +1335,9 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 					Content: "This is the content of section 2. This is the content of section 2.",
 				},
 			},
-			expected: model.GraphSectionalizeErrorResponse{
-				Sections: model.SectionWithoutAutofieldListError{
-					Items: []model.SectionWithoutAutofieldError{
+			expected: openapi.GraphSectionalizeErrorResponse{
+				Sections: openapi.SectionWithoutAutofieldListError{
+					Items: []openapi.SectionWithoutAutofieldError{
 						{
 							Name:    "",
 							Content: "",
@@ -1359,7 +1359,7 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 				"2000000000000001",
 				"2000000000000002",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    "Section 1",
 					Content: "This is the content of section 1. This is the content of section 1.",
@@ -1369,9 +1369,9 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 					Content: "This is the content of section 2. This is the content of section 2.",
 				},
 			},
-			expected: model.GraphSectionalizeErrorResponse{
-				Sections: model.SectionWithoutAutofieldListError{
-					Items: []model.SectionWithoutAutofieldError{
+			expected: openapi.GraphSectionalizeErrorResponse{
+				Sections: openapi.SectionWithoutAutofieldListError{
+					Items: []openapi.SectionWithoutAutofieldError{
 						{
 							Name:    "",
 							Content: "",
@@ -1394,7 +1394,7 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 				"2000000000000001",
 				"2000000000000002",
 			},
-			sections: []model.SectionWithoutAutofield{
+			sections: []openapi.SectionWithoutAutofield{
 				{
 					Name:    "Section 1",
 					Content: tooLongSectionContent,
@@ -1404,9 +1404,9 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 					Content: "This is the content of section 2. This is the content of section 2.",
 				},
 			},
-			expected: model.GraphSectionalizeErrorResponse{
-				Sections: model.SectionWithoutAutofieldListError{
-					Items: []model.SectionWithoutAutofieldError{
+			expected: openapi.GraphSectionalizeErrorResponse{
+				Sections: openapi.SectionWithoutAutofieldListError{
+					Items: []openapi.SectionWithoutAutofieldError{
 						{
 							Name:    "",
 							Content: "section content must be less than or equal to 40000 bytes, but got 40001 bytes",
@@ -1430,10 +1430,10 @@ func TestSectionalizeGraphDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewGraphUseCase(s)
 
-			res, ucErr := uc.SectionalizeGraph(model.GraphSectionalizeRequest{
-				User:     model.UserOnlyId{Id: tc.userId},
-				Project:  model.ProjectOnlyId{Id: tc.projectId},
-				Chapter:  model.ChapterOnlyId{Id: tc.chapterId},
+			res, ucErr := uc.SectionalizeGraph(openapi.GraphSectionalizeRequest{
+				User:     openapi.UserOnlyId{Id: tc.userId},
+				Project:  openapi.ProjectOnlyId{Id: tc.projectId},
+				Chapter:  openapi.ChapterOnlyId{Id: tc.chapterId},
 				Sections: tc.sections,
 			})
 			assert.NotNil(t, ucErr)
@@ -1491,11 +1491,11 @@ func TestSectionalizeGraphServiceError(t *testing.T) {
 
 			uc := usecase.NewGraphUseCase(s)
 
-			res, ucErr := uc.SectionalizeGraph(model.GraphSectionalizeRequest{
-				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
-				Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
-				Sections: []model.SectionWithoutAutofield{
+			res, ucErr := uc.SectionalizeGraph(openapi.GraphSectionalizeRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+				Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
+				Chapter: openapi.ChapterOnlyId{Id: "1000000000000001"},
+				Sections: []openapi.SectionWithoutAutofield{
 					{
 						Name:    "Section",
 						Content: "This is the content of section. This is the content of section.",

@@ -5,44 +5,39 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 )
 
-type PaperApi interface {
-	HandleFind(c *gin.Context)
-	HandleUpdate(c *gin.Context)
-}
-
-type paperApi struct {
+type papersApi struct {
 	verifier middleware.UserVerifier
 	usecase  usecase.PaperUseCase
 }
 
-func NewPaperApi(verifier middleware.UserVerifier, usecase usecase.PaperUseCase) PaperApi {
-	return paperApi{verifier: verifier, usecase: usecase}
+func NewPapersApi(verifier middleware.UserVerifier, usecase usecase.PaperUseCase) openapi.PapersAPI {
+	return papersApi{verifier: verifier, usecase: usecase}
 }
 
-func (api paperApi) HandleFind(c *gin.Context) {
-	var request model.PaperFindRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.PaperFindErrorResponse{
+func (api papersApi) PapersFind(c *gin.Context) {
+	var request openapi.PaperFindRequest
+	if err := c.ShouldBindQuery(&request); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.PaperFindErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
 	}
 
-	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+	vErr := api.verifier.Verify(c.Request.Context(), request.UserId)
 
 	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
 
 	if vErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
@@ -52,24 +47,24 @@ func (api paperApi) HandleFind(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.PaperFindErrorResponse{
-			Message: UseCaseErrorToMessage(ucErr),
-			User:    resErr.User,
-			Project: resErr.Project,
-			Chapter: resErr.Chapter,
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.PaperFindErrorResponse{
+			Message:   UseCaseErrorToMessage(ucErr),
+			UserId:    resErr.UserId,
+			ProjectId: resErr.ProjectId,
+			ChapterId: resErr.ChapterId,
 		})
 		return
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.AbortWithStatusJSON(http.StatusNotFound, model.PaperFindErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, openapi.PaperFindErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -78,10 +73,10 @@ func (api paperApi) HandleFind(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (api paperApi) HandleUpdate(c *gin.Context) {
-	var request model.PaperUpdateRequest
+func (api papersApi) PapersUpdate(c *gin.Context) {
+	var request openapi.PaperUpdateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.PaperUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.PaperUpdateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
@@ -90,14 +85,14 @@ func (api paperApi) HandleUpdate(c *gin.Context) {
 	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
 
 	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
 
 	if vErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
@@ -107,7 +102,7 @@ func (api paperApi) HandleUpdate(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.PaperUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.PaperUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -117,14 +112,14 @@ func (api paperApi) HandleUpdate(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.AbortWithStatusJSON(http.StatusNotFound, model.PaperUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, openapi.PaperUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return

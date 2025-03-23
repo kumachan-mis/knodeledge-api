@@ -15,11 +15,15 @@ type GraphFindErrorResponse struct {
 	// Error message when request body format is invalid
 	Message string `json:"message"`
 
-	User UserOnlyIdError `json:"user,omitempty"`
+	// Error message for user ID
+	UserId string `json:"userId,omitempty"`
 
-	Project ProjectOnlyIdError `json:"project,omitempty"`
+	// Error message for project ID
+	ProjectId string `json:"projectId,omitempty"`
 
-	Chapter ChapterOnlyIdError `json:"chapter,omitempty"`
+	// Error message for chapter ID
+	ChapterId string `json:"chapterId,omitempty"`
 
-	Section SectionOnlyIdError `json:"section,omitempty"`
+	// Error message for section ID
+	SectionId string `json:"sectionId,omitempty"`
 }

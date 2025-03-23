@@ -2,20 +2,20 @@ package usecase
 
 import (
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 )
 
 //go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
 
 type GraphUseCase interface {
-	FindGraph(request model.GraphFindRequest) (
-		*model.GraphFindResponse, *Error[model.GraphFindErrorResponse])
-	UpdateGraph(request model.GraphUpdateRequest) (
-		*model.GraphUpdateResponse, *Error[model.GraphUpdateErrorResponse])
-	DeleteGraph(request model.GraphDeleteRequest) *Error[model.GraphDeleteErrorResponse]
-	SectionalizeGraph(request model.GraphSectionalizeRequest) (
-		*model.GraphSectionalizeResponse, *Error[model.GraphSectionalizeErrorResponse])
+	FindGraph(request openapi.GraphFindRequest) (
+		*openapi.GraphFindResponse, *Error[openapi.GraphFindErrorResponse])
+	UpdateGraph(request openapi.GraphUpdateRequest) (
+		*openapi.GraphUpdateResponse, *Error[openapi.GraphUpdateErrorResponse])
+	DeleteGraph(request openapi.GraphDeleteRequest) *Error[openapi.GraphDeleteErrorResponse]
+	SectionalizeGraph(request openapi.GraphSectionalizeRequest) (
+		*openapi.GraphSectionalizeResponse, *Error[openapi.GraphSectionalizeErrorResponse])
 }
 
 type graphUseCase struct {
@@ -26,12 +26,12 @@ func NewGraphUseCase(service service.GraphService) GraphUseCase {
 	return graphUseCase{service: service}
 }
 
-func (uc graphUseCase) FindGraph(req model.GraphFindRequest) (
-	*model.GraphFindResponse, *Error[model.GraphFindErrorResponse]) {
-	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
-	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
-	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
-	sectionId, sectionIdErr := domain.NewSectionIdObject(req.Section.Id)
+func (uc graphUseCase) FindGraph(req openapi.GraphFindRequest) (
+	*openapi.GraphFindResponse, *Error[openapi.GraphFindErrorResponse]) {
+	userId, userIdErr := domain.NewUserIdObject(req.UserId)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.ProjectId)
+	chapterId, chapterIdErr := domain.NewChapterIdObject(req.ChapterId)
+	sectionId, sectionIdErr := domain.NewSectionIdObject(req.SectionId)
 
 	userIdMsg := ""
 	if userIdErr != nil {
@@ -53,11 +53,11 @@ func (uc graphUseCase) FindGraph(req model.GraphFindRequest) (
 	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || sectionIdErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.GraphFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: userIdMsg},
-				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
-				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
-				Section: model.SectionOnlyIdError{Id: sectionIdMsg},
+			openapi.GraphFindErrorResponse{
+				UserId:    userIdMsg,
+				ProjectId: projectIdMsg,
+				ChapterId: chapterIdMsg,
+				SectionId: sectionIdMsg,
 			},
 		)
 	}
@@ -65,20 +65,20 @@ func (uc graphUseCase) FindGraph(req model.GraphFindRequest) (
 	entity, sErr := uc.service.FindGraph(*userId, *projectId, *chapterId, *sectionId)
 
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.GraphFindErrorResponse](
+		return nil, NewMessageBasedError[openapi.GraphFindErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return nil, NewMessageBasedError[model.GraphFindErrorResponse](
+		return nil, NewMessageBasedError[openapi.GraphFindErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
 	}
 
-	return &model.GraphFindResponse{
-		Graph: model.Graph{
+	return &openapi.GraphFindResponse{
+		Graph: openapi.Graph{
 			Id:        entity.Id().Value(),
 			Name:      entity.Name().Value(),
 			Paragraph: entity.Paragraph().Value(),
@@ -87,8 +87,8 @@ func (uc graphUseCase) FindGraph(req model.GraphFindRequest) (
 	}, nil
 }
 
-func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
-	*model.GraphUpdateResponse, *Error[model.GraphUpdateErrorResponse]) {
+func (uc graphUseCase) UpdateGraph(req openapi.GraphUpdateRequest) (
+	*openapi.GraphUpdateResponse, *Error[openapi.GraphUpdateErrorResponse]) {
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
@@ -121,11 +121,11 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 		graphIdErr != nil || graphParagraphErr != nil || !graphChildrenOk {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.GraphUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: userIdMsg},
-				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
-				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
-				Graph: model.GraphContentError{
+			openapi.GraphUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: userIdMsg},
+				Project: openapi.ProjectOnlyIdError{Id: projectIdMsg},
+				Chapter: openapi.ChapterOnlyIdError{Id: chapterIdMsg},
+				Graph: openapi.GraphContentError{
 					Id:        graphIdMsg,
 					Paragraph: graphParagraphMsg,
 					Children:  *graphChildrenErr,
@@ -139,20 +139,20 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 	entity, uErr := uc.service.UpdateGraphContent(*userId, *projectId, *chapterId, *graphId, *graph)
 
 	if uErr != nil && uErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.GraphUpdateErrorResponse](
+		return nil, NewMessageBasedError[openapi.GraphUpdateErrorResponse](
 			NotFoundError,
 			uErr.Unwrap().Error(),
 		)
 	}
 	if uErr != nil {
-		return nil, NewMessageBasedError[model.GraphUpdateErrorResponse](
+		return nil, NewMessageBasedError[openapi.GraphUpdateErrorResponse](
 			InternalErrorPanic,
 			uErr.Unwrap().Error(),
 		)
 	}
 
-	return &model.GraphUpdateResponse{
-		Graph: model.Graph{
+	return &openapi.GraphUpdateResponse{
+		Graph: openapi.Graph{
 			Id:        entity.Id().Value(),
 			Name:      entity.Name().Value(),
 			Paragraph: entity.Paragraph().Value(),
@@ -161,7 +161,7 @@ func (uc graphUseCase) UpdateGraph(req model.GraphUpdateRequest) (
 	}, nil
 }
 
-func (uc graphUseCase) DeleteGraph(req model.GraphDeleteRequest) *Error[model.GraphDeleteErrorResponse] {
+func (uc graphUseCase) DeleteGraph(req openapi.GraphDeleteRequest) *Error[openapi.GraphDeleteErrorResponse] {
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
@@ -187,11 +187,11 @@ func (uc graphUseCase) DeleteGraph(req model.GraphDeleteRequest) *Error[model.Gr
 	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || sectionIdErr != nil {
 		return NewModelBasedError(
 			DomainValidationError,
-			model.GraphDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: userIdMsg},
-				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
-				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
-				Section: model.SectionOnlyIdError{Id: sectionIdMsg},
+			openapi.GraphDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: userIdMsg},
+				Project: openapi.ProjectOnlyIdError{Id: projectIdMsg},
+				Chapter: openapi.ChapterOnlyIdError{Id: chapterIdMsg},
+				Section: openapi.SectionOnlyIdError{Id: sectionIdMsg},
 			},
 		)
 	}
@@ -199,13 +199,13 @@ func (uc graphUseCase) DeleteGraph(req model.GraphDeleteRequest) *Error[model.Gr
 	sErr := uc.service.DeleteGraph(*userId, *projectId, *chapterId, *sectionId)
 
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return NewMessageBasedError[model.GraphDeleteErrorResponse](
+		return NewMessageBasedError[openapi.GraphDeleteErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return NewMessageBasedError[model.GraphDeleteErrorResponse](
+		return NewMessageBasedError[openapi.GraphDeleteErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
@@ -214,8 +214,8 @@ func (uc graphUseCase) DeleteGraph(req model.GraphDeleteRequest) *Error[model.Gr
 	return nil
 }
 
-func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
-	*model.GraphSectionalizeResponse, *Error[model.GraphSectionalizeErrorResponse]) {
+func (uc graphUseCase) SectionalizeGraph(req openapi.GraphSectionalizeRequest) (
+	*openapi.GraphSectionalizeResponse, *Error[openapi.GraphSectionalizeErrorResponse]) {
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
@@ -237,10 +237,10 @@ func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
 	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || !sectionsOk {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.GraphSectionalizeErrorResponse{
-				User:     model.UserOnlyIdError{Id: userIdMsg},
-				Project:  model.ProjectOnlyIdError{Id: projectIdMsg},
-				Chapter:  model.ChapterOnlyIdError{Id: chapterIdMsg},
+			openapi.GraphSectionalizeErrorResponse{
+				User:     openapi.UserOnlyIdError{Id: userIdMsg},
+				Project:  openapi.ProjectOnlyIdError{Id: projectIdMsg},
+				Chapter:  openapi.ChapterOnlyIdError{Id: chapterIdMsg},
 				Sections: *sectionsErr,
 			},
 		)
@@ -248,27 +248,27 @@ func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
 
 	entities, sErr := uc.service.SectionalizeIntoGraphs(*userId, *projectId, *chapterId, *sections)
 	if sErr != nil && sErr.Code() == service.InvalidArgumentError {
-		return nil, NewMessageBasedError[model.GraphSectionalizeErrorResponse](
+		return nil, NewMessageBasedError[openapi.GraphSectionalizeErrorResponse](
 			InvalidArgumentError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.GraphSectionalizeErrorResponse](
+		return nil, NewMessageBasedError[openapi.GraphSectionalizeErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return nil, NewMessageBasedError[model.GraphSectionalizeErrorResponse](
+		return nil, NewMessageBasedError[openapi.GraphSectionalizeErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
 	}
 
-	graphs := make([]model.Graph, len(entities))
+	graphs := make([]openapi.Graph, len(entities))
 	for i, entity := range entities {
-		graphs[i] = model.Graph{
+		graphs[i] = openapi.Graph{
 			Id:        entity.Id().Value(),
 			Name:      entity.Name().Value(),
 			Paragraph: entity.Paragraph().Value(),
@@ -276,13 +276,13 @@ func (uc graphUseCase) SectionalizeGraph(req model.GraphSectionalizeRequest) (
 		}
 	}
 
-	return &model.GraphSectionalizeResponse{Graphs: graphs}, nil
+	return &openapi.GraphSectionalizeResponse{Graphs: graphs}, nil
 }
 
-func (uc graphUseCase) childrenEntityToModel(entity *domain.GraphChildrenEntity) []model.GraphChild {
-	children := make([]model.GraphChild, len(entity.Value()))
+func (uc graphUseCase) childrenEntityToModel(entity *domain.GraphChildrenEntity) []openapi.GraphChild {
+	children := make([]openapi.GraphChild, len(entity.Value()))
 	for i, child := range entity.Value() {
-		children[i] = model.GraphChild{
+		children[i] = openapi.GraphChild{
 			Name:        child.Name().Value(),
 			Relation:    child.Relation().Value(),
 			Description: child.Description().Value(),
@@ -292,10 +292,10 @@ func (uc graphUseCase) childrenEntityToModel(entity *domain.GraphChildrenEntity)
 	return children
 }
 
-func (uc graphUseCase) childrenModelToEntity(children []model.GraphChild) (
-	*domain.GraphChildrenEntity, *model.GraphChildrenError, bool) {
+func (uc graphUseCase) childrenModelToEntity(children []openapi.GraphChild) (
+	*domain.GraphChildrenEntity, *openapi.GraphChildrenError, bool) {
 	childItems := make([]domain.GraphChildEntity, len(children))
-	childItemErrors := make([]model.GraphChildError, len(children))
+	childItemErrors := make([]openapi.GraphChildError, len(children))
 
 	childItemErrorExists := false
 	for i, child := range children {
@@ -331,13 +331,13 @@ func (uc graphUseCase) childrenModelToEntity(children []model.GraphChild) (
 	}
 
 	ok := childrenErrorMessage == "" && !childItemErrorExists
-	return entity, &model.GraphChildrenError{Message: childrenErrorMessage, Items: childItemErrors}, ok
+	return entity, &openapi.GraphChildrenError{Message: childrenErrorMessage, Items: childItemErrors}, ok
 }
 
-func (uc graphUseCase) sectiionsModelToEntity(sections []model.SectionWithoutAutofield) (
-	*domain.SectionWithoutAutofieldEntityList, *model.SectionWithoutAutofieldListError, bool) {
+func (uc graphUseCase) sectiionsModelToEntity(sections []openapi.SectionWithoutAutofield) (
+	*domain.SectionWithoutAutofieldEntityList, *openapi.SectionWithoutAutofieldListError, bool) {
 	sectionItems := make([]domain.SectionWithoutAutofieldEntity, len(sections))
-	sectionItemErrors := make([]model.SectionWithoutAutofieldError, len(sections))
+	sectionItemErrors := make([]openapi.SectionWithoutAutofieldError, len(sections))
 
 	sectionItemErrorExists := false
 	for i, section := range sections {
@@ -363,5 +363,5 @@ func (uc graphUseCase) sectiionsModelToEntity(sections []model.SectionWithoutAut
 	}
 
 	ok := sectionsErrorMessage == "" && !sectionItemErrorExists
-	return entity, &model.SectionWithoutAutofieldListError{Message: sectionsErrorMessage, Items: sectionItemErrors}, ok
+	return entity, &openapi.SectionWithoutAutofieldListError{Message: sectionsErrorMessage, Items: sectionItemErrors}, ok
 }

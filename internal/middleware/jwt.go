@@ -10,7 +10,7 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/gin-gonic/gin"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 )
 
 type Auth0JwTConfig struct {
@@ -61,7 +61,7 @@ func Auth0JWT(config Auth0JwTConfig) gin.HandlerFunc {
 		middleware.CheckJWT(handler).ServeHTTP(c.Writer, c.Request)
 
 		if !validJwt {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, openapi.ApplicationErrorResponse{
 				Message: "authorization error",
 			})
 		}

@@ -1,4 +1,14 @@
-# List of unused schemas. These are not used in API definitions but useful for frontend development.
+# List of unused schemas. These are not used in API definitions but useful for development.
+ProjectListRequest:
+  $ref: ./interface/projects/list/ProjectListRequest.yaml
+ProjectFindRequest:
+  $ref: ./interface/projects/find/ProjectFindRequest.yaml
+ChapterListRequest:
+  $ref: ./interface/chapters/list/ChapterListRequest.yaml
+PaperFindRequest:
+  $ref: ./interface/papers/find/PaperFindRequest.yaml
+GraphFindRequest:
+  $ref: ./interface/graphs/find/GraphFindRequest.yaml
 PaperWithoutAutofield:
   $ref: ./entity/paper/PaperWithoutAutofield.yaml
 PaperWithoutAutofieldError:

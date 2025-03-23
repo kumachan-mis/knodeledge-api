@@ -5,47 +5,39 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kumachan-mis/knodeledge-api/internal/middleware"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
 )
 
-type ProjectApi interface {
-	HandleList(c *gin.Context)
-	HandleFind(c *gin.Context)
-	HandleCreate(c *gin.Context)
-	HandleUpdate(c *gin.Context)
-	HandleDelete(c *gin.Context)
-}
-
-type projectApi struct {
+type projectsApi struct {
 	verifier middleware.UserVerifier
 	usecase  usecase.ProjectUseCase
 }
 
-func NewProjectApi(verifier middleware.UserVerifier, usecase usecase.ProjectUseCase) ProjectApi {
-	return projectApi{verifier: verifier, usecase: usecase}
+func NewProjectsApi(verifier middleware.UserVerifier, usecase usecase.ProjectUseCase) openapi.ProjectsAPI {
+	return projectsApi{verifier: verifier, usecase: usecase}
 }
 
-func (api projectApi) HandleList(c *gin.Context) {
-	var request model.ProjectListRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectListErrorResponse{
+func (api projectsApi) ProjectsList(c *gin.Context) {
+	var request openapi.ProjectListRequest
+	if err := c.ShouldBindQuery(&request); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectListErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
 	}
 
-	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+	vErr := api.verifier.Verify(c.Request.Context(), request.UserId)
 
 	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
 
 	if vErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
@@ -55,15 +47,15 @@ func (api projectApi) HandleList(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectListErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectListErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
-			User:    resErr.User,
+			UserId:  resErr.UserId,
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -72,26 +64,26 @@ func (api projectApi) HandleList(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (api projectApi) HandleFind(c *gin.Context) {
-	var request model.ProjectFindRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectFindErrorResponse{
+func (api projectsApi) ProjectsFind(c *gin.Context) {
+	var request openapi.ProjectFindRequest
+	if err := c.ShouldBindQuery(&request); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectFindErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
 	}
 
-	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
+	vErr := api.verifier.Verify(c.Request.Context(), request.UserId)
 
 	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
 
 	if vErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
@@ -101,23 +93,23 @@ func (api projectApi) HandleFind(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectFindErrorResponse{
-			Message: UseCaseErrorToMessage(ucErr),
-			User:    resErr.User,
-			Project: resErr.Project,
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectFindErrorResponse{
+			Message:   UseCaseErrorToMessage(ucErr),
+			UserId:    resErr.UserId,
+			ProjectId: resErr.ProjectId,
 		})
 		return
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.AbortWithStatusJSON(http.StatusNotFound, model.ProjectFindErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, openapi.ProjectFindErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -126,10 +118,10 @@ func (api projectApi) HandleFind(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (api projectApi) HandleCreate(c *gin.Context) {
-	var request model.ProjectCreateRequest
+func (api projectsApi) ProjectsCreate(c *gin.Context) {
+	var request openapi.ProjectCreateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectCreateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectCreateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
@@ -138,14 +130,14 @@ func (api projectApi) HandleCreate(c *gin.Context) {
 	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
 
 	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
 
 	if vErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
@@ -155,7 +147,7 @@ func (api projectApi) HandleCreate(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectCreateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectCreateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -164,7 +156,7 @@ func (api projectApi) HandleCreate(c *gin.Context) {
 	}
 
 	if ucErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -173,10 +165,10 @@ func (api projectApi) HandleCreate(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
-func (api projectApi) HandleUpdate(c *gin.Context) {
-	var request model.ProjectUpdateRequest
+func (api projectsApi) ProjectsUpdate(c *gin.Context) {
+	var request openapi.ProjectUpdateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectUpdateErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
@@ -185,14 +177,14 @@ func (api projectApi) HandleUpdate(c *gin.Context) {
 	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
 
 	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
 
 	if vErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
@@ -202,7 +194,7 @@ func (api projectApi) HandleUpdate(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -211,14 +203,14 @@ func (api projectApi) HandleUpdate(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.AbortWithStatusJSON(http.StatusNotFound, model.ProjectUpdateErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, openapi.ProjectUpdateErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
@@ -227,10 +219,10 @@ func (api projectApi) HandleUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (api projectApi) HandleDelete(c *gin.Context) {
-	var request model.ProjectDeleteRequest
+func (api projectsApi) ProjectsDelete(c *gin.Context) {
+	var request openapi.ProjectDeleteRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectDeleteErrorResponse{
 			Message: JsonBindErrorToMessage(err),
 		})
 		return
@@ -239,14 +231,14 @@ func (api projectApi) HandleDelete(c *gin.Context) {
 	vErr := api.verifier.Verify(c.Request.Context(), request.User.Id)
 
 	if vErr != nil && vErr.Code() == middleware.AuthorizationError {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
 	}
 
 	if vErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: MiddlewareErrorToMessage(vErr),
 		})
 		return
@@ -256,7 +248,7 @@ func (api projectApi) HandleDelete(c *gin.Context) {
 
 	if ucErr != nil && ucErr.Code() == usecase.DomainValidationError {
 		resErr := UseCaseErrorToResponse(ucErr)
-		c.AbortWithStatusJSON(http.StatusBadRequest, model.ProjectDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, openapi.ProjectDeleteErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 			User:    resErr.User,
 			Project: resErr.Project,
@@ -265,14 +257,14 @@ func (api projectApi) HandleDelete(c *gin.Context) {
 	}
 
 	if ucErr != nil && ucErr.Code() == usecase.NotFoundError {
-		c.AbortWithStatusJSON(http.StatusNotFound, model.ProjectDeleteErrorResponse{
+		c.AbortWithStatusJSON(http.StatusNotFound, openapi.ProjectDeleteErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return
 	}
 
 	if ucErr != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, model.ApplicationErrorResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, openapi.ApplicationErrorResponse{
 			Message: UseCaseErrorToMessage(ucErr),
 		})
 		return

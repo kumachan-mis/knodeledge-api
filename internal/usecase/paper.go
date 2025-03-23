@@ -2,17 +2,17 @@ package usecase
 
 import (
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 )
 
 //go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
 
 type PaperUseCase interface {
-	FindPaper(request model.PaperFindRequest) (
-		*model.PaperFindResponse, *Error[model.PaperFindErrorResponse])
-	UpdatePaper(request model.PaperUpdateRequest) (
-		*model.PaperUpdateResponse, *Error[model.PaperUpdateErrorResponse])
+	FindPaper(request openapi.PaperFindRequest) (
+		*openapi.PaperFindResponse, *Error[openapi.PaperFindErrorResponse])
+	UpdatePaper(request openapi.PaperUpdateRequest) (
+		*openapi.PaperUpdateResponse, *Error[openapi.PaperUpdateErrorResponse])
 }
 
 type paperUseCase struct {
@@ -23,11 +23,11 @@ func NewPaperUseCase(service service.PaperService) PaperUseCase {
 	return paperUseCase{service: service}
 }
 
-func (uc paperUseCase) FindPaper(req model.PaperFindRequest) (
-	*model.PaperFindResponse, *Error[model.PaperFindErrorResponse]) {
-	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
-	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
-	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
+func (uc paperUseCase) FindPaper(req openapi.PaperFindRequest) (
+	*openapi.PaperFindResponse, *Error[openapi.PaperFindErrorResponse]) {
+	userId, userIdErr := domain.NewUserIdObject(req.UserId)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.ProjectId)
+	chapterId, chapterIdErr := domain.NewChapterIdObject(req.ChapterId)
 
 	userIdMsg := ""
 	if userIdErr != nil {
@@ -45,10 +45,10 @@ func (uc paperUseCase) FindPaper(req model.PaperFindRequest) (
 	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.PaperFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: userIdMsg},
-				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
-				Chapter: model.ChapterOnlyIdError{Id: chapterIdMsg},
+			openapi.PaperFindErrorResponse{
+				UserId:    userIdMsg,
+				ProjectId: projectIdMsg,
+				ChapterId: chapterIdMsg,
 			},
 		)
 	}
@@ -56,28 +56,28 @@ func (uc paperUseCase) FindPaper(req model.PaperFindRequest) (
 	entity, sErr := uc.service.FindPaper(*userId, *projectId, *chapterId)
 
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.PaperFindErrorResponse](
+		return nil, NewMessageBasedError[openapi.PaperFindErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return nil, NewMessageBasedError[model.PaperFindErrorResponse](
+		return nil, NewMessageBasedError[openapi.PaperFindErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
 	}
 
-	return &model.PaperFindResponse{
-		Paper: model.Paper{
+	return &openapi.PaperFindResponse{
+		Paper: openapi.Paper{
 			Id:      entity.Id().Value(),
 			Content: entity.Content().Value(),
 		},
 	}, nil
 }
 
-func (uc paperUseCase) UpdatePaper(req model.PaperUpdateRequest) (
-	*model.PaperUpdateResponse, *Error[model.PaperUpdateErrorResponse]) {
+func (uc paperUseCase) UpdatePaper(req openapi.PaperUpdateRequest) (
+	*openapi.PaperUpdateResponse, *Error[openapi.PaperUpdateErrorResponse]) {
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	paperId, paperIdErr := domain.NewPaperIdObject(req.Paper.Id)
@@ -103,10 +103,10 @@ func (uc paperUseCase) UpdatePaper(req model.PaperUpdateRequest) (
 	if userIdErr != nil || projectIdErr != nil || paperIdErr != nil || paperContentErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.PaperUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: userIdMsg},
-				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
-				Paper:   model.PaperError{Id: paperIdMsg, Content: paperContentMsg},
+			openapi.PaperUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: userIdMsg},
+				Project: openapi.ProjectOnlyIdError{Id: projectIdMsg},
+				Paper:   openapi.PaperError{Id: paperIdMsg, Content: paperContentMsg},
 			},
 		)
 	}
@@ -116,20 +116,20 @@ func (uc paperUseCase) UpdatePaper(req model.PaperUpdateRequest) (
 	entity, sErr := uc.service.UpdatePaper(*userId, *projectId, *paperId, *paper)
 
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.PaperUpdateErrorResponse](
+		return nil, NewMessageBasedError[openapi.PaperUpdateErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return nil, NewMessageBasedError[model.PaperUpdateErrorResponse](
+		return nil, NewMessageBasedError[openapi.PaperUpdateErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
 	}
 
-	return &model.PaperUpdateResponse{
-		Paper: model.Paper{
+	return &openapi.PaperUpdateResponse{
+		Paper: openapi.Paper{
 			Id:      entity.Id().Value(),
 			Content: entity.Content().Value(),
 		},

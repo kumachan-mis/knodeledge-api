@@ -5,7 +5,9 @@ properties:
     type: string
     description: Error message when request body format is invalid
     example: unexpected EOF
-  user:
-    $ref: ../../../entity/user/UserOnlyIdError.yaml
+  userId:
+    type: string
+    description: Error message for user ID
+    example: "user id is required, but got ''"
 required:
   - message

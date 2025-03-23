@@ -15,5 +15,6 @@ type ProjectListErrorResponse struct {
 	// Error message when request body format is invalid
 	Message string `json:"message"`
 
-	User UserOnlyIdError `json:"user,omitempty"`
+	// Error message for user ID
+	UserId string `json:"userId,omitempty"`
 }

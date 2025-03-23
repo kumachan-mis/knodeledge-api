@@ -24,21 +24,13 @@ func TestGraphFind(t *testing.T) {
 	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ReadOnlyUserId(),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITHOUT_DESCRIPTION",
-		},
-		"chapter": map[string]any{
-			"id": "CHAPTER_ONE",
-		},
-		"section": map[string]any{
-			"id": "SECTION_ONE",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/graphs/find", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ReadOnlyUserId())
+	query.Add("projectId", "PROJECT_WITHOUT_DESCRIPTION")
+	query.Add("chapterId", "CHAPTER_ONE")
+	query.Add("sectionId", "SECTION_ONE")
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -88,60 +80,56 @@ func TestGraphFindNotFound(t *testing.T) {
 	router := setupGraphRouter(t)
 
 	tt := []struct {
-		name    string
-		user    string
-		project string
-		chapter string
-		section string
+		name  string
+		query map[string]string
 	}{
 		{
-			name:    "should return error when project not found",
-			user:    testutil.ReadOnlyUserId(),
-			project: "UNKNOWN_PROJECT",
-			chapter: "CHAPTER_ONE",
-			section: "SECTION_ONE",
+			name: "should return error when project not found",
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "UNKNOWN_PROJECT",
+				"chapterId": "CHAPTER_ONE",
+				"sectionId": "SECTION_ONE",
+			},
 		},
 		{
-			name:    "should return not found when user is not author of the project",
-			user:    testutil.ModifyOnlyUserId(),
-			project: "PROJECT_WITH_DESCRIPTION",
-			chapter: "CHAPTER_ONE",
-			section: "SECTION_ONE",
+			name: "should return not found when user is not author of the project",
+			query: map[string]string{
+				"userId":    testutil.ModifyOnlyUserId(),
+				"projectId": "PROJECT_WITH_DESCRIPTION",
+				"chapterId": "CHAPTER_ONE",
+				"sectionId": "SECTION_ONE",
+			},
 		},
 		{
-			name:    "should return error when chapter not found",
-			user:    testutil.ReadOnlyUserId(),
-			project: "PROJECT_WITH_DESCRIPTION",
-			chapter: "UNKNOWN_CHAPTER",
-			section: "SECTION_ONE",
+			name: "should return error when chapter not found",
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "PROJECT_WITH_DESCRIPTION",
+				"chapterId": "UNKNOWN_CHAPTER",
+				"sectionId": "SECTION_ONE",
+			},
 		},
 		{
-			name:    "should return error when section not found",
-			user:    testutil.ReadOnlyUserId(),
-			project: "PROJECT_WITH_DESCRIPTION",
-			chapter: "CHAPTER_ONE",
-			section: "UNKNOWN_SECTION",
+			name: "should return error when section not found",
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "PROJECT_WITH_DESCRIPTION",
+				"chapterId": "CHAPTER_ONE",
+				"sectionId": "UNKNOWN_SECTION",
+			},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(map[string]any{
-				"user": map[string]any{
-					"id": tc.user,
-				},
-				"project": map[string]any{
-					"id": tc.project,
-				},
-				"chapter": map[string]any{
-					"id": tc.chapter,
-				},
-				"section": map[string]any{
-					"id": tc.section,
-				},
-			})
-			req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/graphs/find", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -153,10 +141,6 @@ func TestGraphFindNotFound(t *testing.T) {
 
 			assert.Equal(t, map[string]any{
 				"message": "not found",
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"chapter": map[string]any{},
-				"section": map[string]any{},
 			}, responseBody)
 		})
 	}
@@ -167,125 +151,65 @@ func TestGraphFindDomainValidationError(t *testing.T) {
 
 	tt := []struct {
 		name             string
-		request          map[string]any
+		query            map[string]string
 		expectedResponse map[string]any
 	}{
 		{
 			name: "should return error when user id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": "",
-				},
-				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION",
-				},
-				"chapter": map[string]any{
-					"id": "CHAPTER_ONE",
-				},
-				"section": map[string]any{
-					"id": "SECTION_ONE",
-				},
+			query: map[string]string{
+				"userId":    "",
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
+				"chapterId": "CHAPTER_ONE",
+				"sectionId": "SECTION_ONE",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
-				"project": map[string]any{},
-				"chapter": map[string]any{},
-				"section": map[string]any{},
+				"userId": "user id is required, but got ''",
 			},
 		},
 		{
 			name: "should return error when project id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": testutil.ReadOnlyUserId(),
-				},
-				"project": map[string]any{
-					"id": "",
-				},
-				"chapter": map[string]any{
-					"id": "CHAPTER_ONE",
-				},
-				"section": map[string]any{
-					"id": "SECTION_ONE",
-				},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "",
+				"chapterId": "CHAPTER_ONE",
+				"sectionId": "SECTION_ONE",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{},
-				"project": map[string]any{
-					"id": "project id is required, but got ''",
-				},
-				"chapter": map[string]any{},
-				"section": map[string]any{},
+				"projectId": "project id is required, but got ''",
 			},
 		},
 		{
 			name: "should return error when chapter id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": testutil.ReadOnlyUserId(),
-				},
-				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION",
-				},
-				"chapter": map[string]any{
-					"id": "",
-				},
-				"section": map[string]any{
-					"id": "SECTION_ONE",
-				},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
+				"chapterId": "",
+				"sectionId": "SECTION_ONE",
 			},
 			expectedResponse: map[string]any{
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"chapter": map[string]any{
-					"id": "chapter id is required, but got ''",
-				},
-				"section": map[string]any{},
+				"chapterId": "chapter id is required, but got ''",
 			},
 		},
 		{
 			name: "should return error when section id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": testutil.ReadOnlyUserId(),
-				},
-				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION",
-				},
-				"chapter": map[string]any{
-					"id": "CHAPTER_ONE",
-				},
-				"section": map[string]any{
-					"id": "",
-				},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
+				"chapterId": "CHAPTER_ONE",
+				"sectionId": "",
 			},
 			expectedResponse: map[string]any{
-				"user":    map[string]any{},
-				"project": map[string]any{},
-				"chapter": map[string]any{},
-				"section": map[string]any{
-					"id": "section id is required, but got ''",
-				},
+				"sectionId": "section id is required, but got ''",
 			},
 		},
 		{
-			name:    "should return error when empty object is passed",
-			request: map[string]any{},
+			name:  "should return error when empty parameter is passed",
+			query: map[string]string{},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
-				"project": map[string]any{
-					"id": "project id is required, but got ''",
-				},
-				"chapter": map[string]any{
-					"id": "chapter id is required, but got ''",
-				},
-				"section": map[string]any{
-					"id": "section id is required, but got ''",
-				},
+				"userId":    "user id is required, but got ''",
+				"projectId": "project id is required, but got ''",
+				"chapterId": "chapter id is required, but got ''",
+				"sectionId": "section id is required, but got ''",
 			},
 		},
 	}
@@ -293,8 +217,12 @@ func TestGraphFindDomainValidationError(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tc.request)
-			req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/graphs/find", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -304,59 +232,24 @@ func TestGraphFindDomainValidationError(t *testing.T) {
 			err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 			assert.Nil(t, err)
 
-			assert.Equal(t, map[string]any{
-				"message": "invalid request value",
-				"user":    tc.expectedResponse["user"],
-				"project": tc.expectedResponse["project"],
-				"chapter": tc.expectedResponse["chapter"],
-				"section": tc.expectedResponse["section"],
-			}, responseBody)
+			expectedResponse := tc.expectedResponse
+			expectedResponse["message"] = "invalid request value"
+			assert.Equal(t, expectedResponse, responseBody)
 		})
 	}
-}
-
-func TestGraphFindInvalidRequestFormat(t *testing.T) {
-	router := setupGraphRouter(t)
-
-	recorder := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(""))
-
-	router.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-	var responseBody map[string]any
-	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
-	assert.Nil(t, err)
-
-	assert.Equal(t, map[string]any{
-		"message": "invalid request format",
-		"user":    map[string]any{},
-		"project": map[string]any{},
-		"chapter": map[string]any{},
-		"section": map[string]any{},
-	}, responseBody)
 }
 
 func TestGraphFindInternalError(t *testing.T) {
 	router := setupGraphRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ErrorUserId(7),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITH_INVALID_GRAPH_PARAGRAPH",
-		},
-		"chapter": map[string]any{
-			"id": "CHAPTER_WITH_INVALID_GRAPH_PARAGRAPH",
-		},
-		"section": map[string]any{
-			"id": "SECTION_WITH_INVALID_GRAPH_PARAGRAPH",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/graphs/find", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/graphs/find", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ErrorUserId(7))
+	query.Add("projectId", "PROJECT_WITH_INVALID_GRAPH_PARAGRAPH")
+	query.Add("chapterId", "CHAPTER_WITH_INVALID_GRAPH_PARAGRAPH")
+	query.Add("sectionId", "SECTION_WITH_INVALID_GRAPH_PARAGRAPH")
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -1824,10 +1717,10 @@ func setupGraphRouter(t *testing.T) *gin.Engine {
 	uc := usecase.NewGraphUseCase(s)
 	api := api.NewGraphApi(v, uc)
 
-	router.POST("/api/graphs/find", api.HandleFind)
-	router.POST("/api/graphs/update", api.HandleUpdate)
-	router.POST("/api/graphs/delete", api.HandleDelete)
-	router.POST("/api/graphs/sectionalize", api.HandleSectionalize)
+	router.GET("/api/graphs/find", api.GraphsFind)
+	router.POST("/api/graphs/update", api.GraphsUpdate)
+	router.POST("/api/graphs/delete", api.GraphsDelete)
+	router.POST("/api/graphs/sectionalize", api.GraphsSectionalize)
 
 	return router
 }
