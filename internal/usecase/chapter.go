@@ -2,20 +2,20 @@ package usecase
 
 import (
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 )
 
 //go:generate mockgen -source=$GOFILE -destination=../../mock/$GOPACKAGE/mock_$GOFILE -package=$GOPACKAGE
 
 type ChapterUseCase interface {
-	ListChapters(req model.ChapterListRequest) (
-		*model.ChapterListResponse, *Error[model.ChapterListErrorResponse])
-	CreateChapter(req model.ChapterCreateRequest) (
-		*model.ChapterCreateResponse, *Error[model.ChapterCreateErrorResponse])
-	UpdateChapter(req model.ChapterUpdateRequest) (
-		*model.ChapterUpdateResponse, *Error[model.ChapterUpdateErrorResponse])
-	DeleteChapter(req model.ChapterDeleteRequest) *Error[model.ChapterDeleteErrorResponse]
+	ListChapters(req openapi.ChapterListRequest) (
+		*openapi.ChapterListResponse, *Error[openapi.ChapterListErrorResponse])
+	CreateChapter(req openapi.ChapterCreateRequest) (
+		*openapi.ChapterCreateResponse, *Error[openapi.ChapterCreateErrorResponse])
+	UpdateChapter(req openapi.ChapterUpdateRequest) (
+		*openapi.ChapterUpdateResponse, *Error[openapi.ChapterUpdateErrorResponse])
+	DeleteChapter(req openapi.ChapterDeleteRequest) *Error[openapi.ChapterDeleteErrorResponse]
 }
 
 type chapterUseCase struct {
@@ -26,10 +26,10 @@ func NewChapterUseCase(service service.ChapterService) ChapterUseCase {
 	return chapterUseCase{service: service}
 }
 
-func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
-	*model.ChapterListResponse, *Error[model.ChapterListErrorResponse]) {
-	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
-	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
+func (uc chapterUseCase) ListChapters(req openapi.ChapterListRequest) (
+	*openapi.ChapterListResponse, *Error[openapi.ChapterListErrorResponse]) {
+	userId, userIdErr := domain.NewUserIdObject(req.UserId)
+	projectId, projectIdErr := domain.NewProjectIdObject(req.ProjectId)
 
 	userIdMsg := ""
 	if userIdErr != nil {
@@ -43,38 +43,38 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 	if userIdErr != nil || projectIdErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.ChapterListErrorResponse{
-				User:    model.UserOnlyIdError{Id: userIdMsg},
-				Project: model.ProjectOnlyIdError{Id: projectIdMsg},
+			openapi.ChapterListErrorResponse{
+				UserId:    userIdMsg,
+				ProjectId: projectIdMsg,
 			},
 		)
 	}
 
 	entities, sErr := uc.service.ListChapters(*userId, *projectId)
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.ChapterListErrorResponse](
+		return nil, NewMessageBasedError[openapi.ChapterListErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return nil, NewMessageBasedError[model.ChapterListErrorResponse](
+		return nil, NewMessageBasedError[openapi.ChapterListErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
 	}
 
-	chapters := make([]model.ChapterWithSections, len(entities))
+	chapters := make([]openapi.ChapterWithSections, len(entities))
 	for i, entity := range entities {
-		sections := make([]model.SectionOfChapter, len(entity.Sections()))
+		sections := make([]openapi.SectionOfChapter, len(entity.Sections()))
 		for j, section := range entity.Sections() {
-			sections[j] = model.SectionOfChapter{
+			sections[j] = openapi.SectionOfChapter{
 				Id:   section.Id().Value(),
 				Name: section.Name().Value(),
 			}
 		}
 
-		chapters[i] = model.ChapterWithSections{
+		chapters[i] = openapi.ChapterWithSections{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			Number:   int32(entity.Number().Value()),
@@ -82,11 +82,11 @@ func (uc chapterUseCase) ListChapters(req model.ChapterListRequest) (
 		}
 	}
 
-	return &model.ChapterListResponse{Chapters: chapters}, nil
+	return &openapi.ChapterListResponse{Chapters: chapters}, nil
 }
 
-func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
-	*model.ChapterCreateResponse, *Error[model.ChapterCreateErrorResponse]) {
+func (uc chapterUseCase) CreateChapter(req openapi.ChapterCreateRequest) (
+	*openapi.ChapterCreateResponse, *Error[openapi.ChapterCreateErrorResponse]) {
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterName, chapterNameErr := domain.NewChapterNameObject(req.Chapter.Name)
@@ -113,14 +113,14 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 		chapterNameErr != nil || chapterNumberErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.ChapterCreateErrorResponse{
-				User: model.UserOnlyIdError{
+			openapi.ChapterCreateErrorResponse{
+				User: openapi.UserOnlyIdError{
 					Id: userIdMsg,
 				},
-				Project: model.ProjectOnlyIdError{
+				Project: openapi.ProjectOnlyIdError{
 					Id: projectIdMsg,
 				},
-				Chapter: model.ChapterWithoutAutofieldError{
+				Chapter: openapi.ChapterWithoutAutofieldError{
 					Name:   chapterNameMsg,
 					Number: chapterNumberMsg,
 				},
@@ -132,36 +132,36 @@ func (uc chapterUseCase) CreateChapter(req model.ChapterCreateRequest) (
 
 	chapterEntity, sErr := uc.service.CreateChapter(*userId, *projectId, *chapter)
 	if sErr != nil && sErr.Code() == service.InvalidArgumentError {
-		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
+		return nil, NewMessageBasedError[openapi.ChapterCreateErrorResponse](
 			InvalidArgumentError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
+		return nil, NewMessageBasedError[openapi.ChapterCreateErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return nil, NewMessageBasedError[model.ChapterCreateErrorResponse](
+		return nil, NewMessageBasedError[openapi.ChapterCreateErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
 	}
 
-	return &model.ChapterCreateResponse{
-		Chapter: model.ChapterWithSections{
+	return &openapi.ChapterCreateResponse{
+		Chapter: openapi.ChapterWithSections{
 			Id:       chapterEntity.Id().Value(),
 			Name:     chapterEntity.Name().Value(),
 			Number:   int32(chapterEntity.Number().Value()),
-			Sections: []model.SectionOfChapter{},
+			Sections: []openapi.SectionOfChapter{},
 		},
 	}, nil
 }
 
-func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
-	*model.ChapterUpdateResponse, *Error[model.ChapterUpdateErrorResponse]) {
+func (uc chapterUseCase) UpdateChapter(req openapi.ChapterUpdateRequest) (
+	*openapi.ChapterUpdateResponse, *Error[openapi.ChapterUpdateErrorResponse]) {
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
@@ -192,14 +192,14 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil || chapterNameErr != nil || chapterNumberErr != nil {
 		return nil, NewModelBasedError(
 			DomainValidationError,
-			model.ChapterUpdateErrorResponse{
-				User: model.UserOnlyIdError{
+			openapi.ChapterUpdateErrorResponse{
+				User: openapi.UserOnlyIdError{
 					Id: userIdMsg,
 				},
-				Project: model.ProjectOnlyIdError{
+				Project: openapi.ProjectOnlyIdError{
 					Id: projectIdMsg,
 				},
-				Chapter: model.ChapterError{
+				Chapter: openapi.ChapterError{
 					Id:     chapterIdMsg,
 					Name:   chapterNameMsg,
 					Number: chapterNumberMsg,
@@ -212,35 +212,35 @@ func (uc chapterUseCase) UpdateChapter(req model.ChapterUpdateRequest) (
 
 	entity, sErr := uc.service.UpdateChapter(*userId, *projectId, *chapterId, *chapter)
 	if sErr != nil && sErr.Code() == service.InvalidArgumentError {
-		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
+		return nil, NewMessageBasedError[openapi.ChapterUpdateErrorResponse](
 			InvalidArgumentError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
+		return nil, NewMessageBasedError[openapi.ChapterUpdateErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return nil, NewMessageBasedError[model.ChapterUpdateErrorResponse](
+		return nil, NewMessageBasedError[openapi.ChapterUpdateErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)
 	}
 
-	return &model.ChapterUpdateResponse{
-		Chapter: model.ChapterWithSections{
+	return &openapi.ChapterUpdateResponse{
+		Chapter: openapi.ChapterWithSections{
 			Id:       entity.Id().Value(),
 			Name:     entity.Name().Value(),
 			Number:   int32(entity.Number().Value()),
-			Sections: []model.SectionOfChapter{},
+			Sections: []openapi.SectionOfChapter{},
 		},
 	}, nil
 }
 
-func (uc chapterUseCase) DeleteChapter(req model.ChapterDeleteRequest) *Error[model.ChapterDeleteErrorResponse] {
+func (uc chapterUseCase) DeleteChapter(req openapi.ChapterDeleteRequest) *Error[openapi.ChapterDeleteErrorResponse] {
 	userId, userIdErr := domain.NewUserIdObject(req.User.Id)
 	projectId, projectIdErr := domain.NewProjectIdObject(req.Project.Id)
 	chapterId, chapterIdErr := domain.NewChapterIdObject(req.Chapter.Id)
@@ -261,14 +261,14 @@ func (uc chapterUseCase) DeleteChapter(req model.ChapterDeleteRequest) *Error[mo
 	if userIdErr != nil || projectIdErr != nil || chapterIdErr != nil {
 		return NewModelBasedError(
 			DomainValidationError,
-			model.ChapterDeleteErrorResponse{
-				User: model.UserOnlyIdError{
+			openapi.ChapterDeleteErrorResponse{
+				User: openapi.UserOnlyIdError{
 					Id: userIdMsg,
 				},
-				Project: model.ProjectOnlyIdError{
+				Project: openapi.ProjectOnlyIdError{
 					Id: projectIdMsg,
 				},
-				Chapter: model.ChapterOnlyIdError{
+				Chapter: openapi.ChapterOnlyIdError{
 					Id: chapterIdMsg,
 				},
 			},
@@ -277,13 +277,13 @@ func (uc chapterUseCase) DeleteChapter(req model.ChapterDeleteRequest) *Error[mo
 
 	sErr := uc.service.DeleteChapter(*userId, *projectId, *chapterId)
 	if sErr != nil && sErr.Code() == service.NotFoundError {
-		return NewMessageBasedError[model.ChapterDeleteErrorResponse](
+		return NewMessageBasedError[openapi.ChapterDeleteErrorResponse](
 			NotFoundError,
 			sErr.Unwrap().Error(),
 		)
 	}
 	if sErr != nil {
-		return NewMessageBasedError[model.ChapterDeleteErrorResponse](
+		return NewMessageBasedError[openapi.ChapterDeleteErrorResponse](
 			InternalErrorPanic,
 			sErr.Unwrap().Error(),
 		)

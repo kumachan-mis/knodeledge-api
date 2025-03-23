@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
@@ -43,10 +43,10 @@ func TestFindPaperValidEntity(t *testing.T) {
 
 	uc := usecase.NewPaperUseCase(s)
 
-	res, ucErr := uc.FindPaper(model.PaperFindRequest{
-		User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-		Project: model.ProjectOnlyId{Id: "0000000000000001"},
-		Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
+	res, ucErr := uc.FindPaper(openapi.PaperFindRequest{
+		UserId:    testutil.ReadOnlyUserId(),
+		ProjectId: "0000000000000001",
+		ChapterId: "1000000000000001",
 	})
 
 	assert.Nil(t, ucErr)
@@ -61,17 +61,17 @@ func TestFindPaperDomainValidationError(t *testing.T) {
 		userId    string
 		projectId string
 		chapterId string
-		expected  model.PaperFindErrorResponse
+		expected  openapi.PaperFindErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
 			chapterId: "1000000000000001",
-			expected: model.PaperFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
+			expected: openapi.PaperFindErrorResponse{
+				UserId:    "user id is required, but got ''",
+				ProjectId: "",
+				ChapterId: "",
 			},
 		},
 		{
@@ -79,10 +79,10 @@ func TestFindPaperDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
 			chapterId: "1000000000000001",
-			expected: model.PaperFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterOnlyIdError{Id: ""},
+			expected: openapi.PaperFindErrorResponse{
+				UserId:    "",
+				ProjectId: "project id is required, but got ''",
+				ChapterId: "",
 			},
 		},
 		{
@@ -90,10 +90,10 @@ func TestFindPaperDomainValidationError(t *testing.T) {
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "0000000000000001",
 			chapterId: "",
-			expected: model.PaperFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+			expected: openapi.PaperFindErrorResponse{
+				UserId:    "",
+				ProjectId: "",
+				ChapterId: "chapter id is required, but got ''",
 			},
 		},
 		{
@@ -101,10 +101,10 @@ func TestFindPaperDomainValidationError(t *testing.T) {
 			userId:    "",
 			projectId: "",
 			chapterId: "",
-			expected: model.PaperFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Chapter: model.ChapterOnlyIdError{Id: "chapter id is required, but got ''"},
+			expected: openapi.PaperFindErrorResponse{
+				UserId:    "user id is required, but got ''",
+				ProjectId: "project id is required, but got ''",
+				ChapterId: "chapter id is required, but got ''",
 			},
 		},
 	}
@@ -118,10 +118,10 @@ func TestFindPaperDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewPaperUseCase(s)
 
-			res, ucErr := uc.FindPaper(model.PaperFindRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
-				Chapter: model.ChapterOnlyId{Id: tc.chapterId},
+			res, ucErr := uc.FindPaper(openapi.PaperFindRequest{
+				UserId:    tc.userId,
+				ProjectId: tc.projectId,
+				ChapterId: tc.chapterId,
 			})
 
 			expectedJson, _ := json.Marshal(tc.expected)
@@ -171,10 +171,10 @@ func TestFindPaperServiceError(t *testing.T) {
 				FindPaper(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			res, ucErr := uc.FindPaper(model.PaperFindRequest{
-				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
-				Chapter: model.ChapterOnlyId{Id: "1000000000000001"},
+			res, ucErr := uc.FindPaper(openapi.PaperFindRequest{
+				UserId:    testutil.ReadOnlyUserId(),
+				ProjectId: "0000000000000001",
+				ChapterId: "1000000000000001",
 			})
 
 			assert.Nil(t, res)
@@ -231,10 +231,10 @@ func TestUpdatePaperValidEntity(t *testing.T) {
 
 			uc := usecase.NewPaperUseCase(s)
 
-			res, ucErr := uc.UpdatePaper(model.PaperUpdateRequest{
-				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
-				Paper: model.Paper{
+			res, ucErr := uc.UpdatePaper(openapi.PaperUpdateRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+				Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
+				Paper: openapi.Paper{
 					Id:      "1000000000000001",
 					Content: tc.content,
 				},
@@ -257,7 +257,7 @@ func TestUpdatePaperDomainValidationError(t *testing.T) {
 		projectId string
 		paperId   string
 		content   string
-		expected  model.PaperUpdateErrorResponse
+		expected  openapi.PaperUpdateErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
@@ -265,10 +265,10 @@ func TestUpdatePaperDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			paperId:   "1000000000000001",
 			content:   "This is paper content.",
-			expected: model.PaperUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Paper:   model.PaperError{Id: "", Content: ""},
+			expected: openapi.PaperUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Paper:   openapi.PaperError{Id: "", Content: ""},
 			},
 		},
 		{
@@ -277,10 +277,10 @@ func TestUpdatePaperDomainValidationError(t *testing.T) {
 			projectId: "",
 			paperId:   "1000000000000001",
 			content:   "This is paper content.",
-			expected: model.PaperUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
-				Paper:   model.PaperError{Id: "", Content: ""},
+			expected: openapi.PaperUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+				Paper:   openapi.PaperError{Id: "", Content: ""},
 			},
 		},
 		{
@@ -289,10 +289,10 @@ func TestUpdatePaperDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			paperId:   "",
 			content:   "This is paper content.",
-			expected: model.PaperUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Paper:   model.PaperError{Id: "paper id is required, but got ''", Content: ""},
+			expected: openapi.PaperUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Paper:   openapi.PaperError{Id: "paper id is required, but got ''", Content: ""},
 			},
 		},
 		{
@@ -301,10 +301,10 @@ func TestUpdatePaperDomainValidationError(t *testing.T) {
 			projectId: "0000000000000001",
 			paperId:   "1000000000000001",
 			content:   tooLongPaperContent,
-			expected: model.PaperUpdateErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: ""},
-				Paper: model.PaperError{
+			expected: openapi.PaperUpdateErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
+				Paper: openapi.PaperError{
 					Id:      "",
 					Content: "paper content must be less than or equal to 40000 bytes, but got 40001 bytes",
 				},
@@ -321,10 +321,10 @@ func TestUpdatePaperDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewPaperUseCase(s)
 
-			res, ucErr := uc.UpdatePaper(model.PaperUpdateRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
-				Paper: model.Paper{
+			res, ucErr := uc.UpdatePaper(openapi.PaperUpdateRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
+				Paper: openapi.Paper{
 					Id:      tc.paperId,
 					Content: tc.content,
 				},
@@ -377,10 +377,10 @@ func TestUpdatePaperServiceError(t *testing.T) {
 				UpdatePaper(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, service.Errorf(tc.errorCode, "%s", tc.errorMessage))
 
-			res, ucErr := uc.UpdatePaper(model.PaperUpdateRequest{
-				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
-				Paper: model.Paper{
+			res, ucErr := uc.UpdatePaper(openapi.PaperUpdateRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+				Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
+				Paper: openapi.Paper{
 					Id:      "1000000000000001",
 					Content: "This is paper content.",
 				},

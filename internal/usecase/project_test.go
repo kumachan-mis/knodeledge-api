@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/kumachan-mis/knodeledge-api/internal/domain"
-	"github.com/kumachan-mis/knodeledge-api/internal/model"
+	"github.com/kumachan-mis/knodeledge-api/internal/openapi"
 	"github.com/kumachan-mis/knodeledge-api/internal/service"
 	"github.com/kumachan-mis/knodeledge-api/internal/testutil"
 	"github.com/kumachan-mis/knodeledge-api/internal/usecase"
@@ -57,8 +57,8 @@ func TestListProjectsValidEntity(t *testing.T) {
 
 	uc := usecase.NewProjectUseCase(s)
 
-	res, ucErr := uc.ListProjects(model.ProjectListRequest{
-		User: model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+	res, ucErr := uc.ListProjects(openapi.ProjectListRequest{
+		UserId: testutil.ReadOnlyUserId(),
 	})
 	assert.Nil(t, ucErr)
 
@@ -82,13 +82,13 @@ func TestListProjectsDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name     string
 		userId   string
-		expected model.ProjectListErrorResponse
+		expected openapi.ProjectListErrorResponse
 	}{
 		{
 			name:   "should return error when user id is empty",
 			userId: "",
-			expected: model.ProjectListErrorResponse{
-				User: model.UserOnlyIdError{Id: "user id is required, but got ''"},
+			expected: openapi.ProjectListErrorResponse{
+				UserId: "user id is required, but got ''",
 			},
 		},
 	}
@@ -100,8 +100,8 @@ func TestListProjectsDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.ListProjects(model.ProjectListRequest{
-				User: model.UserOnlyId{Id: tc.userId},
+			res, ucErr := uc.ListProjects(openapi.ProjectListRequest{
+				UserId: tc.userId,
 			})
 			assert.NotNil(t, ucErr)
 
@@ -127,8 +127,8 @@ func TestListProjectsServiceError(t *testing.T) {
 
 	uc := usecase.NewProjectUseCase(s)
 
-	res, ucErr := uc.ListProjects(model.ProjectListRequest{
-		User: model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
+	res, ucErr := uc.ListProjects(openapi.ProjectListRequest{
+		UserId: testutil.ReadOnlyUserId(),
 	})
 	assert.NotNil(t, ucErr)
 	assert.Equal(t, "internal error: service error", ucErr.Error())
@@ -188,9 +188,9 @@ func TestFindProjectValidEntity(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.FindProject(model.ProjectFindRequest{
-				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.FindProject(openapi.ProjectFindRequest{
+				UserId:    testutil.ReadOnlyUserId(),
+				ProjectId: tc.projectId,
 			})
 			assert.Nil(t, ucErr)
 
@@ -206,33 +206,33 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 		name      string
 		userId    string
 		projectId string
-		expected  model.ProjectFindErrorResponse
+		expected  openapi.ProjectFindErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
-			expected: model.ProjectFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
+			expected: openapi.ProjectFindErrorResponse{
+				UserId:    "user id is required, but got ''",
+				ProjectId: "",
 			},
 		},
 		{
 			name:      "should return error when project id is empty",
 			userId:    testutil.ReadOnlyUserId(),
 			projectId: "",
-			expected: model.ProjectFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+			expected: openapi.ProjectFindErrorResponse{
+				UserId:    "",
+				ProjectId: "project id is required, but got ''",
 			},
 		},
 		{
 			name:      "should return error when all fields are empty",
 			userId:    "",
 			projectId: "",
-			expected: model.ProjectFindErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+			expected: openapi.ProjectFindErrorResponse{
+				UserId:    "user id is required, but got ''",
+				ProjectId: "project id is required, but got ''",
 			},
 		},
 	}
@@ -246,9 +246,9 @@ func TestFindProjectDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.FindProject(model.ProjectFindRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
+			res, ucErr := uc.FindProject(openapi.ProjectFindRequest{
+				UserId:    tc.userId,
+				ProjectId: tc.projectId,
 			})
 			assert.NotNil(t, ucErr)
 
@@ -299,9 +299,9 @@ func TestFindProjectServiceError(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.FindProject(model.ProjectFindRequest{
-				User:    model.UserOnlyId{Id: testutil.ReadOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
+			res, ucErr := uc.FindProject(openapi.ProjectFindRequest{
+				UserId:    testutil.ReadOnlyUserId(),
+				ProjectId: "0000000000000001",
 			})
 			assert.NotNil(t, ucErr)
 			assert.Equal(t, tc.expectedError, ucErr.Error())
@@ -318,30 +318,30 @@ func TestCreateProjectValidEntity(t *testing.T) {
 
 	tt := []struct {
 		name    string
-		project model.ProjectWithoutAutofield
+		project openapi.ProjectWithoutAutofield
 	}{
 		{
 			name: "should create project with description",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name:        "Project With Description",
 				Description: "This is a project",
 			},
 		},
 		{
 			name: "should create project without description",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name: "Project Without Description",
 			},
 		},
 		{
 			name: "should create project with max length name",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name: maxLengthProjectName,
 			},
 		},
 		{
 			name: "should create project with max length description",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name:        "Project With Max Length Description",
 				Description: maxLengthProjectDescription,
 			},
@@ -379,8 +379,8 @@ func TestCreateProjectValidEntity(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.CreateProject(model.ProjectCreateRequest{
-				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+			res, ucErr := uc.CreateProject(openapi.ProjectCreateRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
 				Project: tc.project,
 			})
 			assert.Nil(t, ucErr)
@@ -400,18 +400,18 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name     string
 		userId   string
-		project  model.ProjectWithoutAutofield
-		expected model.ProjectCreateErrorResponse
+		project  openapi.ProjectWithoutAutofield
+		expected openapi.ProjectCreateErrorResponse
 	}{
 		{
 			name:   "should return error when user id is empty",
 			userId: "",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name:        "Project With Description",
 				Description: "This is a project",
 			},
-			expected: model.ProjectCreateErrorResponse{
-				User: model.UserOnlyIdError{
+			expected: openapi.ProjectCreateErrorResponse{
+				User: openapi.UserOnlyIdError{
 					Id: "user id is required, but got ''",
 				},
 			},
@@ -419,12 +419,12 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 		{
 			name:   "should return error when project name is empty",
 			userId: testutil.ModifyOnlyUserId(),
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name:        "",
 				Description: "This is a project",
 			},
-			expected: model.ProjectCreateErrorResponse{
-				Project: model.ProjectWithoutAutofieldError{
+			expected: openapi.ProjectCreateErrorResponse{
+				Project: openapi.ProjectWithoutAutofieldError{
 					Name: "project name is required, but got ''",
 				},
 			},
@@ -432,11 +432,11 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 		{
 			name:   "should return error when project name is too long",
 			userId: testutil.ModifyOnlyUserId(),
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name: tooLongProjectName,
 			},
-			expected: model.ProjectCreateErrorResponse{
-				Project: model.ProjectWithoutAutofieldError{
+			expected: openapi.ProjectCreateErrorResponse{
+				Project: openapi.ProjectWithoutAutofieldError{
 					Name: fmt.Sprintf(
 						"project name cannot be longer than 100 characters, but got '%v'",
 						tooLongProjectName,
@@ -447,12 +447,12 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 		{
 			name:   "should return error when project description is too long",
 			userId: testutil.ModifyOnlyUserId(),
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name:        "Project With Description",
 				Description: tooLongProjectDescription,
 			},
-			expected: model.ProjectCreateErrorResponse{
-				Project: model.ProjectWithoutAutofieldError{
+			expected: openapi.ProjectCreateErrorResponse{
+				Project: openapi.ProjectWithoutAutofieldError{
 					Description: fmt.Sprintf(
 						"project description cannot be longer than 400 characters, but got '%v'",
 						tooLongProjectDescription,
@@ -463,12 +463,12 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 		{
 			name:    "should return error when all fields are empty",
 			userId:  "",
-			project: model.ProjectWithoutAutofield{},
-			expected: model.ProjectCreateErrorResponse{
-				User: model.UserOnlyIdError{
+			project: openapi.ProjectWithoutAutofield{},
+			expected: openapi.ProjectCreateErrorResponse{
+				User: openapi.UserOnlyIdError{
 					Id: "user id is required, but got ''",
 				},
-				Project: model.ProjectWithoutAutofieldError{
+				Project: openapi.ProjectWithoutAutofieldError{
 					Name: "project name is required, but got ''",
 				},
 			},
@@ -484,8 +484,8 @@ func TestCreateProjectDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.CreateProject(model.ProjectCreateRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
+			res, ucErr := uc.CreateProject(openapi.ProjectCreateRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
 				Project: tc.project,
 			})
 			assert.NotNil(t, ucErr)
@@ -512,9 +512,9 @@ func TestCreateProjectServiceError(t *testing.T) {
 
 	uc := usecase.NewProjectUseCase(s)
 
-	res, ucErr := uc.CreateProject(model.ProjectCreateRequest{
-		User: model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-		Project: model.ProjectWithoutAutofield{
+	res, ucErr := uc.CreateProject(openapi.ProjectCreateRequest{
+		User: openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+		Project: openapi.ProjectWithoutAutofield{
 			Name: "Project Name",
 		},
 	})
@@ -531,30 +531,30 @@ func TestUpdateProjectValidEntity(t *testing.T) {
 
 	tt := []struct {
 		name    string
-		project model.ProjectWithoutAutofield
+		project openapi.ProjectWithoutAutofield
 	}{
 		{
 			name: "should update project with description",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name:        "Project With Description",
 				Description: "This is a project",
 			},
 		},
 		{
 			name: "should update project without description",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name: "Project Without Description",
 			},
 		},
 		{
 			name: "should update project with max length name",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name: maxLengthProjectName,
 			},
 		},
 		{
 			name: "should update project with max length description",
-			project: model.ProjectWithoutAutofield{
+			project: openapi.ProjectWithoutAutofield{
 				Name:        "Project With Max Length Description",
 				Description: maxLengthProjectDescription,
 			},
@@ -592,9 +592,9 @@ func TestUpdateProjectValidEntity(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.UpdateProject(model.ProjectUpdateRequest{
-				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-				Project: model.Project{Id: "0000000000000001", Name: tc.project.Name, Description: tc.project.Description},
+			res, ucErr := uc.UpdateProject(openapi.ProjectUpdateRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+				Project: openapi.Project{Id: "0000000000000001", Name: tc.project.Name, Description: tc.project.Description},
 			})
 			assert.Nil(t, ucErr)
 
@@ -612,19 +612,19 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name     string
 		userId   string
-		project  model.Project
-		expected model.ProjectUpdateErrorResponse
+		project  openapi.Project
+		expected openapi.ProjectUpdateErrorResponse
 	}{
 		{
 			name:   "should return error when user id is empty",
 			userId: "",
-			project: model.Project{
+			project: openapi.Project{
 				Id:          "0000000000000001",
 				Name:        "Project With Description",
 				Description: "This is a project",
 			},
-			expected: model.ProjectUpdateErrorResponse{
-				User: model.UserOnlyIdError{
+			expected: openapi.ProjectUpdateErrorResponse{
+				User: openapi.UserOnlyIdError{
 					Id: "user id is required, but got ''",
 				},
 			},
@@ -632,13 +632,13 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 		{
 			name:   "should return error when project id is empty",
 			userId: testutil.ModifyOnlyUserId(),
-			project: model.Project{
+			project: openapi.Project{
 				Id:          "",
 				Name:        "Project With Description",
 				Description: "This is a project",
 			},
-			expected: model.ProjectUpdateErrorResponse{
-				Project: model.ProjectError{
+			expected: openapi.ProjectUpdateErrorResponse{
+				Project: openapi.ProjectError{
 					Id: "project id is required, but got ''",
 				},
 			},
@@ -646,13 +646,13 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 		{
 			name:   "should return error when project name is empty",
 			userId: testutil.ModifyOnlyUserId(),
-			project: model.Project{
+			project: openapi.Project{
 				Id:          "0000000000000001",
 				Name:        "",
 				Description: "This is a project",
 			},
-			expected: model.ProjectUpdateErrorResponse{
-				Project: model.ProjectError{
+			expected: openapi.ProjectUpdateErrorResponse{
+				Project: openapi.ProjectError{
 					Name: "project name is required, but got ''",
 				},
 			},
@@ -660,13 +660,13 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 		{
 			name:   "should return error when project name is too long",
 			userId: testutil.ModifyOnlyUserId(),
-			project: model.Project{
+			project: openapi.Project{
 				Id:          "0000000000000001",
 				Name:        tooLongProjectName,
 				Description: "This is a project",
 			},
-			expected: model.ProjectUpdateErrorResponse{
-				Project: model.ProjectError{
+			expected: openapi.ProjectUpdateErrorResponse{
+				Project: openapi.ProjectError{
 					Name: fmt.Sprintf(
 						"project name cannot be longer than 100 characters, but got '%v'",
 						tooLongProjectName,
@@ -677,13 +677,13 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 		{
 			name:   "should return error when project description is too long",
 			userId: testutil.ModifyOnlyUserId(),
-			project: model.Project{
+			project: openapi.Project{
 				Id:          "0000000000000001",
 				Name:        "Project With Description",
 				Description: tooLongProjectDescription,
 			},
-			expected: model.ProjectUpdateErrorResponse{
-				Project: model.ProjectError{
+			expected: openapi.ProjectUpdateErrorResponse{
+				Project: openapi.ProjectError{
 					Description: fmt.Sprintf(
 						"project description cannot be longer than 400 characters, but got '%v'",
 						tooLongProjectDescription,
@@ -694,12 +694,12 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 		{
 			name:    "should return error when all fields are empty",
 			userId:  "",
-			project: model.Project{},
-			expected: model.ProjectUpdateErrorResponse{
-				User: model.UserOnlyIdError{
+			project: openapi.Project{},
+			expected: openapi.ProjectUpdateErrorResponse{
+				User: openapi.UserOnlyIdError{
 					Id: "user id is required, but got ''",
 				},
-				Project: model.ProjectError{
+				Project: openapi.ProjectError{
 					Id:   "project id is required, but got ''",
 					Name: "project name is required, but got ''",
 				},
@@ -716,8 +716,8 @@ func TestUpdateProjectDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.UpdateProject(model.ProjectUpdateRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
+			res, ucErr := uc.UpdateProject(openapi.ProjectUpdateRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
 				Project: tc.project,
 			})
 			assert.NotNil(t, ucErr)
@@ -769,9 +769,9 @@ func TestUpdateProjectServiceError(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			res, ucErr := uc.UpdateProject(model.ProjectUpdateRequest{
-				User: model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-				Project: model.Project{
+			res, ucErr := uc.UpdateProject(openapi.ProjectUpdateRequest{
+				User: openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+				Project: openapi.Project{
 					Id:   "0000000000000001",
 					Name: "Project Name",
 				},
@@ -801,9 +801,9 @@ func TestDeleteProjectValidEntity(t *testing.T) {
 
 	uc := usecase.NewProjectUseCase(s)
 
-	ucErr := uc.DeleteProject(model.ProjectDeleteRequest{
-		User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-		Project: model.ProjectOnlyId{Id: "0000000000000001"},
+	ucErr := uc.DeleteProject(openapi.ProjectDeleteRequest{
+		User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+		Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
 	})
 	assert.Nil(t, ucErr)
 }
@@ -813,33 +813,33 @@ func TestDeleteProjectDomainValidationError(t *testing.T) {
 		name      string
 		userId    string
 		projectId string
-		expected  model.ProjectDeleteErrorResponse
+		expected  openapi.ProjectDeleteErrorResponse
 	}{
 		{
 			name:      "should return error when user id is empty",
 			userId:    "",
 			projectId: "0000000000000001",
-			expected: model.ProjectDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: ""},
+			expected: openapi.ProjectDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: ""},
 			},
 		},
 		{
 			name:      "should return error when project id is empty",
 			userId:    testutil.ModifyOnlyUserId(),
 			projectId: "",
-			expected: model.ProjectDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: ""},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+			expected: openapi.ProjectDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: ""},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
 			},
 		},
 		{
 			name:      "should return error when all fields are empty",
 			userId:    "",
 			projectId: "",
-			expected: model.ProjectDeleteErrorResponse{
-				User:    model.UserOnlyIdError{Id: "user id is required, but got ''"},
-				Project: model.ProjectOnlyIdError{Id: "project id is required, but got ''"},
+			expected: openapi.ProjectDeleteErrorResponse{
+				User:    openapi.UserOnlyIdError{Id: "user id is required, but got ''"},
+				Project: openapi.ProjectOnlyIdError{Id: "project id is required, but got ''"},
 			},
 		},
 	}
@@ -853,9 +853,9 @@ func TestDeleteProjectDomainValidationError(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			ucErr := uc.DeleteProject(model.ProjectDeleteRequest{
-				User:    model.UserOnlyId{Id: tc.userId},
-				Project: model.ProjectOnlyId{Id: tc.projectId},
+			ucErr := uc.DeleteProject(openapi.ProjectDeleteRequest{
+				User:    openapi.UserOnlyId{Id: tc.userId},
+				Project: openapi.ProjectOnlyId{Id: tc.projectId},
 			})
 			assert.NotNil(t, ucErr)
 
@@ -904,9 +904,9 @@ func TestDeleteProjectServiceError(t *testing.T) {
 
 			uc := usecase.NewProjectUseCase(s)
 
-			ucErr := uc.DeleteProject(model.ProjectDeleteRequest{
-				User:    model.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
-				Project: model.ProjectOnlyId{Id: "0000000000000001"},
+			ucErr := uc.DeleteProject(openapi.ProjectDeleteRequest{
+				User:    openapi.UserOnlyId{Id: testutil.ModifyOnlyUserId()},
+				Project: openapi.ProjectOnlyId{Id: "0000000000000001"},
 			})
 			assert.NotNil(t, ucErr)
 			assert.Equal(t, tc.expectedError, ucErr.Error())

@@ -1,10 +1,16 @@
 type: object
-description: Request Body for Project Find API
+description: Request Parameters for Project Find API
 properties:
-  user:
-    $ref: ../../../entity/user/UserOnlyId.yaml
-  project:
-    $ref: ../../../entity/project/ProjectOnlyId.yaml
+  userId:
+    type: string
+    description: User ID
+    example: auth0|65a3d656ca600978b0f9501b
+    x-go-custom-tag: form:"userId"
+  projectId:
+    type: string
+    description: Auto-generated project ID
+    example: 123e4567-e89b-12d3-a456-426614174000
+    x-go-custom-tag: form:"projectId"
 required:
-  - user
-  - project
+  - userId
+  - projectId

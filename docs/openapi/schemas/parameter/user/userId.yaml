@@ -1,0 +1,7 @@
+in: query
+name: userId
+required: true
+schema:
+  type: string
+description: User ID
+example: auth0|65a3d656ca600978b0f9501b

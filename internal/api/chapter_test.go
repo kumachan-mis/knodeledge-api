@@ -24,15 +24,11 @@ func TestChapterList(t *testing.T) {
 	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ReadOnlyUserId(),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITHOUT_DESCRIPTION",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/chapters/list", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ReadOnlyUserId())
+	query.Add("projectId", "PROJECT_WITHOUT_DESCRIPTION")
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -71,15 +67,11 @@ func TestChapterListEmpty(t *testing.T) {
 	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ReadOnlyUserId(),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITH_DESCRIPTION",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/chapters/list", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ReadOnlyUserId())
+	query.Add("projectId", "PROJECT_WITH_DESCRIPTION")
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -94,29 +86,21 @@ func TestChapterListEmpty(t *testing.T) {
 
 func TestChapterListNotFound(t *testing.T) {
 	tt := []struct {
-		name    string
-		request map[string]any
+		name  string
+		query map[string]string
 	}{
 		{
 			name: "should return not found when project is not found",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": testutil.ReadOnlyUserId(),
-				},
-				"project": map[string]any{
-					"id": "UNKNOWN_PROJECT",
-				},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "UNKNOWN_PROJECT",
 			},
 		},
 		{
 			name: "should return not found when user is not author of the project",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": testutil.ModifyOnlyUserId(),
-				},
-				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION",
-				},
+			query: map[string]string{
+				"userId":    testutil.ModifyOnlyUserId(),
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
 			},
 		},
 	}
@@ -126,8 +110,12 @@ func TestChapterListNotFound(t *testing.T) {
 			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tc.request)
-			req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/chapters/list", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -137,8 +125,6 @@ func TestChapterListNotFound(t *testing.T) {
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
 			assert.Equal(t, map[string]any{
 				"message": "not found",
-				"user":    map[string]any{},
-				"project": map[string]any{},
 			}, responseBody)
 		})
 	}
@@ -147,53 +133,35 @@ func TestChapterListNotFound(t *testing.T) {
 func TestChapterListDomainValidationError(t *testing.T) {
 	tt := []struct {
 		name             string
-		request          map[string]any
+		query            map[string]string
 		expectedResponse map[string]any
 	}{
 		{
-			name:    "should return error when request is empty",
-			request: map[string]any{},
-			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
-				"project": map[string]any{
-					"id": "project id is required, but got ''",
-				},
-			},
-		},
-		{
 			name: "should return error when user id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": "",
-				},
-				"project": map[string]any{
-					"id": "PROJECT_WITHOUT_DESCRIPTION",
-				},
+			query: map[string]string{
+				"userId":    "",
+				"projectId": "PROJECT_WITHOUT_DESCRIPTION",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{
-					"id": "user id is required, but got ''",
-				},
-				"project": map[string]any{},
+				"userId": "user id is required, but got ''",
 			},
 		},
 		{
 			name: "should return error when project id is empty",
-			request: map[string]any{
-				"user": map[string]any{
-					"id": testutil.ReadOnlyUserId(),
-				},
-				"project": map[string]any{
-					"id": "",
-				},
+			query: map[string]string{
+				"userId":    testutil.ReadOnlyUserId(),
+				"projectId": "",
 			},
 			expectedResponse: map[string]any{
-				"user": map[string]any{},
-				"project": map[string]any{
-					"id": "project id is required, but got ''",
-				},
+				"projectId": "project id is required, but got ''",
+			},
+		},
+		{
+			name:  "should return error when empty parameter is passed",
+			query: map[string]string{},
+			expectedResponse: map[string]any{
+				"userId":    "user id is required, but got ''",
+				"projectId": "project id is required, but got ''",
 			},
 		},
 	}
@@ -203,8 +171,12 @@ func TestChapterListDomainValidationError(t *testing.T) {
 			router := setupChapterRouter(t)
 
 			recorder := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tc.request)
-			req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(string(requestBody)))
+			req, _ := http.NewRequest("GET", "/api/chapters/list", nil)
+			query := req.URL.Query()
+			for key, value := range tc.query {
+				query.Add(key, value)
+			}
+			req.URL.RawQuery = query.Encode()
 
 			router.ServeHTTP(recorder, req)
 
@@ -212,47 +184,23 @@ func TestChapterListDomainValidationError(t *testing.T) {
 
 			var responseBody map[string]any
 			assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-			assert.Equal(t, map[string]any{
-				"message": "invalid request value",
-				"user":    tc.expectedResponse["user"],
-				"project": tc.expectedResponse["project"],
-			}, responseBody)
+
+			expectedResponse := tc.expectedResponse
+			expectedResponse["message"] = "invalid request value"
+			assert.Equal(t, expectedResponse, responseBody)
 		})
 	}
-}
-
-func TestChapterListInvalidRequestFormat(t *testing.T) {
-	router := setupChapterRouter(t)
-
-	recorder := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(""))
-
-	router.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-	var responseBody map[string]any
-	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &responseBody))
-	assert.Equal(t, map[string]any{
-		"message": "invalid request format",
-		"user":    map[string]any{},
-		"project": map[string]any{},
-	}, responseBody)
 }
 
 func TestChapterListInternalError(t *testing.T) {
 	router := setupChapterRouter(t)
 
 	recorder := httptest.NewRecorder()
-	requestBody, _ := json.Marshal(map[string]any{
-		"user": map[string]any{
-			"id": testutil.ErrorUserId(2),
-		},
-		"project": map[string]any{
-			"id": "PROJECT_WITH_INVALID_CHAPTER_NAME",
-		},
-	})
-	req, _ := http.NewRequest("POST", "/api/chapters/list", strings.NewReader(string(requestBody)))
+	req, _ := http.NewRequest("GET", "/api/chapters/list", nil)
+	query := req.URL.Query()
+	query.Add("userId", testutil.ErrorUserId(2))
+	query.Add("projectId", "PROJECT_WITH_INVALID_CHAPTER_NAME")
+	req.URL.RawQuery = query.Encode()
 
 	router.ServeHTTP(recorder, req)
 
@@ -1139,12 +1087,12 @@ func setupChapterRouter(t *testing.T) *gin.Engine {
 		AnyTimes()
 
 	uc := usecase.NewChapterUseCase(s)
-	api := api.NewChapterApi(v, uc)
+	api := api.NewChaptersApi(v, uc)
 
-	router.POST("/api/chapters/list", api.HandleList)
-	router.POST("/api/chapters/create", api.HandleCreate)
-	router.POST("/api/chapters/update", api.HandleUpdate)
-	router.POST("/api/chapters/delete", api.HandleDelete)
+	router.GET("/api/chapters/list", api.ChaptersList)
+	router.POST("/api/chapters/create", api.ChaptersCreate)
+	router.POST("/api/chapters/update", api.ChaptersUpdate)
+	router.POST("/api/chapters/delete", api.ChaptersDelete)
 
 	return router
 }

@@ -1,13 +1,11 @@
-post:
+get:
   tags:
     - Chapters
   operationId: chapters-list
   summary: Get list of chapters for a project
-  requestBody:
-    content:
-      application/json:
-        schema:
-          $ref: ../../schemas/interface/chapters/list/ChapterListRequest.yaml
+  parameters:
+    - $ref: ../../schemas/parameter/user/userId.yaml
+    - $ref: ../../schemas/parameter/project/projectId.yaml
   responses:
     "200":
       description: OK - Returns list of chapters for a project
