@@ -1,5 +1,5 @@
 type: object
-description: Request Body for Chapter List API
+description: Request Paramemters for Chapter List API
 properties:
   userId:
     type: string

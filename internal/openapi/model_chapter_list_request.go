@@ -9,7 +9,7 @@
 
 package openapi
 
-// ChapterListRequest - Request Body for Chapter List API
+// ChapterListRequest - Request Paramemters for Chapter List API
 type ChapterListRequest struct {
 
 	// User ID
