@@ -1,8 +1,8 @@
 module github.com/kumachan-mis/knodeledge-api
 
-go 1.25
+go 1.24
 
-toolchain go1.25.0
+toolchain go1.24.0
 
 require (
 	cloud.google.com/go/firestore v1.18.0
